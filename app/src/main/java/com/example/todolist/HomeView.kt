@@ -23,6 +23,10 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -38,6 +42,8 @@ import com.example.todolist.data.Task
 fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     val scaffoldState = rememberScaffoldState()
     val context = LocalContext.current
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var taskBeingEdited by remember { mutableStateOf<Task?>(null) }
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -48,6 +54,8 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 contentColor = Color.White,
                 backgroundColor = colorResource(id = R.color.dark_blue),
                 onClick = {
+                    taskBeingEdited = null
+                    showBottomSheet = true
                     Toast.makeText(context, "Add a task here!", Toast.LENGTH_LONG).show()
                 }) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null)
@@ -63,6 +71,24 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 TaskItem(task)
             }
         }
+    }
+
+    if (showBottomSheet) {
+        AddTaskView(
+            0L,
+            viewModel,
+            onDismiss = {
+                showBottomSheet = false
+                taskBeingEdited = null
+            },
+            onSubmit = { task ->
+                if (taskBeingEdited == null) {
+                    //
+                } else {
+                    //
+                }
+            }
+        )
     }
 }
 
@@ -110,6 +136,7 @@ fun TaskItem(task: Task) {
                 thickness = 1.dp
             )
         }
+
 
     }
 }
