@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun SetStatusBarColor(color: Color) {
     val systemUiController = rememberSystemUiController()
-    val useDarkIcons = color.luminance() > 0.5f  // Determine if we should use dark icons based on background luminance
+    val useDarkIcons = true  // Determine if we should use dark icons based on background luminance
 
     SideEffect {
         // Set the status bar color and icon color
