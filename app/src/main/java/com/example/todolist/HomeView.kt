@@ -30,14 +30,12 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 import com.example.todolist.data.DummyTask
 import com.example.todolist.data.Task
 
 @Composable
-fun HomeView(
-    // navController
-    // viewModel
-) {
+fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     val scaffoldState = rememberScaffoldState()
     val context = LocalContext.current
 
