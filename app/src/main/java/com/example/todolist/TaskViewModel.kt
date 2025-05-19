@@ -5,8 +5,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.example.todolist.data.Task
+import com.example.todolist.data.TaskRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 
-class TaskViewModel(): ViewModel() {
+class TaskViewModel(
+    private val taskRepository: TaskRepository = Graph.taskRepository
+): ViewModel() {
 
     var taskTitleState by mutableStateOf("")
     var taskDescriptionState by mutableStateOf("")
@@ -27,5 +34,36 @@ class TaskViewModel(): ViewModel() {
 
     fun onAddressChanged(newString: String) {
         taskAddressState = newString
+    }
+
+    lateinit var getAllTasks: Flow<List<Task>>
+
+    init {
+        viewModelScope.launch {
+            getAllTasks = taskRepository.getTasks()
+        }
+    }
+
+    fun addTask(task: Task) {
+        viewModelScope.launch(Dispatchers.IO) {
+            taskRepository.addTask(task)
+        }
+    }
+
+    fun getTaskById(id: Long): Flow<Task> {
+        return taskRepository.getTaskById(id)
+    }
+
+    fun updateTask(task: Task) {
+        viewModelScope.launch(Dispatchers.IO) {
+            taskRepository.updateATask(task)
+        }
+    }
+
+    fun deleteTask(task: Task) {
+        viewModelScope.launch(Dispatchers.IO) {
+            taskRepository.deleteATask(task)
+            getAllTasks = taskRepository.getTasks()
+        }
     }
 }
