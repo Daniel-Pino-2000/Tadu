@@ -1,6 +1,7 @@
 package com.example.todolist
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -19,6 +20,9 @@ class TaskViewModel(
     var taskDescriptionState by mutableStateOf("")
     var taskDateState by mutableStateOf("")
     var taskAddressState by mutableStateOf("")
+    var taskPriority: String by mutableStateOf("")
+    var taskDeadline by mutableStateOf("")
+
 
     fun onTaskTitleChanged(newString:String){
         taskTitleState = newString
@@ -34,6 +38,14 @@ class TaskViewModel(
 
     fun onAddressChanged(newString: String) {
         taskAddressState = newString
+    }
+
+    fun onTaskPriorityChanged(newString: String) {
+        taskPriority = newString
+    }
+
+    fun onTaskDeadlineChanged(newString: String) {
+        taskDeadline = newString
     }
 
     lateinit var getAllTasks: Flow<List<Task>>

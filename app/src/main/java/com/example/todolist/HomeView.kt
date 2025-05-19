@@ -23,7 +23,9 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Icon
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.todolist.data.DummyTask
 import com.example.todolist.data.Task
@@ -43,7 +46,8 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     val scaffoldState = rememberScaffoldState()
     val context = LocalContext.current
     var showBottomSheet by remember { mutableStateOf(false) }
-    var taskBeingEdited by remember { mutableStateOf<Task?>(null) }
+    var taskBeingEdited by remember { mutableStateOf(false) }
+    var id by remember { mutableLongStateOf(0L) }
 
     Scaffold(
         scaffoldState = scaffoldState,
@@ -54,51 +58,64 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 contentColor = Color.White,
                 backgroundColor = colorResource(id = R.color.dark_blue),
                 onClick = {
-                    taskBeingEdited = null
+                    taskBeingEdited = false
                     showBottomSheet = true
+                    id = 0L
                     Toast.makeText(context, "Add a task here!", Toast.LENGTH_LONG).show()
                 }) {
-                Icon(imageVector = Icons.Default.Add, contentDescription = null)
+                Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.White)
             }
         }
 
     ) {
+        val taskList = viewModel.getAllTasks.collectAsState(initial = listOf())
         LazyColumn(modifier = Modifier
             .fillMaxSize()
             .padding(it)) {
-            items(DummyTask.taskList) {
+            items(taskList.value, key = {task-> task.id}) {
                 task ->
-                TaskItem(task)
+                TaskItem(task, viewModel) {
+                    id = task.id
+                    taskBeingEdited = true
+                    showBottomSheet = true
+                }
             }
         }
     }
 
     if (showBottomSheet) {
         AddTaskView(
-            0L,
+            id,
             viewModel,
             onDismiss = {
                 showBottomSheet = false
-                taskBeingEdited = null
+                taskBeingEdited = false
             },
             onSubmit = { task ->
-                if (taskBeingEdited == null) {
-                    //
+                if (taskBeingEdited == false) {
+                    viewModel.addTask(task)  // ← Add to DB
                 } else {
-                    //
+                    Toast.makeText(context, "It is being updated!", Toast.LENGTH_LONG).show()
+                    viewModel.updateTask(task)  // ← Update in DB
+
                 }
+                showBottomSheet = false
+                taskBeingEdited = false
+
             }
         )
     }
 }
 
 @Composable
-fun TaskItem(task: Task) {
+fun TaskItem(task: Task, viewModel: TaskViewModel, onClick: () -> Unit) {
+    var isChecked by remember { mutableStateOf(false) }
+
     Card(modifier = Modifier
         .fillMaxWidth()
         .padding(top = 8.dp, start = 8.dp, end = 8.dp)
         .clickable {
-            // Add the navigation logic here
+            onClick()
         },
         backgroundColor = Color.White
 
@@ -113,8 +130,13 @@ fun TaskItem(task: Task) {
             ) {
                 Checkbox(
                     checked = false,
-                    onCheckedChange = null, // disables interaction
-                    enabled = false // grays it out to show it's inactive
+                    onCheckedChange = { checked ->
+                        isChecked = checked
+                        if (checked) {
+                            viewModel.deleteTask(task)
+                        }
+                    },
+                    enabled = true
                 )
             }
 
@@ -138,18 +160,5 @@ fun TaskItem(task: Task) {
         }
 
 
-    }
-}
-
-@Preview(showBackground = true)
-@Composable
-fun TaskItemPreview() {
-    MaterialTheme {
-        TaskItem(
-            task = Task(
-                title = "Buy groceries",
-                description = "Milk, eggs, bread, and cheese"
-            )
-        )
     }
 }

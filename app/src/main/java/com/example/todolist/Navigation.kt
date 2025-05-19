@@ -8,7 +8,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 
 @Composable
-fun Navigation(viewModel: TaskViewModel = viewModel(), navController: NavHostController = rememberNavController()) {
+fun Navigation(viewModel: TaskViewModel = viewModel(),
+               navController: NavHostController = rememberNavController()) {
     NavHost(
         navController = navController,
         startDestination = Screen.HomeScreen.route

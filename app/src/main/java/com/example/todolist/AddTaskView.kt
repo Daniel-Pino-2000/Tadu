@@ -29,10 +29,24 @@ fun AddTaskView(
     onDismiss: () -> Unit,
     onSubmit: (task: Task) -> Unit
 ) {
-    var title by remember { mutableStateOf("") }
-    var description by remember { mutableStateOf("") }
-    var date by remember {mutableStateOf(Date().toString())}
-    var address by remember { mutableStateOf("") }
+
+    if (id != 0L) {
+        val task = viewModel.getTaskById(id).collectAsState(initial = Task(0L, "", "", "", "", "5", ""))
+        viewModel.taskTitleState = task.value.title
+        viewModel.taskDescriptionState = task.value.description
+        viewModel.taskDateState = task.value.date
+        viewModel.taskAddressState = task.value.address
+        viewModel.taskDeadline = task.value.deadline
+        viewModel.taskPriority = task.value.priority
+    }
+    else {
+        viewModel.taskTitleState = ""
+        viewModel.taskDescriptionState = ""
+        viewModel.taskDateState = ""
+        viewModel.taskAddressState = ""
+        viewModel.taskDeadline = ""
+        viewModel.taskPriority = ""
+    }
 
     ModalBottomSheet(
         onDismissRequest = onDismiss
@@ -42,38 +56,76 @@ fun AddTaskView(
             Text(text = if (id == 0L) "Add Task" else "Edit Task")
             Spacer(modifier = Modifier.height(8.dp))
             OutlinedTextField(
-                value = title,
-                onValueChange = {title = it},
+                value = viewModel.taskTitleState,
+                onValueChange = {viewModel.onTaskTitleChanged(it)},
                 label = {Text("Title")}
             )
 
             Spacer(modifier = Modifier.height(8.dp))
 
             OutlinedTextField(
-                value = description,
-                onValueChange = { description = it },
+                value = viewModel.taskDescriptionState,
+                onValueChange = { viewModel.onTaskDescriptionChanged(it) },
                 label = { Text("Description") }
             )
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = date,
-                onValueChange = { date = it },
+                value = viewModel.taskDateState,
+                onValueChange = { viewModel.onTaskDateChanged(it) },
                 label = { Text("Date") }
             )
             Spacer(modifier = Modifier.height(16.dp))
 
             OutlinedTextField(
-                value = address,
-                onValueChange = { address = it },
+                value = viewModel.taskAddressState,
+                onValueChange = { viewModel.onAddressChanged(it) },
                 label = { Text("Address") }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = viewModel.taskDeadline,
+                onValueChange = { viewModel.onTaskDeadlineChanged(it) },
+                label = { Text("Deadline") }
+            )
+            Spacer(modifier = Modifier.height(16.dp))
+
+            OutlinedTextField(
+                value = viewModel.taskPriority,
+                onValueChange = { viewModel.onTaskPriorityChanged(it) },
+                label = { Text("Priority") }
             )
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
                 onClick = {
-                    onSubmit(Task(id, title, description, date, address))
-                    onDismiss()
+                    if (id == 0L) {
+                        onSubmit(
+                            Task(
+                                title = viewModel.taskTitleState,
+                                description = viewModel.taskDescriptionState,
+                                date = viewModel.taskDateState,
+                                address = viewModel.taskAddressState,
+                                priority = viewModel.taskPriority,
+                                deadline = viewModel.taskDeadline
+                            )
+                        )
+                    }
+
+                    else {
+                        onSubmit(
+                            Task(
+                                id = id,
+                                title = viewModel.taskTitleState,
+                                description = viewModel.taskDescriptionState,
+                                date = viewModel.taskDateState,
+                                address = viewModel.taskAddressState,
+                                priority = viewModel.taskPriority,
+                                deadline = viewModel.taskDeadline
+                            )
+                        )
+                    }
                 }
             ) {
                 Text("Save")
