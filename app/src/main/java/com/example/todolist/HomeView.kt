@@ -1,15 +1,15 @@
 package com.example.todolist
 
-import android.graphics.Paint
+import android.os.Build
+import android.util.Log
 import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,6 +26,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -36,16 +37,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.VerticalAlignmentLine
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
-import com.example.todolist.data.DummyTask
 import com.example.todolist.data.Task
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     val scaffoldState = rememberScaffoldState()
@@ -61,7 +62,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
             FloatingActionButton(
                 modifier = Modifier.padding(20.dp),
                 contentColor = Color.White,
-                backgroundColor = colorResource(id = R.color.dark_blue),
+                backgroundColor = colorResource(id = R.color.nice_blue),
                 onClick = {
                     taskBeingEdited = false
                     showBottomSheet = true
@@ -112,6 +113,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Unit) {
     var isChecked by remember { mutableStateOf(false) }
@@ -121,7 +123,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Uni
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 8.dp, start = 8.dp, end = 8.dp)
+            .padding(top = 8.dp, start = 15.dp, end = 15.dp)
             .clickable { onClick() },
         backgroundColor = colorResource(id = R.color.light_gray),
         elevation = elevationValue
@@ -130,7 +132,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Uni
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(8.dp),
+                .padding(top = 12.dp, bottom = 12.dp, start = 8.dp, end = 8.dp),
             verticalAlignment = Alignment.Top
         ) {
             Spacer(modifier = Modifier.width(6.dp))
@@ -160,6 +162,8 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Uni
                     style = MaterialTheme.typography.body2
                 )
 
+                DeadlineItem(task)
+
                 if (mode == 2) {
                     Divider(
                         modifier = Modifier.padding(top = 8.dp),
@@ -171,4 +175,58 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Uni
         }
     }
 }
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun DeadlineItem(task: Task) {
+    // Format the date for the comparison
+    val today = LocalDate.now()
+    val currentYear = today.year
+    val formatter = DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH)
+
+    val dateStatus = when (task.deadline.trim().lowercase()) {
+        "today" -> "today"
+        "tomorrow" -> "future"
+        "yesterday" -> "past"
+        else -> {
+            // Try to parse the formatted string
+            try {
+                val deadlineText = task.deadline.trim().replaceFirstChar { it.uppercaseChar() }
+                val parsedDate = LocalDate.parse("$deadlineText $currentYear", formatter)
+
+                when {
+                    parsedDate.isEqual(today) -> "today"
+                    parsedDate.isBefore(today) -> "past"
+                    else -> "future"
+                }
+            } catch (e: Exception) {
+                "invalid"
+            }
+        }
+    }
+
+    // Select the color depending on the result of the comparison
+    val iconColor = when (dateStatus) {
+        "today" -> colorResource(id = R.color.blue_today)
+        "past" -> colorResource(id = R.color.red_yesterday)
+        "future" -> colorResource(id = R.color.green_tomorrow)
+        else -> Color.Gray
+    }
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(
+            imageVector = Icons.Default.DateRange,
+            contentDescription = null,
+            tint = iconColor,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(modifier = Modifier.padding(end = 2.dp))
+        Text(
+            text = task.deadline,
+            color = iconColor,
+            style = MaterialTheme.typography.body2
+        )
+    }
+}
+
 
