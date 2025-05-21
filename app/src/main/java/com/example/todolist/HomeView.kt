@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -27,6 +28,7 @@ import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -157,12 +159,25 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Uni
                     text = task.title,
                     style = MaterialTheme.typography.h6
                 )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
                 Text(
                     text = task.description,
                     style = MaterialTheme.typography.body2
                 )
 
-                DeadlineItem(task)
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Row {
+                    DeadlineItem(task)
+                    Spacer(modifier = Modifier.weight(1f))
+                    if (task.address.isNotEmpty()) {
+                        AddressItem(task)
+                    }
+                }
+
+
 
                 if (mode == 2) {
                     Divider(
@@ -173,6 +188,8 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Uni
                 }
             }
         }
+
+
     }
 }
 
@@ -226,6 +243,16 @@ fun DeadlineItem(task: Task) {
             color = iconColor,
             style = MaterialTheme.typography.body2
         )
+    }
+}
+
+@Composable
+fun AddressItem(task: Task) {
+
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        Icon(Icons.Default.LocationOn, contentDescription = null,modifier = Modifier.size(16.dp))
+        Spacer(modifier = Modifier.padding(2.dp))
+        Text(text = task.address)
     }
 }
 
