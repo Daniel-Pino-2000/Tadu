@@ -4,7 +4,10 @@ import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +19,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Divider
@@ -27,6 +32,7 @@ import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Icon
@@ -38,9 +44,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.todolist.data.Task
@@ -128,6 +137,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Uni
             .padding(top = 8.dp, start = 15.dp, end = 15.dp)
             .clickable { onClick() },
         backgroundColor = colorResource(id = R.color.light_gray),
+        shape = RoundedCornerShape(15.dp),
         elevation = elevationValue
     ) {
 
@@ -139,18 +149,16 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Uni
         ) {
             Spacer(modifier = Modifier.width(6.dp))
 
-            Checkbox(
+            CircularCheckbox(
                 checked = isChecked,
                 onCheckedChange = { checked ->
                     isChecked = checked
                     if (checked) {
                         viewModel.deleteTask(task)
                     }
-                },
-                modifier = Modifier
-                    .size(24.dp)
-                    .padding(end = 8.dp)
+                }
             )
+
 
             Spacer(modifier = Modifier.width(8.dp))
 
@@ -162,15 +170,21 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Uni
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Text(
-                    text = task.description,
-                    style = MaterialTheme.typography.body2
-                )
+                if (task.description.isNotEmpty()) {
+                    Text(
+                        text = task.description,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        style = MaterialTheme.typography.body2
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Row {
-                    DeadlineItem(task)
+                    if (task.deadline.isNotEmpty()) {
+                        DeadlineItem(task)
+                    }
                     Spacer(modifier = Modifier.weight(1f))
                     if (task.address.isNotEmpty()) {
                         AddressItem(task)
@@ -259,8 +273,44 @@ fun AddressItem(task: Task) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         Icon(Icons.Default.LocationOn, contentDescription = null,modifier = Modifier.size(16.dp))
         Spacer(modifier = Modifier.padding(2.dp))
-        Text(text = task.address)
+        Text(
+            text = task.address,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
+
+@Composable
+fun CircularCheckbox(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+    size: Dp = 22.dp,
+    checkedColor: Color = MaterialTheme.colors.primary,
+    uncheckedColor: Color = colorResource(id = R.color.light_gray), // Match card background
+    checkmarkColor: Color = Color.White,
+    borderColor: Color = Color.Gray
+) {
+    Box(
+        modifier = Modifier
+            .size(size)
+            .clip(CircleShape)
+            .background(if (checked) checkedColor else uncheckedColor)
+            .border(1.dp, borderColor, CircleShape) // Add border
+            .clickable { onCheckedChange(!checked) },
+        contentAlignment = Alignment.Center
+    ) {
+        if (checked) {
+            Icon(
+                imageVector = Icons.Default.Check,
+                contentDescription = "Checked",
+                tint = checkmarkColor,
+                modifier = Modifier.size(size * 0.6f)
+            )
+        }
+    }
+}
+
+
 
 
