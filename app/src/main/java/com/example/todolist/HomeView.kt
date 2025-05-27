@@ -201,33 +201,38 @@ fun DeadlineItem(task: Task) {
     val currentYear = today.year
     val formatter = DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH)
 
-    val dateStatus = when (task.deadline.trim().lowercase()) {
-        "today" -> "today"
-        "tomorrow" -> "future"
-        "yesterday" -> "past"
-        else -> {
-            // Try to parse the formatted string
-            try {
-                val deadlineText = task.deadline.trim().replaceFirstChar { it.uppercaseChar() }
-                val parsedDate = LocalDate.parse("$deadlineText $currentYear", formatter)
+    val yesterday = today.minusDays(1)
+    val tomorrow = today.plusDays(1)
 
-                when {
-                    parsedDate.isEqual(today) -> "today"
-                    parsedDate.isBefore(today) -> "past"
-                    else -> "future"
-                }
-            } catch (e: Exception) {
-                "invalid"
-            }
-        }
+    // Parse the selectedDate string to LocalDate by appending current year
+    val deadlineText = task.deadline.trim().replaceFirstChar { it.uppercaseChar() }
+    val parsedDate = LocalDate.parse("$deadlineText $currentYear", formatter)
+
+    // Check the different possible dates
+    val dateStatus: String = when {
+        parsedDate.isEqual(today) -> "Today"
+        parsedDate.isEqual(yesterday) -> "Yesterday"
+        parsedDate.isBefore(today) -> "Past"
+        parsedDate.isEqual(tomorrow) -> "Tomorrow"
+        else -> "Future"
     }
 
     // Select the color depending on the result of the comparison
     val iconColor = when (dateStatus) {
-        "today" -> colorResource(id = R.color.blue_today)
-        "past" -> colorResource(id = R.color.red_yesterday)
-        "future" -> colorResource(id = R.color.green_tomorrow)
+
+        "Today" -> colorResource(id = R.color.blue_today)
+        "Past"  -> colorResource(id = R.color.red_yesterday)
+        "Yesterday" -> colorResource(id = R.color.red_yesterday)
+        "Future" -> colorResource(id = R.color.green_tomorrow)
+        "Tomorrow" -> colorResource(id = R.color.green_tomorrow)
         else -> Color.Gray
+    }
+
+    // Assign the text that will be displayed
+    val dateText = if (dateStatus == "Today" || dateStatus == "Yesterday" || dateStatus == "Tomorrow") {
+        dateStatus
+    } else {
+        task.deadline
     }
 
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -238,8 +243,10 @@ fun DeadlineItem(task: Task) {
             modifier = Modifier.size(16.dp)
         )
         Spacer(modifier = Modifier.padding(end = 2.dp))
+
+
         Text(
-            text = task.deadline,
+            text = dateText,
             color = iconColor,
             style = MaterialTheme.typography.body2
         )

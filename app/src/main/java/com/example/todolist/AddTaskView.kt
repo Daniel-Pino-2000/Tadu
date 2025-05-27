@@ -94,24 +94,8 @@ fun AddTaskView(
 
             DeadlinePickerButton { selectedDate ->
 
-                val formatter = DateTimeFormatter.ofPattern("MMM dd")
-                val currentYear = LocalDate.now().year
 
-                // Parse the selectedDate string to LocalDate by appending current year
-                val parsedDate = LocalDate.parse("$selectedDate $currentYear", DateTimeFormatter.ofPattern("MMM dd yyyy"))
-
-                val today = LocalDate.now()
-                val yesterday = today.minusDays(1)
-                val tomorrow = today.plusDays(1)
-
-                val label = when (parsedDate) {
-                    today -> "Today"
-                    yesterday -> "Yesterday"
-                    tomorrow -> "Tomorrow"
-                    else -> selectedDate
-                }
-
-                viewModel.onTaskDeadlineChanged(label)
+                viewModel.onTaskDeadlineChanged(selectedDate)
 
 
             }
