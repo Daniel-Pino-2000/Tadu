@@ -85,7 +85,6 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                     taskBeingEdited = false
                     showBottomSheet = true
                     id = 0L
-                    Toast.makeText(context, "Add a task here!", Toast.LENGTH_LONG).show()
                 }) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.White)
             }
@@ -119,7 +118,6 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 if (taskBeingEdited == false) {
                     viewModel.addTask(task)  // ← Add to DB
                 } else {
-                    Toast.makeText(context, "It is being updated!", Toast.LENGTH_LONG).show()
                     viewModel.updateTask(task)  // ← Update in DB
 
                 }
