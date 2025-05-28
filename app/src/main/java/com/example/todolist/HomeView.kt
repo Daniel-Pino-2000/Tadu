@@ -38,9 +38,11 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,6 +55,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.example.todolist.data.Task
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -149,12 +154,19 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Uni
         ) {
             Spacer(modifier = Modifier.width(6.dp))
 
+            val coroutineScope = rememberCoroutineScope()
+            val priority = task.priority.toInt()
             CircularCheckbox(
                 checked = isChecked,
+                priority = priority,
                 onCheckedChange = { checked ->
                     isChecked = checked
                     if (checked) {
-                        viewModel.deleteTask(task)
+                        coroutineScope.launch {
+                            delay(350)
+                            viewModel.deleteTask(task)
+                        }
+
                     }
                 }
             )
@@ -284,13 +296,20 @@ fun AddressItem(task: Task) {
 @Composable
 fun CircularCheckbox(
     checked: Boolean,
+    priority: Int = 4,
     onCheckedChange: (Boolean) -> Unit,
-    size: Dp = 22.dp,
-    checkedColor: Color = MaterialTheme.colors.primary,
-    uncheckedColor: Color = colorResource(id = R.color.light_gray), // Match card background
-    checkmarkColor: Color = Color.White,
-    borderColor: Color = Color.Gray
+
 ) {
+    val size: Dp = 22.dp
+    val checkedColor: Color = colorResource(id = R.color.nice_blue)
+    val defaultUncheckedColor = colorResource(id = R.color.light_gray)
+    val checkmarkColor: Color = Color.White
+    val borderColor: Color = Color.Gray
+
+    // Track uncheckedColor reactively based on priority
+    var uncheckedColor = PriorityUtils.getColor(priority)
+
+
     Box(
         modifier = Modifier
             .size(size)
@@ -305,7 +324,7 @@ fun CircularCheckbox(
                 imageVector = Icons.Default.Check,
                 contentDescription = "Checked",
                 tint = checkmarkColor,
-                modifier = Modifier.size(size * 0.6f)
+                modifier = Modifier.size(size * 1f)
             )
         }
     }
