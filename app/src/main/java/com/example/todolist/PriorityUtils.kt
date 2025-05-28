@@ -23,6 +23,12 @@ object PriorityUtils {
         3 to R.color.priority_blue,
     )
 
+    val priorityBorderColor = mapOf(
+        1 to R.color.red_yesterday,
+        2 to R.color.orange,
+        3 to R.color.nice_blue,
+    )
+
     val priorityIcons = mapOf(
         1 to Icons.Default.PriorityHigh,
         2 to Icons.Default.Warning,
@@ -38,6 +44,12 @@ object PriorityUtils {
     @Composable
     fun getColor(priority: Int): androidx.compose.ui.graphics.Color {
         val resId = priorityColorRes[priority] ?: defaultColorRes
+        return colorResource(id = resId)
+    }
+
+    @Composable
+    fun getBorderColor(priority: Int) :androidx.compose.ui.graphics.Color {
+        val resId = priorityBorderColor[priority] ?: defaultColorRes
         return colorResource(id = resId)
     }
 

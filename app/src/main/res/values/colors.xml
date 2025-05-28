@@ -12,8 +12,10 @@
     <color name="blue_today">#0733f5</color>
     <color name="red_yesterday">#cf0c0c</color>
     <color name="green_tomorrow">#08a625</color>
+    <color name="orange">#f56642</color>
+    <color name="gray"></color>
 
-    <color name="priority_blue">#6f6cad</color>
-    <color name="priority_red">#ad6c6c</color>
-    <color name="priority_orange">#d99373</color>
+    <color name="priority_blue">#A3ADF8</color>
+    <color name="priority_red">#DFB3B3</color>
+    <color name="priority_orange">#DFBCA8</color>
 </resources>

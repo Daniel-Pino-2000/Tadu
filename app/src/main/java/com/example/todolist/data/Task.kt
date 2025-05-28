@@ -18,20 +18,7 @@ data class Task(
     @ColumnInfo(name = "task-address")
     val address: String = "",
     @ColumnInfo(name = "task-priority")
-    val priority: String = "5",
+    val priority: String,
     @ColumnInfo(name = "task-deadline")
     val deadline: String = Date().toString()
 )
-
-object DummyTask{
-    val taskList = listOf(
-        Task(title="Study",
-            description =  "I have a quiz soon"),
-        Task(title = "Exercise",
-            description = "Go to the gym"),
-        Task(title = "Devotional",
-            description= "Prepare the class for the small group"),
-        Task(title = "Call Eli",
-            description = "Spend time with my girlfriend")
-    )
-}

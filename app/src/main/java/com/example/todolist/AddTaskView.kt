@@ -48,7 +48,7 @@ fun AddTaskView(
 ) {
 
     if (id != 0L) {
-        val task = viewModel.getTaskById(id).collectAsState(initial = Task(0L, "", "", "", "", "5", ""))
+        val task = viewModel.getTaskById(id).collectAsState(initial = Task(0L, "", "", "", "", "", ""))
         viewModel.taskTitleState = task.value.title
         viewModel.taskDescriptionState = task.value.description
         viewModel.taskAddressState = task.value.address

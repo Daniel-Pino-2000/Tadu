@@ -50,6 +50,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -73,6 +74,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
 
     Scaffold(
         scaffoldState = scaffoldState,
+        backgroundColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
         topBar = { AppBarView(title = "Today") },
         floatingActionButton = {
             FloatingActionButton(
@@ -155,8 +157,16 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Uni
             Spacer(modifier = Modifier.width(6.dp))
 
             val coroutineScope = rememberCoroutineScope()
-            val priority = task.priority.toInt()
+
+            val priority: Int = if (task.priority.isNotEmpty()) {
+                task.priority.toInt()
+            } else {
+                4
+            }
+
+
             CircularCheckbox(
+
                 checked = isChecked,
                 priority = priority,
                 onCheckedChange = { checked ->
@@ -177,8 +187,9 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Uni
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     text = task.title,
-                    style = MaterialTheme.typography.h6
+                    style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Light)
                 )
+
 
                 Spacer(modifier = Modifier.height(4.dp))
 
@@ -300,22 +311,32 @@ fun CircularCheckbox(
     onCheckedChange: (Boolean) -> Unit,
 
 ) {
-    val size: Dp = 22.dp
+    val size: Dp = 23.dp
     val checkedColor: Color = colorResource(id = R.color.nice_blue)
-    val defaultUncheckedColor = colorResource(id = R.color.light_gray)
     val checkmarkColor: Color = Color.White
-    val borderColor: Color = Color.Gray
+
+    val borderColor: Color = if(priority < 4) {
+        PriorityUtils.getBorderColor(priority)
+    } else {
+        Color.Gray
+    }
 
     // Track uncheckedColor reactively based on priority
     var uncheckedColor = PriorityUtils.getColor(priority)
+
+    var border: Dp = if(priority < 4) {
+        2.dp
+    } else {
+        1.dp
+    }
 
 
     Box(
         modifier = Modifier
             .size(size)
             .clip(CircleShape)
-            .background(if (checked) checkedColor else uncheckedColor)
-            .border(1.dp, borderColor, CircleShape) // Add border
+            .background(if (checked) borderColor else uncheckedColor)
+            .border(border, borderColor, CircleShape) // Add border
             .clickable { onCheckedChange(!checked) },
         contentAlignment = Alignment.Center
     ) {
