@@ -4,6 +4,7 @@ import android.os.Build
 import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,18 +24,25 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
+import androidx.compose.material.DismissDirection
+import androidx.compose.material.DismissValue
 import androidx.compose.material.Divider
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FloatingActionButton
+import androidx.compose.material.FractionalThreshold
 import androidx.compose.material.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.material.Scaffold
+import androidx.compose.material.SwipeToDismiss
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.rememberDismissState
 import androidx.compose.material3.Icon
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -63,6 +71,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+@OptIn(ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
@@ -70,6 +79,8 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     val context = LocalContext.current
     var showBottomSheet by remember { mutableStateOf(false) }
     var taskBeingEdited by remember { mutableStateOf(false) }
+    val showDatePicker = remember { mutableStateOf(false) }
+
     var id by remember { mutableLongStateOf(0L) }
 
     Scaffold(
@@ -100,15 +111,91 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
         ) {
             val sortedTasks = taskList.value.sortedBy { it.priority } // Sorts the tasks by priority
 
-            items(sortedTasks, key = { task -> task.id }) { task ->
-                TaskItem(task, viewModel, 1) {
-                    id = task.id
-                    taskBeingEdited = true
-                    showBottomSheet = true
-                }
+            items(sortedTasks, key = { task -> task.id }) {
+                task ->
+                val dismissState = rememberDismissState(
+                    confirmStateChange = { dismissValue ->
+                        when (dismissValue) {
+                            DismissValue.DismissedToEnd -> {
+                                // Show date picker (do not dismiss)
+                                showDatePicker.value = true
+                                false // prevent item from being swiped off screen
+
+                            }
+                            DismissValue.DismissedToStart -> {
+                                // Delete the task
+                                viewModel.deleteTask(task)
+                                true // allow swipe to delete
+                            }
+                            else -> false
+                        }
+                    }
+                )
+
+                SwipeToDismiss(
+                    state = dismissState,
+                    background = {
+                        val color by animateColorAsState(
+                            targetValue = when {
+                                dismissState.dismissDirection == DismissDirection.EndToStart -> Color.Red
+                                dismissState.dismissDirection == DismissDirection.StartToEnd -> colorResource(id = R.color.orange)
+                                dismissState.dismissDirection == null && dismissState.currentValue == DismissValue.Default -> Color.Transparent
+                                else -> Color.Transparent
+                            },
+                            label = ""
+                        )
+
+
+                        val alignment = when (dismissState.dismissDirection) {
+                            DismissDirection.StartToEnd -> Alignment.CenterStart
+                            DismissDirection.EndToStart -> Alignment.CenterEnd
+                            else -> Alignment.Center
+                        }
+
+                        Box(
+                            Modifier
+                                .fillMaxSize()
+                                .background(color)
+                                .padding(horizontal = 20.dp),
+                            contentAlignment = alignment
+                        ) {
+                            when (dismissState.dismissDirection) {
+                                DismissDirection.EndToStart -> Icon(
+                                    Icons.Default.Delete,
+                                    contentDescription = "Delete Icon",
+                                    tint = Color.White
+                                )
+                                DismissDirection.StartToEnd -> Icon(
+                                    Icons.Default.DateRange,
+                                    contentDescription = "Date Icon",
+                                    tint = Color.White
+                                )
+                                else -> {}
+                            }
+                        }
+                    }
+                    ,
+                    directions = setOf(DismissDirection.EndToStart, DismissDirection.StartToEnd),
+                    dismissThresholds = {FractionalThreshold(1f)},
+                    dismissContent = {
+                        TaskItem(task, viewModel, 1) {
+                            id = task.id
+                            taskBeingEdited = true
+                            showBottomSheet = true
+                        }
+                    }
+                )
+
+
             }
         }
 
+    }
+
+    if (showDatePicker.value) {
+        DatePicker { selectedDate ->
+            viewModel.onTaskDeadlineChanged(selectedDate)
+        }
     }
 
     if (showBottomSheet) {
@@ -133,7 +220,6 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
         )
     }
 }
-
 
 
 
