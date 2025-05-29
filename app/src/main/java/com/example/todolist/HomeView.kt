@@ -92,11 +92,15 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
 
     ) {
         val taskList = viewModel.getAllTasks.collectAsState(initial = listOf())
-        LazyColumn(modifier = Modifier
-            .fillMaxSize()
-            .padding(it)) {
-            items(taskList.value, key = {task-> task.id}) {
-                task ->
+
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(it)
+        ) {
+            val sortedTasks = taskList.value.sortedBy { it.priority } // Sorts the tasks by priority
+
+            items(sortedTasks, key = { task -> task.id }) { task ->
                 TaskItem(task, viewModel, 1) {
                     id = task.id
                     taskBeingEdited = true
@@ -104,6 +108,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 }
             }
         }
+
     }
 
     if (showBottomSheet) {
