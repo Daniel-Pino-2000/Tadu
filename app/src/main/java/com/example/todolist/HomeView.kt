@@ -80,6 +80,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     var showBottomSheet by remember { mutableStateOf(false) }
     var taskBeingEdited by remember { mutableStateOf(false) }
     val showDatePicker = remember { mutableStateOf(false) }
+    val taskToUpdate = remember { mutableStateOf(Task(0, "", "", "", "", "")) } // Dummy task
 
     var id by remember { mutableLongStateOf(0L) }
 
@@ -109,18 +110,19 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 .fillMaxSize()
                 .padding(it)
         ) {
+
+
             val sortedTasks = taskList.value.sortedBy { it.priority } // Sorts the tasks by priority
 
-            items(sortedTasks, key = { task -> task.id }) {
-                task ->
+            items(sortedTasks, key = { task -> task.id }) { task ->
                 val dismissState = rememberDismissState(
                     confirmStateChange = { dismissValue ->
                         when (dismissValue) {
                             DismissValue.DismissedToEnd -> {
+                                taskToUpdate.value = task
                                 // Show date picker (do not dismiss)
                                 showDatePicker.value = true
                                 false // prevent item from being swiped off screen
-
                             }
                             DismissValue.DismissedToStart -> {
                                 // Delete the task
@@ -132,70 +134,75 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                     }
                 )
 
-                SwipeToDismiss(
-                    state = dismissState,
-                    background = {
-                        val color by animateColorAsState(
-                            targetValue = when {
-                                dismissState.dismissDirection == DismissDirection.EndToStart -> Color.Red
-                                dismissState.dismissDirection == DismissDirection.StartToEnd -> colorResource(id = R.color.orange)
-                                dismissState.dismissDirection == null && dismissState.currentValue == DismissValue.Default -> Color.Transparent
-                                else -> Color.Transparent
-                            },
-                            label = ""
-                        )
+                Box(modifier = Modifier.padding(top = 8.dp)) {
+                    SwipeToDismiss(
+                        state = dismissState,
+                        background = {
+                            val color by animateColorAsState(
+                                targetValue = when (dismissState.targetValue) {
+                                    DismissValue.DismissedToStart -> Color.Red
+                                    DismissValue.DismissedToEnd -> colorResource(id = R.color.orange)
+                                    else -> Color.Transparent
+                                },
+                                label = ""
+                            )
+
+                            val alignment = when (dismissState.targetValue) {
+                                DismissValue.DismissedToStart -> Alignment.CenterEnd
+                                DismissValue.DismissedToEnd -> Alignment.CenterStart
+                                else -> Alignment.Center
+                            }
 
 
-                        val alignment = when (dismissState.dismissDirection) {
-                            DismissDirection.StartToEnd -> Alignment.CenterStart
-                            DismissDirection.EndToStart -> Alignment.CenterEnd
-                            else -> Alignment.Center
-                        }
+                            Box(
+                                Modifier
+                                    .fillMaxSize()
+                                    .background(color)
+                                    .padding(horizontal = 20.dp),
+                                contentAlignment = alignment
+                            ) {
+                                when (dismissState.targetValue) {
+                                    DismissValue.DismissedToStart -> Icon(
+                                        Icons.Default.Delete,
+                                        contentDescription = "Delete Icon",
+                                        tint = Color.White
+                                    )
 
-                        Box(
-                            Modifier
-                                .fillMaxSize()
-                                .background(color)
-                                .padding(horizontal = 20.dp),
-                            contentAlignment = alignment
-                        ) {
-                            when (dismissState.dismissDirection) {
-                                DismissDirection.EndToStart -> Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = "Delete Icon",
-                                    tint = Color.White
-                                )
-                                DismissDirection.StartToEnd -> Icon(
-                                    Icons.Default.DateRange,
-                                    contentDescription = "Date Icon",
-                                    tint = Color.White
-                                )
-                                else -> {}
+                                    DismissValue.DismissedToEnd -> Icon(
+                                        Icons.Default.DateRange,
+                                        contentDescription = "Date Icon",
+                                        tint = Color.White
+                                    )
+
+                                    else -> {}
+                                }
+                            }
+                        },
+                        directions = setOf(
+                            DismissDirection.EndToStart,
+                            DismissDirection.StartToEnd
+                        ),
+                        dismissThresholds = { FractionalThreshold(0.1f) },
+                        dismissContent = {
+                            TaskItem(task, viewModel) {
+                                id = task.id
+                                taskBeingEdited = true
+                                showBottomSheet = true
                             }
                         }
-                    }
-                    ,
-                    directions = setOf(DismissDirection.EndToStart, DismissDirection.StartToEnd),
-                    dismissThresholds = {FractionalThreshold(1f)},
-                    dismissContent = {
-                        TaskItem(task, viewModel, 1) {
-                            id = task.id
-                            taskBeingEdited = true
-                            showBottomSheet = true
-                        }
-                    }
-                )
-
-
+                    )
+                }
             }
+
         }
 
     }
 
     if (showDatePicker.value) {
         DatePicker { selectedDate ->
-            viewModel.onTaskDeadlineChanged(selectedDate)
+            viewModel.updateTask(taskToUpdate.value.copy(deadline = selectedDate)) // When the user picks a date, update the task:
         }
+        showDatePicker.value = false
     }
 
     if (showBottomSheet) {

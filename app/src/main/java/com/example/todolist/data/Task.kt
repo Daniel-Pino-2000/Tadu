@@ -20,5 +20,5 @@ data class Task(
     @ColumnInfo(name = "task-priority")
     val priority: String,
     @ColumnInfo(name = "task-deadline")
-    val deadline: String = Date().toString()
+    var deadline: String = Date().toString()
 )

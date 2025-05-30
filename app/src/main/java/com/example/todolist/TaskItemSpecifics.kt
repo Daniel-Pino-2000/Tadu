@@ -52,15 +52,15 @@ import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Unit) {
+fun TaskItem(task: Task, viewModel: TaskViewModel, onClick: () -> Unit) {
     var isChecked by remember { mutableStateOf(false) }
 
-    val elevationValue = if (mode == 1) 8.dp else 0.dp
+    val elevationValue = 8.dp
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(top = 8.dp, start = 15.dp, end = 15.dp)
+            .padding(start = 15.dp, end = 15.dp)
             .clickable { onClick() },
         backgroundColor = colorResource(id = R.color.light_gray),
         shape = RoundedCornerShape(15.dp),
@@ -133,15 +133,6 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, mode: Int, onClick: () -> Uni
                     }
                 }
 
-
-
-                if (mode == 2) {
-                    Divider(
-                        modifier = Modifier.padding(top = 8.dp),
-                        color = MaterialTheme.colors.onSurface.copy(alpha = 0.12f),
-                        thickness = 1.dp
-                    )
-                }
             }
         }
 
