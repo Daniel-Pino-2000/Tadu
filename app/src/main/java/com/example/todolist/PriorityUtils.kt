@@ -4,17 +4,21 @@ import android.graphics.Color
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Help
 import androidx.compose.material.icons.automirrored.filled.Label
+import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.PriorityHigh
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material.icons.outlined.Flag
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.colorResource
 
 
 object PriorityUtils {
+
+    val priorityIcon = Icons.Outlined.Flag
 
     // You can store resource IDs here
     val priorityColorRes = mapOf(

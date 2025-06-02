@@ -62,6 +62,9 @@ import androidx.compose.material.icons.filled.Launch
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.unit.DpOffset
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -237,17 +240,8 @@ fun ScrollableRow(viewModel: TaskViewModel) {
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        OutlinedTextField(
-            shape = RoundedCornerShape(16.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = Color.Blue,
-                unfocusedBorderColor = Color.Black
-            ),
-            modifier = Modifier.fillMaxWidth(),
-            value = viewModel.taskPriority,
-            onValueChange = { viewModel.onTaskPriorityChanged(it) },
-            label = { Text("Priority") }
-        )
+        DropUpMenuButton(viewModel)
+
     }
 }
 
@@ -291,6 +285,69 @@ fun DeadlinePickerButton(onDateSelected: (String) -> Unit) {
         Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.Blue)
         Spacer(modifier = Modifier.width(4.dp))
         Text("Deadline")
+    }
+}
+
+@Composable
+fun DropUpMenuButton(viewModel: TaskViewModel) {
+    var expanded by remember { mutableStateOf(false) }
+    val buttonWidth = remember { mutableStateOf(0) }
+
+    Box {
+        // Button that toggles the menu
+        OutlinedButton(
+            onClick = { expanded = true },
+            shape = RoundedCornerShape(16.dp),
+            border = BorderStroke(1.dp, Color.Black),
+            modifier = Modifier.height(62.dp).padding(top = 7.dp).onGloballyPositioned { coordinates ->
+                buttonWidth.value = coordinates.size.width
+            },  // Match typical TextField height
+            colors = ButtonDefaults.outlinedButtonColors(
+                backgroundColor = Color.Transparent,  // No background, like OutlinedTextField
+                contentColor = Color.Blue
+            )
+        ) {
+            Icon(PriorityUtils.priorityIcon, contentDescription = null)
+            Spacer(modifier = Modifier.width(4.dp))
+            Text("Priority")
+        }
+
+        // DropdownMenu (simulating DropUp)
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            offset = DpOffset(x = 0.dp, y = (-160).dp),  // negative y offset moves it up
+            modifier = Modifier.width(with(LocalDensity.current) { buttonWidth.value.toDp() })
+        ) {
+            DropdownMenuItem(onClick = {
+                expanded = false
+                // Handle Option 1
+                viewModel.onTaskPriorityChanged("1")
+            }) {
+                Text("Option 1")
+            }
+            DropdownMenuItem(onClick = {
+                expanded = false
+                // Handle Option 2
+                viewModel.onTaskPriorityChanged("2")
+            }) {
+                Text("Option 2")
+            }
+            DropdownMenuItem(onClick = {
+                expanded = false
+                // Handle Option 3
+                viewModel.onTaskPriorityChanged("3")
+            }) {
+                Text("Option 3")
+            }
+            DropdownMenuItem(onClick = {
+                expanded = false
+                // Handle Option 4
+                viewModel.onTaskPriorityChanged("4")
+            }) {
+                Text("Option 4")
+            }
+        }
     }
 }
 
