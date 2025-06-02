@@ -27,14 +27,41 @@ import android.app.DatePickerDialog
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.IconButton
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.lifecycle.ViewModel
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Date
+import android.content.Intent
+import android.net.Uri
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.material.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.text.*
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.material3.*
+import androidx.compose.material.icons.filled.Flag
+import androidx.compose.material.icons.filled.Launch
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.layout.Box
+import androidx.compose.ui.Alignment
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -83,30 +110,11 @@ fun AddTaskView(
                 onValueChange = { viewModel.onTaskDescriptionChanged(it) },
                 label = { Text("Description") }
             )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            OutlinedTextField(
-                value = viewModel.taskAddressState,
-                onValueChange = { viewModel.onAddressChanged(it) },
-                label = { Text("Address") }
-            )
-            Spacer(modifier = Modifier.height(16.dp))
-
-            DeadlinePickerButton { selectedDate ->
-
-
-                viewModel.onTaskDeadlineChanged(selectedDate)
-
-
-            }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            OutlinedTextField(
-                value = viewModel.taskPriority,
-                onValueChange = { viewModel.onTaskPriorityChanged(it) },
-                label = { Text("Priority") }
-            )
+            ScrollableRow(viewModel)
+
             Spacer(modifier = Modifier.height(16.dp))
 
             Button(
@@ -149,6 +157,100 @@ fun AddTaskView(
     }
 }
 
+
+@RequiresApi(Build.VERSION_CODES.O)
+@Composable
+fun ScrollableRow(viewModel: TaskViewModel) {
+
+    var scrollState = rememberScrollState()
+
+    Row(modifier = Modifier.horizontalScroll(scrollState).height(76.dp)
+        .fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.Center) {
+
+        OutlinedTextField(
+            value = viewModel.taskAddressState,
+            onValueChange = { viewModel.onAddressChanged(it) },
+            label = { Text("Address") },
+            leadingIcon = {
+                Icon(
+                    imageVector = Icons.Default.LocationOn,
+                    contentDescription = null,
+                    tint = Color.Gray
+                )
+            },
+            trailingIcon = {
+                val context = LocalContext.current
+                IconButton(
+                    onClick = {
+                        try {
+                            val encodedLocation = Uri.encode(viewModel.taskAddressState.trim())
+                            val gmmIntentUri = Uri.parse("geo:0,0?q=$encodedLocation")
+                            val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                            mapIntent.setPackage("com.google.android.apps.maps")
+
+                            // Check if Google Maps is available
+                            if (mapIntent.resolveActivity(context.packageManager) != null) {
+                                context.startActivity(mapIntent)
+                            } else {
+                                // Fallback to any available maps app
+                                val fallbackIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+                                context.startActivity(fallbackIntent)
+                            }
+                        } catch (e: Exception) {
+                            // Handle the exception (e.g., show a toast or log)
+                            Log.e("MapsLaunch", "Failed to open maps", e)
+                            // Optionally show a toast to the user
+                            Toast.makeText(context, "Unable to open maps", Toast.LENGTH_SHORT).show()
+                        }
+                    },
+                    enabled = viewModel.taskAddressState.isNotBlank()
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Launch,
+                        contentDescription = "Open in Maps",
+                        tint = if (viewModel.taskAddressState.isNotBlank())
+                            Color.Blue
+                        else
+                            Color.LightGray
+                    )
+                }
+            },
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.Blue,
+                unfocusedBorderColor = Color.Black
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        DeadlinePickerButton { selectedDate ->
+
+
+            viewModel.onTaskDeadlineChanged(selectedDate)
+
+
+        }
+
+        Spacer(modifier = Modifier.width(16.dp))
+
+        OutlinedTextField(
+            shape = RoundedCornerShape(16.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = Color.Blue,
+                unfocusedBorderColor = Color.Black
+            ),
+            modifier = Modifier.fillMaxWidth(),
+            value = viewModel.taskPriority,
+            onValueChange = { viewModel.onTaskPriorityChanged(it) },
+            label = { Text("Priority") }
+        )
+    }
+}
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DeadlinePickerButton(onDateSelected: (String) -> Unit) {
@@ -159,7 +261,6 @@ fun DeadlinePickerButton(onDateSelected: (String) -> Unit) {
     val month = calendar.get(Calendar.MONTH)
     val day = calendar.get(Calendar.DAY_OF_MONTH)
 
-    // Keep track of whether to show the dialog
     var showDialog by remember { mutableStateOf(false) }
 
     if (showDialog) {
@@ -176,14 +277,21 @@ fun DeadlinePickerButton(onDateSelected: (String) -> Unit) {
         ).show()
     }
 
-    Button(
+    // Use OutlinedButton to match OutlinedTextField appearance
+    OutlinedButton(
         onClick = { showDialog = true },
-        colors = ButtonDefaults.buttonColors(
-            backgroundColor = Color.White  // Set the button background color
+        shape = RoundedCornerShape(16.dp),
+        border = BorderStroke(1.dp, Color.Black),
+        modifier = Modifier.height(62.dp).padding(top = 7.dp),  // Match typical TextField height
+        colors = ButtonDefaults.outlinedButtonColors(
+            backgroundColor = Color.Transparent,  // No background, like OutlinedTextField
+            contentColor = Color.Blue
         )
     ) {
-        Icon(Icons.Default.DateRange, contentDescription = null, tint = colorResource(id = R.color.nice_blue))
-        Spacer(modifier = Modifier.padding(end = 2.dp))
-        Text("Deadline", color = colorResource(id = R.color.nice_blue))
+        Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.Blue)
+        Spacer(modifier = Modifier.width(4.dp))
+        Text("Deadline")
     }
 }
+
+
