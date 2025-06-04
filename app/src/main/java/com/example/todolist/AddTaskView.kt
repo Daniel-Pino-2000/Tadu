@@ -188,6 +188,7 @@ fun ScrollableRow(viewModel: TaskViewModel) {
                 IconButton(
                     onClick = {
                         try {
+                            // Open a Maps application and send the address
                             val encodedLocation = Uri.encode(viewModel.taskAddressState.trim())
                             val gmmIntentUri = Uri.parse("geo:0,0?q=$encodedLocation")
                             val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)

@@ -200,7 +200,17 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
 
     if (showDatePicker.value) {
         DatePicker { selectedDate ->
-            viewModel.updateTask(taskToUpdate.value.copy(deadline = selectedDate)) // When the user picks a date, update the task:
+            viewModel.onTaskDeadlineChanged(selectedDate)
+            val newTask = Task(
+                id = taskToUpdate.value.id,
+                title = viewModel.taskTitleState,
+                description = viewModel.taskDescriptionState,
+                date = viewModel.taskDateState,
+                address = viewModel.taskAddressState,
+                priority = viewModel.taskPriority,
+                deadline = viewModel.taskDeadline
+            )
+            viewModel.updateTask(newTask) // When the user picks a date, update the task:
         }
         showDatePicker.value = false
     }
