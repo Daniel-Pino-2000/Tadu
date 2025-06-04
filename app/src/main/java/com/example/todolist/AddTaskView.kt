@@ -48,6 +48,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
+import androidx.compose.foundation.focusable
 import androidx.compose.material.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
@@ -67,7 +68,12 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.sp
 
 
@@ -80,6 +86,18 @@ fun AddTaskView(
     onDismiss: () -> Unit,
     onSubmit: (task: Task) -> Unit
 ) {
+
+    var sheetState: SheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+
+    val focusRequester = remember { FocusRequester() }
+    val keyboardController = LocalSoftwareKeyboardController.current
+
+    LaunchedEffect(sheetState.isVisible) {
+        if (sheetState.isVisible) {
+            focusRequester.requestFocus()
+            keyboardController?.show()
+        }
+    }
 
     if (id != 0L) {
         val task = viewModel.getTaskById(id).collectAsState(initial = Task(0L, "", "", "", "", "", ""))
@@ -99,6 +117,7 @@ fun AddTaskView(
 
     ModalBottomSheet(
         onDismissRequest = onDismiss,
+        sheetState = sheetState,
         dragHandle = { /* Empty so there is no drag handle*/ },
         modifier = Modifier.padding(0.dp)
     ) {
@@ -122,7 +141,12 @@ fun AddTaskView(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     backgroundColor = Color.Transparent
-                )
+                ),
+                modifier = Modifier.focusRequester(focusRequester),
+                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                keyboardActions = KeyboardActions(onDone = {
+                    //keyboardController?.hide()
+                })
             )
 
             TextField(
@@ -302,7 +326,7 @@ fun DeadlinePickerButton(onDateSelected: (String) -> Unit) {
         onClick = { showDialog = true },
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(1.dp, Color.Black),
-        modifier = Modifier.height(62.dp).padding(top = 7.dp),  // Match typical TextField height
+        modifier = Modifier.height(62.dp).padding(top = 7.dp).focusable(false),  // Match typical TextField height
         colors = ButtonDefaults.outlinedButtonColors(
             backgroundColor = Color.Transparent,  // No background, like OutlinedTextField
             contentColor = Color.Blue
@@ -325,7 +349,7 @@ fun DropUpMenuButton(viewModel: TaskViewModel) {
             onClick = { expanded = true },
             shape = RoundedCornerShape(16.dp),
             border = BorderStroke(1.dp, Color.Black),
-            modifier = Modifier.height(62.dp).padding(top = 7.dp).onGloballyPositioned { coordinates ->
+            modifier = Modifier.height(62.dp).focusable(false).padding(top = 7.dp).onGloballyPositioned { coordinates ->
                 buttonWidth.value = coordinates.size.width
             },  // Match typical TextField height
             colors = ButtonDefaults.outlinedButtonColors(
