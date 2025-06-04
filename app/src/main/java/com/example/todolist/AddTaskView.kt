@@ -65,6 +65,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.DpOffset
+import androidx.compose.material.TextField
+import androidx.compose.material.TextFieldDefaults
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.sp
 
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -94,31 +98,50 @@ fun AddTaskView(
     }
 
     ModalBottomSheet(
-        onDismissRequest = onDismiss
+        onDismissRequest = onDismiss,
+        dragHandle = { /* Empty so there is no drag handle*/ },
+        modifier = Modifier.padding(0.dp)
     ) {
 
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(text = if (id == 0L) "Add Task" else "Edit Task")
-            Spacer(modifier = Modifier.height(8.dp))
-            OutlinedTextField(
+        val textStyle = TextStyle(
+            fontSize = 20.sp,
+            color = Color.Black
+        )
+
+        Column(modifier = Modifier.padding(6.dp)) {
+
+            TextField(
+                singleLine = true,
                 value = viewModel.taskTitleState,
-                onValueChange = {viewModel.onTaskTitleChanged(it)},
-                label = {Text("Title")}
+                onValueChange = { newValue ->
+                    viewModel.onTaskTitleChanged(newValue)
+                },
+                textStyle = textStyle,
+                placeholder = { Text("Task Title", style = TextStyle(fontSize = 20.sp, color = Color.Gray)) },
+                colors = TextFieldDefaults.textFieldColors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    backgroundColor = Color.Transparent
+                )
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
-
-            OutlinedTextField(
+            TextField(
                 value = viewModel.taskDescriptionState,
-                onValueChange = { viewModel.onTaskDescriptionChanged(it) },
-                label = { Text("Description") }
+                onValueChange = { newValue ->
+                    viewModel.onTaskDescriptionChanged(newValue)
+                },
+                textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
+                placeholder = { Text("Description", style = TextStyle(fontSize = 16.sp, color = Color.Gray)) },
+                colors = TextFieldDefaults.textFieldColors(
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    backgroundColor = Color.Transparent
+                )
             )
-
-            Spacer(modifier = Modifier.height(16.dp))
 
             ScrollableRow(viewModel)
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(6.dp))
 
             Button(
                 onClick = {
