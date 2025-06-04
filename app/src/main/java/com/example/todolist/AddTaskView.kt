@@ -231,6 +231,10 @@ fun ScrollableRow(viewModel: TaskViewModel) {
 
         Spacer(modifier = Modifier.width(16.dp))
 
+        DropUpMenuButton(viewModel)
+
+        Spacer(modifier = Modifier.width(16.dp))
+
         DeadlinePickerButton { selectedDate ->
 
 
@@ -239,9 +243,7 @@ fun ScrollableRow(viewModel: TaskViewModel) {
 
         }
 
-        Spacer(modifier = Modifier.width(16.dp))
 
-        DropUpMenuButton(viewModel)
 
     }
 }
@@ -318,35 +320,43 @@ fun DropUpMenuButton(viewModel: TaskViewModel) {
             expanded = expanded,
             onDismissRequest = { expanded = false },
             offset = DpOffset(x = 0.dp, y = (-160).dp),  // negative y offset moves it up
-            modifier = Modifier.width(with(LocalDensity.current) { buttonWidth.value.toDp() })
+
         ) {
             DropdownMenuItem(onClick = {
                 expanded = false
                 // Handle Option 1
                 viewModel.onTaskPriorityChanged("1")
             }) {
-                Text("Option 1")
+                Icon(PriorityUtils.priorityIcon, contentDescription = null, tint = colorResource(id = R.color.red_yesterday))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Priority 1")
             }
             DropdownMenuItem(onClick = {
                 expanded = false
                 // Handle Option 2
                 viewModel.onTaskPriorityChanged("2")
             }) {
-                Text("Option 2")
+                Icon(PriorityUtils.priorityIcon, contentDescription = null, tint = colorResource(id = R.color.orange))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Priority 2")
             }
             DropdownMenuItem(onClick = {
                 expanded = false
                 // Handle Option 3
                 viewModel.onTaskPriorityChanged("3")
             }) {
-                Text("Option 3")
+                Icon(PriorityUtils.priorityIcon, contentDescription = null, tint = colorResource(id = R.color.blue_today))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Priority 3")
             }
             DropdownMenuItem(onClick = {
                 expanded = false
                 // Handle Option 4
                 viewModel.onTaskPriorityChanged("4")
             }) {
-                Text("Option 4")
+                Icon(PriorityUtils.priorityIcon, contentDescription = null)
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Priority 4")
             }
         }
     }
