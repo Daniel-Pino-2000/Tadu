@@ -16,6 +16,7 @@ class TaskViewModel(
     private val taskRepository: TaskRepository = Graph.taskRepository
 ): ViewModel() {
 
+    var taskHasBeenChanged by mutableStateOf(false)
     var taskTitleState by mutableStateOf("")
     var taskDescriptionState by mutableStateOf("")
     var taskDateState by mutableStateOf("")
@@ -26,26 +27,32 @@ class TaskViewModel(
 
     fun onTaskTitleChanged(newString:String){
         taskTitleState = newString
+        taskHasBeenChanged = true
     }
 
     fun onTaskDescriptionChanged(newString: String){
         taskDescriptionState = newString
+        taskHasBeenChanged = true
     }
 
     fun onTaskDateChanged(newString: String) {
         taskDateState = newString
+        taskHasBeenChanged = true
     }
 
     fun onAddressChanged(newString: String) {
         taskAddressState = newString
+        taskHasBeenChanged = true
     }
 
     fun onTaskPriorityChanged(newString: String) {
         taskPriority = newString
+        taskHasBeenChanged = true
     }
 
     fun onTaskDeadlineChanged(newString: String) {
         taskDeadline = newString
+        taskHasBeenChanged = true
     }
 
     lateinit var getAllTasks: Flow<List<Task>>

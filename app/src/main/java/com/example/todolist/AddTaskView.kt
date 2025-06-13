@@ -138,6 +138,7 @@ fun AddTaskView(
                 textStyle = textStyle,
                 placeholder = { Text("Task Title", style = TextStyle(fontSize = 20.sp, color = Color.Gray)) },
                 colors = TextFieldDefaults.textFieldColors(
+                    cursorColor = colorResource(id = R.color.nice_blue),
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     backgroundColor = Color.Transparent
@@ -157,6 +158,7 @@ fun AddTaskView(
                 textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
                 placeholder = { Text("Description", style = TextStyle(fontSize = 16.sp, color = Color.Gray)) },
                 colors = TextFieldDefaults.textFieldColors(
+                    cursorColor = colorResource(id = R.color.nice_blue),
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     backgroundColor = Color.Transparent
@@ -167,43 +169,59 @@ fun AddTaskView(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            Button(
-                onClick = {
-                    if (id == 0L) {
-                        onSubmit(
-                            Task(
-                                title = viewModel.taskTitleState,
-                                description = viewModel.taskDescriptionState,
-                                address = viewModel.taskAddressState,
-                                priority = viewModel.taskPriority,
-                                deadline = viewModel.taskDeadline
-                            )
-                        )
-                    }
-
-                    else {
-                        onSubmit(
-                            Task(
-                                id = id,
-                                title = viewModel.taskTitleState,
-                                description = viewModel.taskDescriptionState,
-                                date = viewModel.taskDateState,
-                                address = viewModel.taskAddressState,
-                                priority = viewModel.taskPriority,
-                                deadline = viewModel.taskDeadline
-                            )
-                        )
-                    }
-                },
-                colors = ButtonDefaults.buttonColors(
-                    backgroundColor = colorResource(id = R.color.nice_blue) // Set the button background color
-                )
-
-
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
+                horizontalArrangement = Arrangement.End
             ) {
-                Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
+                var isValid = false
+                var buttonColor: Color
+                if (viewModel.taskTitleState.isNotBlank()) {
+                    buttonColor = colorResource(id = R.color.nice_blue)
+                    isValid = true
+                } else {
+                    buttonColor = Color.Gray
+                }
+
+                Button(
+                    onClick = {
+                        if (!isValid) return@Button // ignore click if not valid
+
+                        if (id == 0L) {
+                            onSubmit(
+                                Task(
+                                    title = viewModel.taskTitleState,
+                                    description = viewModel.taskDescriptionState,
+                                    address = viewModel.taskAddressState,
+                                    priority = viewModel.taskPriority,
+                                    deadline = viewModel.taskDeadline
+                                )
+                            )
+                        } else {
+                            onSubmit(
+                                Task(
+                                    id = id,
+                                    title = viewModel.taskTitleState,
+                                    description = viewModel.taskDescriptionState,
+                                    date = viewModel.taskDateState,
+                                    address = viewModel.taskAddressState,
+                                    priority = viewModel.taskPriority,
+                                    deadline = viewModel.taskDeadline
+                                )
+                            )
+                        }
+                    },
+                    enabled = true, // always enabled so appearance never changes
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = buttonColor
+                    )
+                ) {
+                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
+                }
+
             }
+
         }
+
     }
 }
 
@@ -215,7 +233,8 @@ fun ScrollableRow(viewModel: TaskViewModel) {
     var scrollState = rememberScrollState()
 
     Row(modifier = Modifier.horizontalScroll(scrollState).height(76.dp)
-        .fillMaxWidth(),
+        .fillMaxWidth()
+        .padding(horizontal = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.Center) {
 
@@ -251,6 +270,7 @@ fun ScrollableRow(viewModel: TaskViewModel) {
             },
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
+                cursorColor = colorResource(id = R.color.nice_blue),
                 focusedBorderColor = Color.Blue,
                 unfocusedBorderColor = Color.Black
             ),
