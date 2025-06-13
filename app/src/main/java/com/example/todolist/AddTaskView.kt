@@ -222,6 +222,7 @@ fun ScrollableRow(viewModel: TaskViewModel) {
         OutlinedTextField(
             value = viewModel.taskAddressState,
             onValueChange = { viewModel.onAddressChanged(it) },
+            maxLines = 1,
             label = { Text("Address") },
             leadingIcon = {
                 Icon(
@@ -234,27 +235,7 @@ fun ScrollableRow(viewModel: TaskViewModel) {
                 val context = LocalContext.current
                 IconButton(
                     onClick = {
-                        try {
-                            // Open a Maps application and send the address
-                            val encodedLocation = Uri.encode(viewModel.taskAddressState.trim())
-                            val gmmIntentUri = Uri.parse("geo:0,0?q=$encodedLocation")
-                            val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
-                            mapIntent.setPackage("com.google.android.apps.maps")
-
-                            // Check if Google Maps is available
-                            if (mapIntent.resolveActivity(context.packageManager) != null) {
-                                context.startActivity(mapIntent)
-                            } else {
-                                // Fallback to any available maps app
-                                val fallbackIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
-                                context.startActivity(fallbackIntent)
-                            }
-                        } catch (e: Exception) {
-                            // Handle the exception (e.g., show a toast or log)
-                            Log.e("MapsLaunch", "Failed to open maps", e)
-                            // Optionally show a toast to the user
-                            Toast.makeText(context, "Unable to open maps", Toast.LENGTH_SHORT).show()
-                        }
+                        openAddressInMaps(context, viewModel.taskAddressState)
                     },
                     enabled = viewModel.taskAddressState.isNotBlank()
                 ) {

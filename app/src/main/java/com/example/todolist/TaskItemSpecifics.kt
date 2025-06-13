@@ -1,7 +1,12 @@
 package com.example.todolist
 
 import android.app.DatePickerDialog
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
+import android.util.Log
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -123,15 +128,37 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, onClick: () -> Unit) {
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Row {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
                     if (task.deadline.isNotEmpty()) {
                         DeadlineItem(task)
                     }
+
                     Spacer(modifier = Modifier.weight(1f))
+
                     if (task.address.isNotEmpty()) {
-                        AddressItem(task)
+                        val context = LocalContext.current
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Has address",
+                            modifier = Modifier
+                                .size(16.dp)
+                                .clickable {
+                                    openAddressInMaps(
+                                        context = context,
+                                        viewModel.taskAddressState
+                                    )
+                                }
+                                .align(Alignment.CenterVertically),
+                            tint = Color.Black,
+                        )
                     }
+
+
                 }
+
 
             }
         }
@@ -200,19 +227,28 @@ fun DeadlineItem(task: Task) {
     }
 }
 
+// This wont be used for now
 @Composable
-fun AddressItem(task: Task) {
-
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.LocationOn, contentDescription = null,modifier = Modifier.size(16.dp))
-        Spacer(modifier = Modifier.padding(2.dp))
+fun AddressItem(task: Task, modifier: Modifier = Modifier) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = modifier
+    ) {
+        Icon(
+            imageVector = Icons.Default.LocationOn,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp)
+        )
+        Spacer(modifier = Modifier.width(2.dp))
         Text(
             text = task.address,
             maxLines = 1,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.body2
         )
     }
 }
+
 
 @Composable
 fun CircularCheckbox(
@@ -281,4 +317,23 @@ fun DatePicker(onDateSelected: (String) -> Unit) {
         },
         year, month, day
     ).show()
+}
+
+fun openAddressInMaps(context: Context, address: String) {
+    try {
+        val encodedLocation = Uri.encode(address.trim())
+        val gmmIntentUri = Uri.parse("geo:0,0?q=$encodedLocation")
+        val mapIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+        mapIntent.setPackage("com.google.android.apps.maps")
+
+        if (mapIntent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(mapIntent)
+        } else {
+            val fallbackIntent = Intent(Intent.ACTION_VIEW, gmmIntentUri)
+            context.startActivity(fallbackIntent)
+        }
+    } catch (e: Exception) {
+        Log.e("MapsLaunch", "Failed to open maps", e)
+        Toast.makeText(context, "Unable to open maps", Toast.LENGTH_SHORT).show()
+    }
 }
