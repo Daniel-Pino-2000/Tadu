@@ -100,7 +100,7 @@ fun AddTaskView(
     }
 
     if (id != 0L) {
-        val task = viewModel.getTaskById(id).collectAsState(initial = Task(0L, "", "", "", "", "", ""))
+        val task = viewModel.getTaskById(id).collectAsState(initial = Task(0L, "", "", "", "", "4", ""))
         viewModel.taskTitleState = task.value.title
         viewModel.taskDescriptionState = task.value.description
         viewModel.taskAddressState = task.value.address
@@ -112,7 +112,7 @@ fun AddTaskView(
         viewModel.taskDescriptionState = ""
         viewModel.taskAddressState = ""
         viewModel.taskDeadline = ""
-        viewModel.taskPriority = ""
+        viewModel.taskPriority = "4"
     }
 
     ModalBottomSheet(
