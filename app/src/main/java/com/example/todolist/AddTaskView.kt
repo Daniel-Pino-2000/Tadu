@@ -65,6 +65,7 @@ import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Launch
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalDensity
@@ -79,6 +80,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.material.Checkbox
+import androidx.compose.material.CheckboxDefaults
+import androidx.compose.material.icons.filled.Event
 
 
 /**
@@ -104,6 +108,9 @@ fun AddTaskView(
     onDismiss: () -> Unit,
     onSubmit: (task: Task) -> Unit
 ) {
+
+    val context = LocalContext.current
+
     // State for controlling the confirmation dialog visibility
     val openConfirmDialog = remember { mutableStateOf(false) }
 
@@ -216,7 +223,7 @@ fun AddTaskView(
                 modifier = Modifier.focusRequester(focusRequester),
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = {
-                    //keyboardController?.hide()
+                //keyboardController?.hide()
                 })
             )
 
@@ -241,19 +248,53 @@ fun AddTaskView(
 
             Spacer(modifier = Modifier.height(6.dp))
 
+            var addToCalendar by remember { mutableStateOf(false) } // Checkbox state
+
             // Submit button section
             Row(
-                modifier = Modifier.fillMaxWidth().padding(horizontal = 10.dp),
-                horizontalArrangement = Arrangement.End
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 10.dp),
+                horizontalArrangement = Arrangement.SpaceBetween, // Space out checkbox and button
+                verticalAlignment = Alignment.CenterVertically
             ) {
+
+                val hasDeadline = viewModel.taskDeadline.isNotBlank()
+                val taskTitle = viewModel.taskTitleState
+                val taskDeadline = viewModel.taskDeadline
+
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    modifier = Modifier.padding(end = 8.dp)
+                ) {
+                    IconButton(
+                        onClick = {
+                            addTaskToCalendar(context, taskTitle, taskDeadline)
+                        },
+                        enabled = hasDeadline && taskTitle.isNotEmpty(),
+                        modifier = Modifier.size(48.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Event,
+                            contentDescription = "Add to Calendar",
+                            tint = if (hasDeadline) colorResource(id = R.color.nice_blue) else Color.Gray
+                        )
+                    }
+                    Text(
+                        text = "Add to Calendar",
+                        fontSize = 12.sp,
+                        color = if (hasDeadline) Color.Black else Color.Gray
+                    )
+                }
+
+
+
                 // Determine button state based on form validation
-                var isValid = false
-                var buttonColor: Color
-                if (viewModel.taskTitleState.isNotBlank()) {
-                    buttonColor = colorResource(id = R.color.nice_blue)
-                    isValid = true
+                val isValid = viewModel.taskTitleState.isNotBlank()
+                val buttonColor = if (isValid) {
+                    colorResource(id = R.color.nice_blue)
                 } else {
-                    buttonColor = Color.Gray
+                    Color.Gray
                 }
 
                 // Submit button - always enabled but ignores clicks when invalid
@@ -262,30 +303,32 @@ fun AddTaskView(
                         if (!isValid) return@Button // ignore click if not valid
 
                         // Create task object based on whether we're editing or creating
-                        if (id == 0L) {
-                            // Creating new task
-                            onSubmit(
-                                Task(
-                                    title = viewModel.taskTitleState,
-                                    description = viewModel.taskDescriptionState,
-                                    address = viewModel.taskAddressState,
-                                    priority = viewModel.taskPriority,
-                                    deadline = viewModel.taskDeadline
-                                )
+                        val task = if (id == 0L) {
+                            Task(
+                                title = viewModel.taskTitleState,
+                                description = viewModel.taskDescriptionState,
+                                address = viewModel.taskAddressState,
+                                priority = viewModel.taskPriority,
+                                deadline = viewModel.taskDeadline
                             )
                         } else {
-                            // Updating existing task
-                            onSubmit(
-                                Task(
-                                    id = id,
-                                    title = viewModel.taskTitleState,
-                                    description = viewModel.taskDescriptionState,
-                                    date = viewModel.taskDateState,
-                                    address = viewModel.taskAddressState,
-                                    priority = viewModel.taskPriority,
-                                    deadline = viewModel.taskDeadline
-                                )
+                            Task(
+                                id = id,
+                                title = viewModel.taskTitleState,
+                                description = viewModel.taskDescriptionState,
+                                date = viewModel.taskDateState,
+                                address = viewModel.taskAddressState,
+                                priority = viewModel.taskPriority,
+                                deadline = viewModel.taskDeadline
                             )
+                        }
+
+                        // Submit the task
+                        onSubmit(task)
+
+                        // Add to calendar if checked
+                        if (addToCalendar) {
+                            addTaskToCalendar(context = context, task.title, task.deadline)
                         }
                     },
                     enabled = true, // always enabled so appearance never changes
@@ -295,8 +338,8 @@ fun AddTaskView(
                 ) {
                     Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
                 }
-
             }
+
 
         }
 

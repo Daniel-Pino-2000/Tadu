@@ -52,6 +52,14 @@ import androidx.compose.ui.unit.sp
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
+import android.content.Context
+import android.content.Intent
+import android.provider.CalendarContract
+import android.util.Log
+import android.widget.Toast
+import androidx.compose.material.icons.filled.Alarm
+import java.time.ZoneId
+import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -160,7 +168,7 @@ fun DeadlinePickerButton(onDateSelected: (String) -> Unit) {
             contentColor = Color.Blue
         )
     ) {
-        Icon(Icons.Default.DateRange, contentDescription = null, tint = Color.Blue)
+        Icon(Icons.Default.Alarm, contentDescription = null, tint = Color.Blue)
         Spacer(modifier = Modifier.width(4.dp))
         Text("Deadline")
     }
@@ -234,5 +242,40 @@ fun DropUpMenuButton(viewModel: TaskViewModel) {
                 Text("Priority 4")
             }
         }
+    }
+}
+
+@RequiresApi(Build.VERSION_CODES.O)
+fun addTaskToCalendar(context: Context, title: String, deadline: String) {
+    try {
+        // Append current year to deadline like "Jun 16" → "Jun 16 2025"
+        val currentYear = LocalDate.now().year
+        val deadlineWithYear = "$deadline $currentYear"
+
+        // Parse deadline using formatter for "MMM dd yyyy"
+        val formatter = DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH)
+        val parsedDate = LocalDate.parse(deadlineWithYear, formatter)
+
+        val startMillis = parsedDate
+            .atStartOfDay(ZoneId.systemDefault())
+            .toInstant()
+            .toEpochMilli()
+
+        val intent = Intent(Intent.ACTION_INSERT).apply {
+            data = CalendarContract.Events.CONTENT_URI
+            putExtra(CalendarContract.Events.TITLE, title)
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startMillis)
+            putExtra(CalendarContract.EXTRA_EVENT_END_TIME, startMillis + 60 * 60 * 1000) // 1 hour
+        }
+
+        if (intent.resolveActivity(context.packageManager) != null) {
+            context.startActivity(intent)
+        } else {
+            Toast.makeText(context, "No calendar app found", Toast.LENGTH_SHORT).show()
+        }
+
+    } catch (e: Exception) {
+        Log.e("AddToCalendar", "Failed to parse date or launch calendar", e)
+        Toast.makeText(context, "Failed to add event to calendar", Toast.LENGTH_SHORT).show()
     }
 }
