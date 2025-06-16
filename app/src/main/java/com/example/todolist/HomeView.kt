@@ -80,7 +80,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     var showBottomSheet by remember { mutableStateOf(false) }
     var taskBeingEdited by remember { mutableStateOf(false) }
     val showDatePicker = remember { mutableStateOf(false) }
-    val taskToUpdate = remember { mutableStateOf(Task(0, "", "", "", "", "")) } // Dummy task
+    val taskToUpdate = remember { mutableStateOf(Task(0, "", "", "", "4", "")) } // Dummy task
 
     var id by remember { mutableLongStateOf(0L) }
 
@@ -203,12 +203,12 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
             viewModel.onTaskDeadlineChanged(selectedDate)
             val newTask = Task(
                 id = taskToUpdate.value.id,
-                title = viewModel.taskTitleState,
-                description = viewModel.taskDescriptionState,
-                date = viewModel.taskDateState,
-                address = viewModel.taskAddressState,
-                priority = viewModel.taskPriority,
-                deadline = viewModel.taskDeadline
+                title = taskToUpdate.value.title,
+                description = taskToUpdate.value.description,
+                date = taskToUpdate.value.date,
+                address = taskToUpdate.value.address,
+                priority = taskToUpdate.value.priority,
+                deadline = selectedDate
             )
             viewModel.updateTask(newTask) // When the user picks a date, update the task:
         }
