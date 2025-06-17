@@ -58,6 +58,7 @@ import android.provider.CalendarContract
 import android.util.Log
 import android.widget.Toast
 import androidx.compose.material.icons.filled.Alarm
+import androidx.compose.runtime.LaunchedEffect
 import java.time.ZoneId
 import java.util.Locale
 
@@ -143,18 +144,31 @@ fun DeadlinePickerButton(viewModel: TaskViewModel ,onDateSelected: (String) -> U
 
     var showDialog by remember { mutableStateOf(false) }
 
-    if (showDialog) {
-        DatePickerDialog(
-            context,
-            { _, selectedYear, selectedMonth, selectedDay ->
-                val selectedLocalDate = LocalDate.of(selectedYear, selectedMonth + 1, selectedDay)
-                val formatter = DateTimeFormatter.ofPattern("MMM dd")
-                val selectedDate = selectedLocalDate.format(formatter)
-                onDateSelected(selectedDate)
-                showDialog = false
-            },
-            year, month, day
-        ).show()
+    // Launch DatePickerDialog only once when showDialog is true
+    LaunchedEffect(showDialog) {
+        if (showDialog) {
+            DatePickerDialog(
+                context,
+                { _, selectedYear, selectedMonth, selectedDay ->
+                    val selectedLocalDate = LocalDate.of(selectedYear, selectedMonth + 1, selectedDay)
+                    val formatter = DateTimeFormatter.ofPattern("MMM dd")
+                    val selectedDate = selectedLocalDate.format(formatter)
+                    onDateSelected(selectedDate)
+                },
+                year, month, day
+            ).apply {
+                setOnCancelListener {
+                    showDialog = false
+                }
+                setOnDismissListener {
+                    showDialog = false
+                }
+            }.show()
+
+            // Ensure this gets reset even if selection listener doesn’t trigger (e.g., user taps outside)
+            // This line is technically redundant due to listeners above, but safe to keep
+            showDialog = false
+        }
     }
 
     // Use OutlinedButton to match OutlinedTextField appearance
