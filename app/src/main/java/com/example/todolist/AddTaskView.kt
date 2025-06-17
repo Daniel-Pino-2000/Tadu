@@ -251,11 +251,12 @@ fun AddTaskView(
             var addToCalendar by remember { mutableStateOf(false) } // Checkbox state
 
             // Submit button section
+            // Submit button section with modern Add to Calendar button
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 10.dp),
-                horizontalArrangement = Arrangement.SpaceBetween, // Space out checkbox and button
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
@@ -263,32 +264,39 @@ fun AddTaskView(
                 val taskTitle = viewModel.taskTitleState
                 val taskDeadline = viewModel.taskDeadline
 
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    modifier = Modifier.padding(end = 8.dp)
+                // Modern Add to Calendar Button - Inverted colors from submit button
+                Button(
+                    onClick = {
+                        addTaskToCalendar(context, taskTitle, taskDeadline)
+                    },
+                    enabled = hasDeadline && taskTitle.isNotEmpty(),
+                    modifier = Modifier.height(48.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        backgroundColor = Color.Transparent,
+                        contentColor = if (hasDeadline && taskTitle.isNotEmpty())
+                            colorResource(id = R.color.nice_blue) else Color.Gray,
+                        disabledBackgroundColor = Color.Transparent,
+                        disabledContentColor = Color.Gray
+                    ),
+                    elevation = ButtonDefaults.elevation(
+                        defaultElevation = 0.dp,
+                        pressedElevation = 0.dp,
+                        disabledElevation = 0.dp
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    IconButton(
-                        onClick = {
-                            addTaskToCalendar(context, taskTitle, taskDeadline)
-                        },
-                        enabled = hasDeadline && taskTitle.isNotEmpty(),
-                        modifier = Modifier.size(48.dp)
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Event,
-                            contentDescription = "Add to Calendar",
-                            tint = if (hasDeadline) colorResource(id = R.color.nice_blue) else Color.Gray
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.Event,
+                        contentDescription = "Add to Calendar",
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        modifier = Modifier.padding(start = 8.dp),
                         text = "Add to Calendar",
-                        fontSize = 12.sp,
-                        color = if (hasDeadline) Color.Black else Color.Gray
+                        fontSize = 14.sp,
+                        fontWeight = FontWeight.Medium
                     )
                 }
-
-
 
                 // Determine button state based on form validation
                 val isValid = viewModel.taskTitleState.isNotBlank()
@@ -333,14 +341,19 @@ fun AddTaskView(
                         }
                     },
                     enabled = true, // always enabled so appearance never changes
+                    modifier = Modifier.size(48.dp),
                     colors = ButtonDefaults.buttonColors(
                         backgroundColor = buttonColor
-                    )
+                    ),
+                    shape = RoundedCornerShape(12.dp)
                 ) {
-                    Icon(Icons.Default.Check, contentDescription = null, tint = Color.White)
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = "Submit Task",
+                        tint = Color.White
+                    )
                 }
             }
-
 
         }
 
