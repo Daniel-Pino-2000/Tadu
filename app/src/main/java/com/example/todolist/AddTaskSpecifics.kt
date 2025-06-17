@@ -118,7 +118,7 @@ fun ScrollableRow(viewModel: TaskViewModel) {
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        DeadlinePickerButton { selectedDate ->
+        DeadlinePickerButton(viewModel) { selectedDate ->
 
 
             viewModel.onTaskDeadlineChanged(selectedDate)
@@ -133,7 +133,7 @@ fun ScrollableRow(viewModel: TaskViewModel) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun DeadlinePickerButton(onDateSelected: (String) -> Unit) {
+fun DeadlinePickerButton(viewModel: TaskViewModel ,onDateSelected: (String) -> Unit) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
 
@@ -170,7 +170,13 @@ fun DeadlinePickerButton(onDateSelected: (String) -> Unit) {
     ) {
         Icon(Icons.Default.Alarm, contentDescription = null, tint = Color.Blue)
         Spacer(modifier = Modifier.width(4.dp))
-        Text("Deadline")
+
+        if (viewModel.taskDeadline.isEmpty()) {
+            Text("Deadline")
+        }
+        else {
+            Text(viewModel.taskDeadline)
+        }
     }
 }
 
@@ -179,71 +185,89 @@ fun DropUpMenuButton(viewModel: TaskViewModel) {
     var expanded by remember { mutableStateOf(false) }
     val buttonWidth = remember { mutableStateOf(0) }
 
+    val red = colorResource(id = R.color.red_yesterday)
+    val orange = colorResource(id = R.color.orange)
+    val blue = colorResource(id = R.color.blue_today)
+    val black = Color.Black
+
+    // Read current priority from viewModel (you might use StateFlow, LiveData, etc.)
+    val priority = viewModel.taskPriority // Replace with your actual priority state
+
+    // Determine icon text and tint based on priority
+    val (iconTint, labelText) = when (priority) {
+        "1" -> Pair(red, "Priority 1")
+        "2" -> Pair(orange, "Priority 2")
+        "3" -> Pair(blue, "Priority 3")
+        "4" -> Pair(black, "Priority 4")
+        else -> Pair(Color.Blue, "Priority")
+    }
+
     Box {
-        // Button that toggles the menu
         OutlinedButton(
             onClick = { expanded = true },
             shape = RoundedCornerShape(16.dp),
             border = BorderStroke(1.dp, Color.Black),
-            modifier = Modifier.height(62.dp).focusable(false).padding(top = 7.dp).onGloballyPositioned { coordinates ->
-                buttonWidth.value = coordinates.size.width
-            },  // Match typical TextField height
+            modifier = Modifier
+                .height(62.dp)
+                .focusable(false)
+                .padding(top = 7.dp)
+                .onGloballyPositioned { coordinates ->
+                    buttonWidth.value = coordinates.size.width
+                },
             colors = ButtonDefaults.outlinedButtonColors(
-                backgroundColor = Color.Transparent,  // No background, like OutlinedTextField
+                backgroundColor = Color.Transparent,
                 contentColor = Color.Blue
             )
         ) {
-            Icon(PriorityUtils.priorityIcon, contentDescription = null)
+            Icon(PriorityUtils.priorityIcon, contentDescription = null, tint = iconTint)
             Spacer(modifier = Modifier.width(4.dp))
-            Text("Priority")
+            Text(labelText)
         }
 
-        // DropdownMenu (simulating DropUp)
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            offset = DpOffset(x = 0.dp, y = (-160).dp),  // negative y offset moves it up
-
+            offset = DpOffset(x = 0.dp, y = (-160).dp)
         ) {
             DropdownMenuItem(onClick = {
                 expanded = false
-                // Handle Option 1
                 viewModel.onTaskPriorityChanged("1")
             }) {
-                Icon(PriorityUtils.priorityIcon, contentDescription = null, tint = colorResource(id = R.color.red_yesterday))
+                Icon(PriorityUtils.priorityIcon, contentDescription = null, tint = red)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("Priority 1")
             }
+
             DropdownMenuItem(onClick = {
                 expanded = false
-                // Handle Option 2
                 viewModel.onTaskPriorityChanged("2")
             }) {
-                Icon(PriorityUtils.priorityIcon, contentDescription = null, tint = colorResource(id = R.color.orange))
+                Icon(PriorityUtils.priorityIcon, contentDescription = null, tint = orange)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("Priority 2")
             }
+
             DropdownMenuItem(onClick = {
                 expanded = false
-                // Handle Option 3
                 viewModel.onTaskPriorityChanged("3")
             }) {
-                Icon(PriorityUtils.priorityIcon, contentDescription = null, tint = colorResource(id = R.color.blue_today))
+                Icon(PriorityUtils.priorityIcon, contentDescription = null, tint = blue)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("Priority 3")
             }
+
             DropdownMenuItem(onClick = {
                 expanded = false
-                // Handle Option 4
                 viewModel.onTaskPriorityChanged("4")
             }) {
-                Icon(PriorityUtils.priorityIcon, contentDescription = null)
+                Icon(PriorityUtils.priorityIcon, contentDescription = null, tint = black)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("Priority 4")
             }
         }
     }
 }
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 fun addTaskToCalendar(context: Context, title: String, deadline: String) {

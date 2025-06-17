@@ -169,7 +169,7 @@ fun AddTaskView(
         viewModel.taskDescriptionState = ""
         viewModel.taskAddressState = ""
         viewModel.taskDeadline = ""
-        viewModel.taskPriority = "4"
+        viewModel.taskPriority = ""
     }
 
     // Reset the "has changed" flag since we just loaded initial values
@@ -281,6 +281,7 @@ fun AddTaskView(
                         )
                     }
                     Text(
+                        modifier = Modifier.padding(start = 8.dp),
                         text = "Add to Calendar",
                         fontSize = 12.sp,
                         color = if (hasDeadline) Color.Black else Color.Gray
