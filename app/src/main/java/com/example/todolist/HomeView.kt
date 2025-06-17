@@ -111,8 +111,11 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 .padding(it)
         ) {
 
+            // Sorts the tasks by priority
+            val sortedTasks = taskList.value.sortedBy {
+                (if (it.priority.isBlank()) "4" else it.priority).toInt()
+            }
 
-            val sortedTasks = taskList.value.sortedBy { it.priority } // Sorts the tasks by priority
 
             items(sortedTasks, key = { task -> task.id }) { task ->
                 val dismissState = rememberDismissState(
