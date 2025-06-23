@@ -92,6 +92,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
             FloatingActionButton(
                 modifier = Modifier.padding(20.dp),
                 contentColor = Color.White,
+                shape = RoundedCornerShape(16.dp),
                 backgroundColor = colorResource(id = R.color.nice_blue),
                 onClick = {
                     taskBeingEdited = false
