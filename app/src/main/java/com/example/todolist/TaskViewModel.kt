@@ -1,5 +1,6 @@
 package com.example.todolist
 
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -23,6 +24,14 @@ class TaskViewModel(
     var taskAddressState by mutableStateOf("")
     var taskPriority: String by mutableStateOf("")
     var taskDeadline by mutableStateOf("")
+
+    private val _currentScreen: MutableState<Screen> = mutableStateOf(Screen.BottomScreen.Today)
+
+    val currentScreen: MutableState<Screen> get() = _currentScreen
+
+    fun setCurrentScreen(screen: Screen) {
+        _currentScreen.value = screen
+    }
 
 
     fun onTaskTitleChanged(newString:String){
@@ -85,4 +94,5 @@ class TaskViewModel(
             getAllTasks = taskRepository.getTasks()
         }
     }
+
 }

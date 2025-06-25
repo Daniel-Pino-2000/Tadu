@@ -18,10 +18,13 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.BottomNavigation
+import androidx.compose.material.BottomNavigationItem
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
 import androidx.compose.material.DismissDirection
@@ -58,11 +61,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import com.example.todolist.data.Task
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.delay
@@ -84,7 +91,34 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
 
     var id by remember { mutableLongStateOf(0L) }
 
+    val currentScreen = remember {
+        viewModel.currentScreen.value
+    }
+
+    val controller: NavController = rememberNavController()
+    val navBackStackEntry by controller.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val bottomBar: @Composable () -> Unit = {
+         if (currentScreen is Screen.BottomScreen.Today || currentScreen is Screen.BottomScreen.Inbox || currentScreen is Screen.BottomScreen.Search) {
+             BottomNavigation(Modifier.wrapContentSize()) {
+                 screenInBottom.forEach { item ->
+                     BottomNavigationItem(
+                         selected = currentRoute == item.bRoute,
+                         onClick = { navController.navigate(item.bRoute) }, icon = {
+                             Icon(contentDescription = item.bTitle, imageVector = item.bIcon)
+                         },
+                         label = { Text(text = item.bTitle) },
+                         selectedContentColor = Color.White,
+                         unselectedContentColor = Color.Black
+                     )
+                 }
+             }
+         }
+    }
+
     Scaffold(
+        bottomBar = bottomBar,
         scaffoldState = scaffoldState,
         backgroundColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
         topBar = { AppBarView(title = "Today") },
