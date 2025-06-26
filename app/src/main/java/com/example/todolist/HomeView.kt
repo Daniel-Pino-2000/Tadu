@@ -5,6 +5,8 @@ import android.util.Log
 import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -23,22 +25,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.BottomNavigation
-import androidx.compose.material.BottomNavigationItem
-import androidx.compose.material.Card
-import androidx.compose.material.Checkbox
 import androidx.compose.material.DismissDirection
 import androidx.compose.material.DismissValue
-import androidx.compose.material.Divider
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.FloatingActionButton
 import androidx.compose.material.FractionalThreshold
-import androidx.compose.material.MaterialTheme
-import androidx.compose.runtime.Composable
-import androidx.compose.material.rememberScaffoldState
-import androidx.compose.material.Scaffold
 import androidx.compose.material.SwipeToDismiss
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
@@ -46,7 +37,8 @@ import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.rememberDismissState
-import androidx.compose.material3.Icon
+import androidx.compose.material.rememberScaffoldState
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -58,6 +50,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
@@ -66,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -77,6 +72,17 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
+import androidx.compose.material3.Surface
+
+
 
 @OptIn(ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -95,39 +101,148 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
         viewModel.currentScreen.value
     }
 
-    val controller: NavController = rememberNavController()
-    val navBackStackEntry by controller.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    var currentRoute = navBackStackEntry?.destination?.route
 
     val bottomBar: @Composable () -> Unit = {
-         if (currentScreen is Screen.BottomScreen.Today || currentScreen is Screen.BottomScreen.Inbox || currentScreen is Screen.BottomScreen.Search) {
-             BottomNavigation(Modifier.wrapContentSize()) {
-                 screenInBottom.forEach { item ->
-                     BottomNavigationItem(
-                         selected = currentRoute == item.bRoute,
-                         onClick = { navController.navigate(item.bRoute) }, icon = {
-                             Icon(contentDescription = item.bTitle, imageVector = item.bIcon)
-                         },
-                         label = { Text(text = item.bTitle) },
-                         selectedContentColor = Color.White,
-                         unselectedContentColor = Color.Black
-                     )
-                 }
-             }
-         }
+        if (currentScreen is Screen.BottomScreen.Today ||
+            currentScreen is Screen.BottomScreen.Inbox ||
+            currentScreen is Screen.BottomScreen.Search) {
+
+            // Modern Navigation Bar with glassmorphism effect
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                color = Color.Transparent
+            ) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 8.dp)
+                ) {
+                    // Glassmorphism background
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(72.dp)
+                            .background(
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = 0.15f),
+                                        Color.White.copy(alpha = 0.05f)
+                                    )
+                                ),
+                                shape = RoundedCornerShape(24.dp)
+                            )
+                            .border(
+                                width = 1.dp,
+                                brush = Brush.verticalGradient(
+                                    colors = listOf(
+                                        Color.White.copy(alpha = 0.3f),
+                                        Color.White.copy(alpha = 0.1f)
+                                    )
+                                ),
+                                shape = RoundedCornerShape(24.dp)
+                            )
+                    )
+
+                    // Navigation items
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(72.dp)
+                            .padding(horizontal = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        screenInBottom.forEach { item ->
+                            val isSelected = currentRoute == item.bRoute
+                            val scale by animateFloatAsState(
+                                targetValue = if (isSelected) 1.1f else 1f,
+                                animationSpec = tween(300),
+                                label = "scale"
+                            )
+
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .height(56.dp)
+                                    .scale(scale)
+                                    .clickable {
+                                        if (currentRoute != item.bRoute) {
+                                            navController.navigate(item.bRoute) {
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        }
+                                    }
+                                    .then(
+                                        if (isSelected) {
+                                            Modifier.background(
+                                                brush = Brush.radialGradient(
+                                                    colors = listOf(
+                                                        colorResource(id = R.color.nice_blue).copy(alpha = 0.2f),
+                                                        Color.Transparent
+                                                    ),
+                                                    radius = 60f
+                                                ),
+                                                shape = RoundedCornerShape(20.dp)
+                                            )
+                                        } else Modifier
+                                    ),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    // Icon with animated container
+                                    Box(
+                                        modifier = Modifier
+                                            .size(32.dp)
+                                            .then(
+                                                if (isSelected) {
+                                                    Modifier.background(
+                                                        colorResource(id = R.color.nice_blue),
+                                                        CircleShape
+                                                    )
+                                                } else Modifier
+                                            ),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Icon(
+                                            imageVector = if (isSelected) item.selectedIcon else item.unselectedIcon,
+                                            contentDescription = item.bTitle,
+                                            tint = if (isSelected) Color.White else Color.Gray,
+                                            modifier = Modifier.size(20.dp)
+                                        )
+                                    }
+
+                                    Spacer(modifier = Modifier.height(4.dp))
+
+                                    // Label with animated color
+                                    Text(
+                                        text = item.bTitle,
+                                        fontSize = 11.sp,
+                                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
+                                        color = if (isSelected) colorResource(id = R.color.nice_blue) else Color.Gray
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     Scaffold(
         bottomBar = bottomBar,
-        scaffoldState = scaffoldState,
-        backgroundColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
+        containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
         topBar = { AppBarView(title = "Today") },
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.padding(20.dp),
                 contentColor = Color.White,
                 shape = RoundedCornerShape(16.dp),
-                backgroundColor = colorResource(id = R.color.nice_blue),
+                containerColor = colorResource(id = R.color.nice_blue),
                 onClick = {
                     taskBeingEdited = false
                     showBottomSheet = true
@@ -150,7 +265,6 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
             val sortedTasks = taskList.value.sortedBy {
                 (if (it.priority.isBlank()) "4" else it.priority).toInt()
             }
-
 
             items(sortedTasks, key = { task -> task.id }) { task ->
                 val dismissState = rememberDismissState(
@@ -191,7 +305,6 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                                 else -> Alignment.Center
                             }
 
-
                             Box(
                                 Modifier
                                     .fillMaxSize()
@@ -231,9 +344,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                     )
                 }
             }
-
         }
-
     }
 
     if (showDatePicker.value) {
@@ -266,11 +377,9 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                     viewModel.addTask(task)  // ← Add to DB
                 } else {
                     viewModel.updateTask(task)  // ← Update in DB
-
                 }
                 showBottomSheet = false
                 taskBeingEdited = false
-
             }
         )
     }
