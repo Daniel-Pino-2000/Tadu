@@ -96,3 +96,11 @@ class TaskViewModel(
     }
 
 }
+
+// Data class for UI state (add to your ViewModel)
+data class HomeUiState(
+    val isLoading: Boolean = false,
+    val errorMessage: String? = null,
+    val showBottomSheet: Boolean = false,
+    val taskBeingEdited: Task? = null
+)
