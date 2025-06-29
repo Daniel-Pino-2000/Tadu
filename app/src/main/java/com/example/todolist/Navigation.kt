@@ -15,9 +15,15 @@ fun Navigation(viewModel: TaskViewModel = viewModel(),
                navController: NavHostController = rememberNavController()) {
     NavHost(
         navController = navController,
-        startDestination = Screen.TodayScreen.route
+        startDestination = Screen.BottomScreen.Today.bRoute
     ) {
-        composable(Screen.TodayScreen.route) {
+        composable(Screen.BottomScreen.Today.bRoute) {
+            HomeView(navController, viewModel)
+        }
+        composable(Screen.BottomScreen.Inbox.bRoute) {
+            HomeView(navController, viewModel)
+        }
+        composable(Screen.BottomScreen.Search.bRoute) {
             HomeView(navController, viewModel)
         }
     }

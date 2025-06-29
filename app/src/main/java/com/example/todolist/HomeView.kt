@@ -102,7 +102,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     }
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    var currentRoute = navBackStackEntry?.destination?.route
+    val currentRoute = navBackStackEntry?.destination?.route
 
     val bottomBar: @Composable () -> Unit = {
         if (currentScreen is Screen.BottomScreen.Today ||
@@ -169,6 +169,9 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                                     .clickable {
                                         if (currentRoute != item.bRoute) {
                                             navController.navigate(item.bRoute) {
+                                                popUpTo(navController.graph.startDestinationId) {
+                                                    saveState = true
+                                                }
                                                 launchSingleTop = true
                                                 restoreState = true
                                             }
@@ -236,7 +239,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     Scaffold(
         bottomBar = bottomBar,
         containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
-        topBar = { AppBarView(title = "Today") },
+        topBar = { AppBarView(title = getScreenTitle(currentRoute)) },
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.padding(20.dp),
@@ -253,7 +256,38 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
         }
 
     ) {
+        val today = LocalDate.now()
+        val formatter = DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH)
+        val currentYear = today.year
+
         val taskList = viewModel.getAllTasks.collectAsState(initial = listOf())
+        val tasks = taskList.value
+
+        val tasksToDisplay = when (currentRoute) {
+            "today" -> tasks.filter { task ->
+                if (task.deadline.isBlank()) {
+                    true // include tasks with blank deadline in "today"
+                } else {
+                    try {
+                        val taskDate = LocalDate.parse("${task.deadline} $currentYear", formatter)
+                        !taskDate.isAfter(today) // deadline <= today
+                    } catch (e: Exception) {
+                        false // exclude if parsing fails
+                    }
+                }
+            }
+            "inbox" -> tasks.filter { task ->
+                try {
+                    val taskDate = LocalDate.parse("${task.deadline} $currentYear", formatter)
+                    taskDate.isAfter(today) // deadline > today
+                } catch (e: Exception) {
+                    false // exclude if parsing fails
+                }
+            }
+            else -> tasks // fallback: show all tasks
+        }
+
+
 
         LazyColumn(
             modifier = Modifier
@@ -262,7 +296,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
         ) {
 
             // Sorts the tasks by priority
-            val sortedTasks = taskList.value.sortedBy {
+            val sortedTasks = tasksToDisplay.sortedBy {
                 (if (it.priority.isBlank()) "4" else it.priority).toInt()
             }
 
@@ -383,4 +417,9 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
             }
         )
     }
+}
+
+// Option 2: More elegant approach using your screenInBottom list
+fun getScreenTitle(route: String?): String {
+    return screenInBottom.find { it.bRoute == route }?.bTitle ?: "Today"
 }
