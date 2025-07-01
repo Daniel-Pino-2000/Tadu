@@ -9,8 +9,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todolist.data.Task
 import com.example.todolist.data.TaskRepository
+import com.example.todolist.data.UiState
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 class TaskViewModel(
@@ -28,6 +31,9 @@ class TaskViewModel(
     private val _currentScreen: MutableState<Screen> = mutableStateOf(Screen.BottomScreen.Today)
 
     val currentScreen: MutableState<Screen> get() = _currentScreen
+
+    private val _uiState = MutableStateFlow(UiState())
+    val uiState: StateFlow<UiState> = _uiState
 
     fun setCurrentScreen(screen: Screen) {
         _currentScreen.value = screen
@@ -95,12 +101,26 @@ class TaskViewModel(
         }
     }
 
+    fun setShowBottomSheet(show: Boolean) {
+        _uiState.value = _uiState.value.copy(showBottomSheet = show)
+    }
+
+    fun setTaskBeingEdited(editing: Boolean) {
+        _uiState.value = _uiState.value.copy(taskBeingEdited = editing)
+    }
+
+    fun setShowDatePicker(show: Boolean) {
+        _uiState.value = _uiState.value.copy(showDatePicker = show)
+    }
+
+    fun setTaskToUpdate(task: Task) {
+        _uiState.value = _uiState.value.copy(taskToUpdate = task)
+    }
+
+    fun setId(id: Long) {
+        _uiState.value = _uiState.value.copy(currentId = id)
+    }
+
+
 }
 
-// Data class for UI state (add to your ViewModel)
-data class HomeUiState(
-    val isLoading: Boolean = false,
-    val errorMessage: String? = null,
-    val showBottomSheet: Boolean = false,
-    val taskBeingEdited: Task? = null
-)

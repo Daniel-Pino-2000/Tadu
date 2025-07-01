@@ -1,3 +1,5 @@
+
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -49,6 +51,10 @@ dependencies {
     implementation("androidx.room:room-runtime:2.7.1")
     implementation("androidx.room:room-ktx:2.7.1")
     kapt("androidx.room:room-compiler:2.7.1")
+
+
+    implementation("androidx.compose.animation:animation")
+    implementation("androidx.compose.animation:animation-core")
 
     implementation("androidx.navigation:navigation-compose:2.9.0")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.28.0")
