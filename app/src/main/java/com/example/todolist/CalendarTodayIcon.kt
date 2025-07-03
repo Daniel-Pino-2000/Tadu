@@ -3,7 +3,6 @@ package com.example.todolist
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.PathFillType
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
@@ -42,7 +41,6 @@ object CalendarTodayIcons {
                 strokeLineCap = StrokeCap.Round,
                 strokeLineJoin = StrokeJoin.Round
             ) {
-                // Main calendar body
                 moveTo(3f, 6f)
                 lineTo(21f, 6f)
                 lineTo(21f, 20f)
@@ -53,22 +51,18 @@ object CalendarTodayIcons {
                 close()
             }
 
-            // Top rings
             path(
                 fill = null,
                 stroke = SolidColor(Color.Black),
                 strokeLineWidth = 2f,
                 strokeLineCap = StrokeCap.Round
             ) {
-                // Left ring
                 moveTo(7f, 2f)
                 lineTo(7f, 6f)
-                // Right ring
                 moveTo(17f, 2f)
                 lineTo(17f, 6f)
             }
 
-            // Horizontal separator line
             path(
                 fill = null,
                 stroke = SolidColor(Color.Black),
@@ -79,9 +73,7 @@ object CalendarTodayIcons {
                 lineTo(21f, 10f)
             }
 
-            // Day number
             addDayNumber(day, false)
-
         }.build()
     }
 
@@ -93,7 +85,6 @@ object CalendarTodayIcons {
             viewportWidth = 24f,
             viewportHeight = 24f
         ).apply {
-            // Filled background (tintable)
             path(
                 fill = SolidColor(Color.Unspecified),
                 stroke = null
@@ -110,7 +101,6 @@ object CalendarTodayIcons {
                 close()
             }
 
-            // Outline stroke on top
             path(
                 fill = null,
                 stroke = SolidColor(Color.Black),
@@ -125,7 +115,6 @@ object CalendarTodayIcons {
                 close()
             }
 
-            // Top rings
             path(
                 fill = null,
                 stroke = SolidColor(Color.Black),
@@ -138,225 +127,216 @@ object CalendarTodayIcons {
                 lineTo(17f, 6f)
             }
 
-            // Horizontal separator
             path(
                 fill = null,
                 stroke = SolidColor(Color.Black),
                 strokeLineWidth = 1f,
                 strokeLineCap = StrokeCap.Round
             ) {
-                moveTo(3f, 10f)
-                lineTo(21f, 10f)
+                moveTo(4f, 10f)
+                lineTo(20f, 10f)
             }
 
-            // Day number (always white)
             addDayNumber(day, true)
-
         }.build()
     }
 
-
-
     private fun ImageVector.Builder.addDayNumber(day: Int, isOnFilledBackground: Boolean) {
-        val dayString = day.toString()
-        // Use white color for filled background, black for outlined
         val color = if (isOnFilledBackground) Color.White else Color.Black
+        val singleDigitY = 14.5f
+        val firstDigitX = 9f
+        val secondDigitX = 15f
+        val twoDigitY = 14.5f
 
-        // For single digit days
         if (day < 10) {
             when (day) {
-                1 -> addDigit1(12f, 15.5f, color)
-                2 -> addDigit2(12f, 15.5f, color)
-                3 -> addDigit3(12f, 15.5f, color)
-                4 -> addDigit4(12f, 15.5f, color)
-                5 -> addDigit5(12f, 15.5f, color)
-                6 -> addDigit6(12f, 15.5f, color)
-                7 -> addDigit7(12f, 15.5f, color)
-                8 -> addDigit8(12f, 15.5f, color)
-                9 -> addDigit9(12f, 15.5f, color)
+                1 -> addDigit1(12f, singleDigitY, color)
+                2 -> addDigit2(12f, singleDigitY, color)
+                3 -> addDigit3(12f, singleDigitY, color)
+                4 -> addDigit4(12f, singleDigitY, color)
+                5 -> addDigit5(12f, singleDigitY, color)
+                6 -> addDigit6(12f, singleDigitY, color)
+                7 -> addDigit7(12f, singleDigitY, color)
+                8 -> addDigit8(12f, singleDigitY, color)
+                9 -> addDigit9(12f, singleDigitY, color)
             }
         } else {
-            // For two digit days
             val firstDigit = day / 10
             val secondDigit = day % 10
 
-            // First digit positioned to the left
             when (firstDigit) {
-                1 -> addDigit1(9f, 15.5f, color)
-                2 -> addDigit2(9f, 15.5f, color)
-                3 -> addDigit3(9f, 15.5f, color)
+                1 -> addDigit1(firstDigitX, twoDigitY, color)
+                2 -> addDigit2(firstDigitX, twoDigitY, color)
+                3 -> addDigit3(firstDigitX, twoDigitY, color)
             }
 
-            // Second digit positioned to the right
             when (secondDigit) {
-                0 -> addDigit0(15f, 15.5f, color)
-                1 -> addDigit1(15f, 15.5f, color)
-                2 -> addDigit2(15f, 15.5f, color)
-                3 -> addDigit3(15f, 15.5f, color)
-                4 -> addDigit4(15f, 15.5f, color)
-                5 -> addDigit5(15f, 15.5f, color)
-                6 -> addDigit6(15f, 15.5f, color)
-                7 -> addDigit7(15f, 15.5f, color)
-                8 -> addDigit8(15f, 15.5f, color)
-                9 -> addDigit9(15f, 15.5f, color)
+                0 -> addDigit0(secondDigitX, twoDigitY, color)
+                1 -> addDigit1(secondDigitX, twoDigitY, color)
+                2 -> addDigit2(secondDigitX, twoDigitY, color)
+                3 -> addDigit3(secondDigitX, twoDigitY, color)
+                4 -> addDigit4(secondDigitX, twoDigitY, color)
+                5 -> addDigit5(secondDigitX, twoDigitY, color)
+                6 -> addDigit6(secondDigitX, twoDigitY, color)
+                7 -> addDigit7(secondDigitX, twoDigitY, color)
+                8 -> addDigit8(secondDigitX, twoDigitY, color)
+                9 -> addDigit9(secondDigitX, twoDigitY, color)
             }
         }
     }
 
     private fun ImageVector.Builder.addDigit0(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
-            moveTo(x - 2f, y - 2.5f)
-            lineTo(x + 2f, y - 2.5f)
-            lineTo(x + 2f, y + 2.5f)
-            lineTo(x - 2f, y + 2.5f)
+            moveTo(x - 2.4f, y - 2.4f)
+            lineTo(x + 2.4f, y - 2.4f)
+            lineTo(x + 2.4f, y + 2.4f)
+            lineTo(x - 2.4f, y + 2.4f)
             close()
-            moveTo(x - 1.5f, y - 2f)
-            lineTo(x - 1.5f, y + 2f)
-            lineTo(x + 1.5f, y + 2f)
-            lineTo(x + 1.5f, y - 2f)
+            moveTo(x - 1.8f, y - 1.8f)
+            lineTo(x - 1.8f, y + 1.8f)
+            lineTo(x + 1.8f, y + 1.8f)
+            lineTo(x + 1.8f, y - 1.8f)
             close()
         }
     }
-
 
     private fun ImageVector.Builder.addDigit1(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
-            moveTo(x - 0.7f, y - 2.5f)
-            lineTo(x + 0.7f, y - 2.5f)
-            lineTo(x + 0.7f, y + 2.5f)
-            lineTo(x - 0.7f, y + 2.5f)
+            moveTo(x - 0.9f, y - 2.4f)
+            lineTo(x + 0.9f, y - 2.4f)
+            lineTo(x + 0.9f, y + 2.4f)
+            lineTo(x - 0.9f, y + 2.4f)
             close()
         }
     }
 
-
     private fun ImageVector.Builder.addDigit2(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
-            moveTo(x - 1.5f, y - 2f)
-            lineTo(x + 1.5f, y - 2f)
-            lineTo(x + 1.5f, y - 0.5f)
-            lineTo(x - 1.5f, y - 0.5f)
-            lineTo(x - 1.5f, y + 0.5f)
-            lineTo(x + 1.5f, y + 0.5f)
-            lineTo(x + 1.5f, y + 2f)
-            lineTo(x - 1.5f, y + 2f)
+            moveTo(x - 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y - 0.6f)
+            lineTo(x - 1.8f, y - 0.6f)
+            lineTo(x - 1.8f, y + 0.6f)
+            lineTo(x + 1.8f, y + 0.6f)
+            lineTo(x + 1.8f, y + 2.4f)
+            lineTo(x - 1.8f, y + 2.4f)
             close()
         }
     }
 
     private fun ImageVector.Builder.addDigit3(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
-            moveTo(x - 1.5f, y - 2f)
-            lineTo(x + 1.5f, y - 2f)
-            lineTo(x + 1.5f, y + 2f)
-            lineTo(x - 1.5f, y + 2f)
-            lineTo(x - 1.5f, y + 1.5f)
-            lineTo(x + 1f, y + 1.5f)
-            lineTo(x + 1f, y + 0.5f)
-            lineTo(x - 1f, y + 0.5f)
-            lineTo(x - 1f, y - 0.5f)
-            lineTo(x + 1f, y - 0.5f)
-            lineTo(x + 1f, y - 1.5f)
-            lineTo(x - 1.5f, y - 1.5f)
+            moveTo(x - 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y + 2.4f)
+            lineTo(x - 1.8f, y + 2.4f)
+            lineTo(x - 1.8f, y + 1.8f)
+            lineTo(x + 1.2f, y + 1.8f)
+            lineTo(x + 1.2f, y + 0.6f)
+            lineTo(x - 1.2f, y + 0.6f)
+            lineTo(x - 1.2f, y - 0.6f)
+            lineTo(x + 1.2f, y - 0.6f)
+            lineTo(x + 1.2f, y - 1.8f)
+            lineTo(x - 1.8f, y - 1.8f)
             close()
         }
     }
 
     private fun ImageVector.Builder.addDigit4(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
-            moveTo(x - 1.5f, y - 2f)
-            lineTo(x - 1f, y - 2f)
-            lineTo(x - 1f, y)
-            lineTo(x + 1.5f, y)
-            lineTo(x + 1.5f, y + 0.5f)
-            lineTo(x + 1f, y + 0.5f)
-            lineTo(x + 1f, y + 2f)
-            lineTo(x + 0.5f, y + 2f)
-            lineTo(x + 0.5f, y + 0.5f)
-            lineTo(x - 1.5f, y + 0.5f)
+            moveTo(x - 1.8f, y - 2.4f)
+            lineTo(x - 1.2f, y - 2.4f)
+            lineTo(x - 1.2f, y)
+            lineTo(x + 1.8f, y)
+            lineTo(x + 1.8f, y + 0.6f)
+            lineTo(x + 1.2f, y + 0.6f)
+            lineTo(x + 1.2f, y + 2.4f)
+            lineTo(x + 0.6f, y + 2.4f)
+            lineTo(x + 0.6f, y + 0.6f)
+            lineTo(x - 1.8f, y + 0.6f)
             close()
         }
     }
 
     private fun ImageVector.Builder.addDigit5(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
-            moveTo(x - 1.5f, y - 2f)
-            lineTo(x + 1.5f, y - 2f)
-            lineTo(x + 1.5f, y - 1.5f)
-            lineTo(x - 1f, y - 1.5f)
-            lineTo(x - 1f, y - 0.5f)
-            lineTo(x + 1.5f, y - 0.5f)
-            lineTo(x + 1.5f, y + 2f)
-            lineTo(x - 1.5f, y + 2f)
+            moveTo(x - 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y - 1.8f)
+            lineTo(x - 1.2f, y - 1.8f)
+            lineTo(x - 1.2f, y - 0.6f)
+            lineTo(x + 1.8f, y - 0.6f)
+            lineTo(x + 1.8f, y + 2.4f)
+            lineTo(x - 1.8f, y + 2.4f)
             close()
         }
     }
 
     private fun ImageVector.Builder.addDigit6(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
-            moveTo(x - 1.5f, y - 2f)
-            lineTo(x + 1.5f, y - 2f)
-            lineTo(x + 1.5f, y - 1.5f)
-            lineTo(x - 1f, y - 1.5f)
-            lineTo(x - 1f, y - 0.5f)
-            lineTo(x + 1.5f, y - 0.5f)
-            lineTo(x + 1.5f, y + 2f)
-            lineTo(x - 1.5f, y + 2f)
+            moveTo(x - 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y - 1.8f)
+            lineTo(x - 1.2f, y - 1.8f)
+            lineTo(x - 1.2f, y - 0.6f)
+            lineTo(x + 1.8f, y - 0.6f)
+            lineTo(x + 1.8f, y + 2.4f)
+            lineTo(x - 1.8f, y + 2.4f)
             close()
-            moveTo(x - 1f, y)
-            lineTo(x + 1f, y)
-            lineTo(x + 1f, y + 1.5f)
-            lineTo(x - 1f, y + 1.5f)
+            moveTo(x - 1.2f, y)
+            lineTo(x + 1.2f, y)
+            lineTo(x + 1.2f, y + 1.8f)
+            lineTo(x - 1.2f, y + 1.8f)
             close()
         }
     }
 
     private fun ImageVector.Builder.addDigit7(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
-            moveTo(x - 1.5f, y - 2f)
-            lineTo(x + 1.5f, y - 2f)
-            lineTo(x + 1.5f, y + 2f)
-            lineTo(x + 1f, y + 2f)
-            lineTo(x + 1f, y - 1.5f)
-            lineTo(x - 1.5f, y - 1.5f)
+            moveTo(x - 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y + 2.4f)
+            lineTo(x + 1.2f, y + 2.4f)
+            lineTo(x + 1.2f, y - 1.8f)
+            lineTo(x - 1.8f, y - 1.8f)
             close()
         }
     }
 
     private fun ImageVector.Builder.addDigit8(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
-            moveTo(x - 1.5f, y - 2f)
-            lineTo(x + 1.5f, y - 2f)
-            lineTo(x + 1.5f, y + 2f)
-            lineTo(x - 1.5f, y + 2f)
+            moveTo(x - 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y + 2.4f)
+            lineTo(x - 1.8f, y + 2.4f)
             close()
-            moveTo(x - 1f, y - 1.5f)
-            lineTo(x - 1f, y - 0.5f)
-            lineTo(x + 1f, y - 0.5f)
-            lineTo(x + 1f, y - 1.5f)
+            moveTo(x - 1.2f, y - 1.8f)
+            lineTo(x - 1.2f, y - 0.6f)
+            lineTo(x + 1.2f, y - 0.6f)
+            lineTo(x + 1.2f, y - 1.8f)
             close()
-            moveTo(x - 1f, y)
-            lineTo(x - 1f, y + 1.5f)
-            lineTo(x + 1f, y + 1.5f)
-            lineTo(x + 1f, y)
+            moveTo(x - 1.2f, y)
+            lineTo(x - 1.2f, y + 1.8f)
+            lineTo(x + 1.2f, y + 1.8f)
+            lineTo(x + 1.2f, y)
             close()
         }
     }
 
     private fun ImageVector.Builder.addDigit9(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
-            moveTo(x - 1.5f, y - 2f)
-            lineTo(x + 1.5f, y - 2f)
-            lineTo(x + 1.5f, y + 2f)
-            lineTo(x - 1.5f, y + 2f)
-            lineTo(x - 1.5f, y + 1.5f)
-            lineTo(x + 1f, y + 1.5f)
-            lineTo(x + 1f, y)
-            lineTo(x - 1f, y)
-            lineTo(x - 1f, y - 1.5f)
-            lineTo(x + 1f, y - 1.5f)
-            lineTo(x + 1f, y - 0.5f)
-            lineTo(x - 1.5f, y - 0.5f)
+            moveTo(x - 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y + 2.4f)
+            lineTo(x - 1.8f, y + 2.4f)
+            lineTo(x - 1.8f, y + 1.8f)
+            lineTo(x + 1.2f, y + 1.8f)
+            lineTo(x + 1.2f, y)
+            lineTo(x - 1.2f, y)
+            lineTo(x - 1.2f, y - 1.8f)
+            lineTo(x + 1.2f, y - 1.8f)
+            lineTo(x + 1.2f, y - 0.6f)
+            lineTo(x - 1.8f, y - 0.6f)
             close()
         }
     }
