@@ -1,5 +1,7 @@
 package com.example.todolist
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
@@ -31,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BottomBar(currentScreen: Screen, currentRoute: String, navController: NavHostController) {
     if (currentScreen is Screen.BottomScreen.Today ||
