@@ -20,5 +20,15 @@ data class Task(
     @ColumnInfo(name = "task-priority")
     val priority: String,
     @ColumnInfo(name = "task-deadline")
-    var deadline: String = Date().toString()
+    var deadline: String = Date().toString(),
+
+    @ColumnInfo(name = "task-deleted")
+    var isDeleted: Boolean =  false,
+    @ColumnInfo(name = "task-deletion-date")
+    var deletionDate: Long? = null,
+    @ColumnInfo(name = "task-completed")
+    var isCompleted: Boolean =  false,
+    @ColumnInfo(name = "task-completion-date")
+    var completionDate: Long? = null,
+
 )

@@ -131,6 +131,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
 }
 
 // Option 2: More elegant approach using your screenInBottom list
+@RequiresApi(Build.VERSION_CODES.O)
 fun getScreenTitle(route: String?): String {
     return screenInBottom.find { it.bRoute == route }?.bTitle ?: "Today"
 }

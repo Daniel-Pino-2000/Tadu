@@ -71,7 +71,7 @@ fun BottomNavScreens(
     val formatter = DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH)
     val currentYear = today.year
 
-    val taskList = viewModel.getAllTasks.collectAsState(initial = listOf())
+    val taskList = viewModel.getPendingTasks.collectAsState(initial = listOf())
     val tasks = taskList.value
 
     val tasksToDisplay = when (currentRoute) {
@@ -305,7 +305,7 @@ fun BottomNavScreens(
 
                                     DismissValue.DismissedToStart -> {
                                         // Delete the task
-                                        viewModel.deleteTask(task)
+                                        viewModel.deleteTask(task.id)
                                         true // allow swipe to delete
                                     }
 

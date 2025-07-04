@@ -1,8 +1,9 @@
 package com.example.todolist
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -28,17 +29,19 @@ class TaskViewModel(
     var taskPriority: String by mutableStateOf("")
     var taskDeadline by mutableStateOf("")
 
+    @RequiresApi(Build.VERSION_CODES.O)
     private val _currentScreen: MutableState<Screen> = mutableStateOf(Screen.BottomScreen.Today)
 
-    val currentScreen: MutableState<Screen> get() = _currentScreen
+    val currentScreen: MutableState<Screen> @RequiresApi(Build.VERSION_CODES.O)
+    get() = _currentScreen
 
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState
 
+    @RequiresApi(Build.VERSION_CODES.O)
     fun setCurrentScreen(screen: Screen) {
         _currentScreen.value = screen
     }
-
 
     fun onTaskTitleChanged(newString:String){
         taskTitleState = newString
@@ -70,13 +73,11 @@ class TaskViewModel(
         taskHasBeenChanged = true
     }
 
-    lateinit var getAllTasks: Flow<List<Task>>
-
-    init {
-        viewModelScope.launch {
-            getAllTasks = taskRepository.getTasks()
-        }
-    }
+    // Initialize flows directly - they're already reactive
+    val getAllTasks: Flow<List<Task>> = taskRepository.getTasks()
+    val getPendingTasks: Flow<List<Task>> = taskRepository.getPendingTasks()
+    val getCompletedTasks: Flow<List<Task>> = taskRepository.getCompletedTasks()
+    val getDeletedTasks: Flow<List<Task>> = taskRepository.getDeletedTasks()
 
     fun addTask(task: Task) {
         viewModelScope.launch(Dispatchers.IO) {
@@ -94,13 +95,42 @@ class TaskViewModel(
         }
     }
 
-    fun deleteTask(task: Task) {
+    // Hard delete - permanently removes from database
+    fun permanentlyDeleteTask(task: Task) {
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.deleteATask(task)
-            getAllTasks = taskRepository.getTasks()
         }
     }
 
+    // Soft delete - marks as deleted but keeps in database
+    fun deleteTask(taskId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            taskRepository.softDeleteTask(taskId)
+        }
+    }
+
+    // Mark task as completed
+    fun completeTask(taskId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            taskRepository.markTaskCompleted(taskId)
+        }
+    }
+
+    // Mark task as pending (uncompleted)
+    fun uncompleteTask(taskId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            taskRepository.markTaskPending(taskId)
+        }
+    }
+
+    // Restore deleted task
+    fun restoreTask(taskId: Long) {
+        viewModelScope.launch(Dispatchers.IO) {
+            taskRepository.restoreTask(taskId)
+        }
+    }
+
+    // UI setter functions
     fun setShowBottomSheet(show: Boolean) {
         _uiState.value = _uiState.value.copy(showBottomSheet = show)
     }
@@ -120,7 +150,4 @@ class TaskViewModel(
     fun setId(id: Long) {
         _uiState.value = _uiState.value.copy(currentId = id)
     }
-
-
 }
-

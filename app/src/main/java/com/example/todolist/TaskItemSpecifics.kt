@@ -98,7 +98,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, onClick: () -> Unit) {
                     if (checked) {
                         coroutineScope.launch {
                             delay(350)
-                            viewModel.deleteTask(task)
+                            viewModel.completeTask(task.id)
                         }
 
                     }
