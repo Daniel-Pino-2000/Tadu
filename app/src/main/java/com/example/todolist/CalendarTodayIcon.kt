@@ -187,37 +187,67 @@ object CalendarTodayIcons {
 
     private fun ImageVector.Builder.addDigit0(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
-            moveTo(x - 2.4f, y - 2.4f)
-            lineTo(x + 2.4f, y - 2.4f)
-            lineTo(x + 2.4f, y + 2.4f)
-            lineTo(x - 2.4f, y + 2.4f)
+            // Outer rectangle
+            moveTo(x - 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y + 2.4f)
+            lineTo(x - 1.8f, y + 2.4f)
             close()
-            moveTo(x - 1.8f, y - 1.8f)
-            lineTo(x - 1.8f, y + 1.8f)
-            lineTo(x + 1.8f, y + 1.8f)
-            lineTo(x + 1.8f, y - 1.8f)
+            // Inner rectangle (hole)
+            moveTo(x - 1.2f, y - 1.8f)
+            lineTo(x - 1.2f, y + 1.8f)
+            lineTo(x + 1.2f, y + 1.8f)
+            lineTo(x + 1.2f, y - 1.8f)
             close()
         }
     }
 
     private fun ImageVector.Builder.addDigit1(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
-            moveTo(x - 0.9f, y - 2.4f)
-            lineTo(x + 0.9f, y - 2.4f)
-            lineTo(x + 0.9f, y + 2.4f)
-            lineTo(x - 0.9f, y + 2.4f)
+            // Vertical line
+            moveTo(x - 0.3f, y - 2.4f)
+            lineTo(x + 0.3f, y - 2.4f)
+            lineTo(x + 0.3f, y + 2.4f)
+            lineTo(x - 0.3f, y + 2.4f)
+            close()
+            // Top diagonal
+            moveTo(x - 0.9f, y - 1.8f)
+            lineTo(x - 0.3f, y - 2.4f)
+            lineTo(x + 0.3f, y - 2.4f)
+            lineTo(x - 0.3f, y - 1.8f)
             close()
         }
     }
 
     private fun ImageVector.Builder.addDigit2(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
+            // Top horizontal
             moveTo(x - 1.8f, y - 2.4f)
             lineTo(x + 1.8f, y - 2.4f)
-            lineTo(x + 1.8f, y - 0.6f)
-            lineTo(x - 1.8f, y - 0.6f)
-            lineTo(x - 1.8f, y + 0.6f)
-            lineTo(x + 1.8f, y + 0.6f)
+            lineTo(x + 1.8f, y - 1.8f)
+            lineTo(x - 1.8f, y - 1.8f)
+            close()
+            // Top right vertical
+            moveTo(x + 1.2f, y - 1.8f)
+            lineTo(x + 1.8f, y - 1.8f)
+            lineTo(x + 1.8f, y - 0.3f)
+            lineTo(x + 1.2f, y - 0.3f)
+            close()
+            // Middle horizontal
+            moveTo(x - 1.8f, y - 0.3f)
+            lineTo(x + 1.8f, y - 0.3f)
+            lineTo(x + 1.8f, y + 0.3f)
+            lineTo(x - 1.8f, y + 0.3f)
+            close()
+            // Bottom left vertical
+            moveTo(x - 1.8f, y + 0.3f)
+            lineTo(x - 1.2f, y + 0.3f)
+            lineTo(x - 1.2f, y + 1.8f)
+            lineTo(x - 1.8f, y + 1.8f)
+            close()
+            // Bottom horizontal
+            moveTo(x - 1.8f, y + 1.8f)
+            lineTo(x + 1.8f, y + 1.8f)
             lineTo(x + 1.8f, y + 2.4f)
             lineTo(x - 1.8f, y + 2.4f)
             close()
@@ -226,46 +256,91 @@ object CalendarTodayIcons {
 
     private fun ImageVector.Builder.addDigit3(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
+            // Top horizontal
             moveTo(x - 1.8f, y - 2.4f)
             lineTo(x + 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y - 1.8f)
+            lineTo(x - 1.8f, y - 1.8f)
+            close()
+            // Top right vertical
+            moveTo(x + 1.2f, y - 1.8f)
+            lineTo(x + 1.8f, y - 1.8f)
+            lineTo(x + 1.8f, y - 0.3f)
+            lineTo(x + 1.2f, y - 0.3f)
+            close()
+            // Middle horizontal
+            moveTo(x - 1.2f, y - 0.3f)
+            lineTo(x + 1.8f, y - 0.3f)
+            lineTo(x + 1.8f, y + 0.3f)
+            lineTo(x - 1.2f, y + 0.3f)
+            close()
+            // Bottom right vertical
+            moveTo(x + 1.2f, y + 0.3f)
+            lineTo(x + 1.8f, y + 0.3f)
+            lineTo(x + 1.8f, y + 1.8f)
+            lineTo(x + 1.2f, y + 1.8f)
+            close()
+            // Bottom horizontal
+            moveTo(x - 1.8f, y + 1.8f)
+            lineTo(x + 1.8f, y + 1.8f)
             lineTo(x + 1.8f, y + 2.4f)
             lineTo(x - 1.8f, y + 2.4f)
-            lineTo(x - 1.8f, y + 1.8f)
-            lineTo(x + 1.2f, y + 1.8f)
-            lineTo(x + 1.2f, y + 0.6f)
-            lineTo(x - 1.2f, y + 0.6f)
-            lineTo(x - 1.2f, y - 0.6f)
-            lineTo(x + 1.2f, y - 0.6f)
-            lineTo(x + 1.2f, y - 1.8f)
-            lineTo(x - 1.8f, y - 1.8f)
             close()
         }
     }
 
     private fun ImageVector.Builder.addDigit4(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
+            // Left vertical (top part)
             moveTo(x - 1.8f, y - 2.4f)
             lineTo(x - 1.2f, y - 2.4f)
-            lineTo(x - 1.2f, y)
-            lineTo(x + 1.8f, y)
-            lineTo(x + 1.8f, y + 0.6f)
-            lineTo(x + 1.2f, y + 0.6f)
+            lineTo(x - 1.2f, y - 0.3f)
+            lineTo(x - 1.8f, y - 0.3f)
+            close()
+            // Right vertical (full height)
+            moveTo(x + 1.2f, y - 2.4f)
+            lineTo(x + 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y + 2.4f)
             lineTo(x + 1.2f, y + 2.4f)
-            lineTo(x + 0.6f, y + 2.4f)
-            lineTo(x + 0.6f, y + 0.6f)
-            lineTo(x - 1.8f, y + 0.6f)
+            close()
+            // Middle horizontal
+            moveTo(x - 1.8f, y - 0.3f)
+            lineTo(x + 1.8f, y - 0.3f)
+            lineTo(x + 1.8f, y + 0.3f)
+            lineTo(x - 1.8f, y + 0.3f)
             close()
         }
     }
 
     private fun ImageVector.Builder.addDigit5(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
+            // Top horizontal
             moveTo(x - 1.8f, y - 2.4f)
             lineTo(x + 1.8f, y - 2.4f)
             lineTo(x + 1.8f, y - 1.8f)
+            lineTo(x - 1.8f, y - 1.8f)
+            close()
+            // Top left vertical
+            moveTo(x - 1.8f, y - 1.8f)
             lineTo(x - 1.2f, y - 1.8f)
-            lineTo(x - 1.2f, y - 0.6f)
-            lineTo(x + 1.8f, y - 0.6f)
+            lineTo(x - 1.2f, y - 0.3f)
+            lineTo(x - 1.8f, y - 0.3f)
+            close()
+            // Middle horizontal
+            moveTo(x - 1.8f, y - 0.3f)
+            lineTo(x + 1.8f, y - 0.3f)
+            lineTo(x + 1.8f, y + 0.3f)
+            lineTo(x - 1.8f, y + 0.3f)
+            close()
+            // Bottom right vertical
+            moveTo(x + 1.2f, y + 0.3f)
+            lineTo(x + 1.8f, y + 0.3f)
+            lineTo(x + 1.8f, y + 1.8f)
+            lineTo(x + 1.2f, y + 1.8f)
+            close()
+            // Bottom horizontal
+            moveTo(x - 1.8f, y + 1.8f)
+            lineTo(x + 1.8f, y + 1.8f)
             lineTo(x + 1.8f, y + 2.4f)
             lineTo(x - 1.8f, y + 2.4f)
             close()
@@ -274,69 +349,110 @@ object CalendarTodayIcons {
 
     private fun ImageVector.Builder.addDigit6(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
+            // Top horizontal
             moveTo(x - 1.8f, y - 2.4f)
             lineTo(x + 1.8f, y - 2.4f)
             lineTo(x + 1.8f, y - 1.8f)
+            lineTo(x - 1.8f, y - 1.8f)
+            close()
+            // Left vertical (full height)
+            moveTo(x - 1.8f, y - 1.8f)
             lineTo(x - 1.2f, y - 1.8f)
-            lineTo(x - 1.2f, y - 0.6f)
-            lineTo(x + 1.8f, y - 0.6f)
+            lineTo(x - 1.2f, y + 1.8f)
+            lineTo(x - 1.8f, y + 1.8f)
+            close()
+            // Middle horizontal
+            moveTo(x - 1.8f, y - 0.3f)
+            lineTo(x + 1.8f, y - 0.3f)
+            lineTo(x + 1.8f, y + 0.3f)
+            lineTo(x - 1.8f, y + 0.3f)
+            close()
+            // Bottom right vertical
+            moveTo(x + 1.2f, y + 0.3f)
+            lineTo(x + 1.8f, y + 0.3f)
+            lineTo(x + 1.8f, y + 1.8f)
+            lineTo(x + 1.2f, y + 1.8f)
+            close()
+            // Bottom horizontal
+            moveTo(x - 1.8f, y + 1.8f)
+            lineTo(x + 1.8f, y + 1.8f)
             lineTo(x + 1.8f, y + 2.4f)
             lineTo(x - 1.8f, y + 2.4f)
-            close()
-            moveTo(x - 1.2f, y)
-            lineTo(x + 1.2f, y)
-            lineTo(x + 1.2f, y + 1.8f)
-            lineTo(x - 1.2f, y + 1.8f)
             close()
         }
     }
 
     private fun ImageVector.Builder.addDigit7(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
+            // Top horizontal
             moveTo(x - 1.8f, y - 2.4f)
             lineTo(x + 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y - 1.8f)
+            lineTo(x - 1.8f, y - 1.8f)
+            close()
+            // Right vertical
+            moveTo(x + 1.2f, y - 1.8f)
+            lineTo(x + 1.8f, y - 1.8f)
             lineTo(x + 1.8f, y + 2.4f)
             lineTo(x + 1.2f, y + 2.4f)
-            lineTo(x + 1.2f, y - 1.8f)
-            lineTo(x - 1.8f, y - 1.8f)
             close()
         }
     }
 
     private fun ImageVector.Builder.addDigit8(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
+            // Outer rectangle
             moveTo(x - 1.8f, y - 2.4f)
             lineTo(x + 1.8f, y - 2.4f)
             lineTo(x + 1.8f, y + 2.4f)
             lineTo(x - 1.8f, y + 2.4f)
             close()
+            // Top inner rectangle (hole)
             moveTo(x - 1.2f, y - 1.8f)
-            lineTo(x - 1.2f, y - 0.6f)
-            lineTo(x + 1.2f, y - 0.6f)
+            lineTo(x - 1.2f, y - 0.3f)
+            lineTo(x + 1.2f, y - 0.3f)
             lineTo(x + 1.2f, y - 1.8f)
             close()
-            moveTo(x - 1.2f, y)
+            // Bottom inner rectangle (hole)
+            moveTo(x - 1.2f, y + 0.3f)
             lineTo(x - 1.2f, y + 1.8f)
             lineTo(x + 1.2f, y + 1.8f)
-            lineTo(x + 1.2f, y)
+            lineTo(x + 1.2f, y + 0.3f)
             close()
         }
     }
 
     private fun ImageVector.Builder.addDigit9(x: Float, y: Float, color: Color) {
         path(fill = SolidColor(color)) {
+            // Top horizontal
             moveTo(x - 1.8f, y - 2.4f)
             lineTo(x + 1.8f, y - 2.4f)
+            lineTo(x + 1.8f, y - 1.8f)
+            lineTo(x - 1.8f, y - 1.8f)
+            close()
+            // Top left vertical
+            moveTo(x - 1.8f, y - 1.8f)
+            lineTo(x - 1.2f, y - 1.8f)
+            lineTo(x - 1.2f, y - 0.3f)
+            lineTo(x - 1.8f, y - 0.3f)
+            close()
+            // Right vertical (full height)
+            moveTo(x + 1.2f, y - 1.8f)
+            lineTo(x + 1.8f, y - 1.8f)
+            lineTo(x + 1.8f, y + 1.8f)
+            lineTo(x + 1.2f, y + 1.8f)
+            close()
+            // Middle horizontal
+            moveTo(x - 1.8f, y - 0.3f)
+            lineTo(x + 1.8f, y - 0.3f)
+            lineTo(x + 1.8f, y + 0.3f)
+            lineTo(x - 1.8f, y + 0.3f)
+            close()
+            // Bottom horizontal
+            moveTo(x - 1.8f, y + 1.8f)
+            lineTo(x + 1.8f, y + 1.8f)
             lineTo(x + 1.8f, y + 2.4f)
             lineTo(x - 1.8f, y + 2.4f)
-            lineTo(x - 1.8f, y + 1.8f)
-            lineTo(x + 1.2f, y + 1.8f)
-            lineTo(x + 1.2f, y)
-            lineTo(x - 1.2f, y)
-            lineTo(x - 1.2f, y - 1.8f)
-            lineTo(x + 1.2f, y - 1.8f)
-            lineTo(x + 1.2f, y - 0.6f)
-            lineTo(x - 1.8f, y - 0.6f)
             close()
         }
     }

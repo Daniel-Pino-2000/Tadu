@@ -16,6 +16,9 @@ import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material.icons.outlined.CalendarMonth
+import androidx.compose.material.icons.outlined.History
+import androidx.compose.material.icons.outlined.NotificationsActive
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -23,6 +26,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
@@ -70,7 +74,7 @@ fun DropDownActionMenu(expanded: Boolean = true, onDismissRequest: () -> Unit) {
         DropdownMenuItem(onClick = {
             onDismissRequest()
         }) {
-            Icon(Icons.Default.History, contentDescription = null)
+            Icon(Icons.Outlined.History, contentDescription = null, tint = colorResource(id = R.color.dropMenuIcon_gray))
             Spacer(Modifier.padding(end = 5.dp))
             Text("Task History")
         }
@@ -78,7 +82,7 @@ fun DropDownActionMenu(expanded: Boolean = true, onDismissRequest: () -> Unit) {
         DropdownMenuItem(onClick = {
             onDismissRequest()
         }) {
-            Icon(Icons.Default.CalendarMonth, contentDescription = null)
+            Icon(Icons.Outlined.CalendarMonth, contentDescription = null, tint = colorResource(id = R.color.dropMenuIcon_gray))
             Spacer(Modifier.padding(end = 5.dp))
             Text("Calendar View")
         }
@@ -86,7 +90,7 @@ fun DropDownActionMenu(expanded: Boolean = true, onDismissRequest: () -> Unit) {
         DropdownMenuItem(onClick = {
             onDismissRequest()
         }) {
-            Icon(Icons.Default.NotificationsActive, contentDescription = null)
+            Icon(Icons.Outlined.NotificationsActive, contentDescription = null, tint = colorResource(id = R.color.dropMenuIcon_gray))
             Spacer(Modifier.padding(end = 5.dp))
             Text("Reminders")
         }

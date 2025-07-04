@@ -17,4 +17,5 @@
     <color name="priority_red">#DFB3B3</color>
     <color name="priority_orange">#DFBCA8</color>
     <color name="searchBar_gray">#8494ad</color>
+    <color name="dropMenuIcon_gray">#696766</color>
 </resources>
