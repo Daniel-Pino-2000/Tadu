@@ -37,6 +37,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,7 +45,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -66,6 +70,8 @@ fun BottomNavScreens(
 ) {
     var searchQuery by remember { mutableStateOf("") }
     val keyboardController = LocalSoftwareKeyboardController.current
+    val focusManager = LocalFocusManager.current
+    val searchFocusRequester = remember { FocusRequester() }
 
     val today = LocalDate.now()
     val formatter = DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH)
@@ -73,6 +79,17 @@ fun BottomNavScreens(
 
     val taskList = viewModel.getPendingTasks.collectAsState(initial = listOf())
     val tasks = taskList.value
+
+    // Observe UI state for keyboard management
+    val uiState by viewModel.uiState.collectAsState()
+
+    // Hide keyboard when bottom sheet is closed or task editing is completed
+    LaunchedEffect(uiState.showBottomSheet, uiState.taskBeingEdited) {
+        if (!uiState.showBottomSheet && !uiState.taskBeingEdited) {
+            keyboardController?.hide()
+            focusManager.clearFocus()
+        }
+    }
 
     val tasksToDisplay = when (currentRoute) {
         "today" -> tasks.filter { task ->
@@ -174,6 +191,15 @@ fun BottomNavScreens(
         }
     }
 
+    // Clear focus and hide keyboard when switching routes
+    LaunchedEffect(currentRoute) {
+        if (currentRoute != "search") {
+            keyboardController?.hide()
+            focusManager.clearFocus()
+            searchQuery = "" // Clear search query when leaving search screen
+        }
+    }
+
     Column(
         modifier = modifier.fillMaxSize()
     ) {
@@ -201,6 +227,7 @@ fun BottomNavScreens(
                             onClick = {
                                 searchQuery = ""
                                 keyboardController?.hide()
+                                focusManager.clearFocus()
                             }
                         ) {
                             Icon(
@@ -213,7 +240,8 @@ fun BottomNavScreens(
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                    .padding(horizontal = 16.dp, vertical = 12.dp)
+                    .focusRequester(searchFocusRequester),
                 shape = RoundedCornerShape(12.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color.Transparent,
@@ -226,7 +254,10 @@ fun BottomNavScreens(
                 singleLine = true,
                 keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
                 keyboardActions = KeyboardActions(
-                    onSearch = { keyboardController?.hide() }
+                    onSearch = {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                    }
                 )
             )
         }
@@ -364,6 +395,10 @@ fun BottomNavScreens(
                                 dismissThresholds = { FractionalThreshold(0.1f) },
                                 dismissContent = {
                                     TaskItem(task, viewModel) {
+                                        // Clear focus and hide keyboard before editing
+                                        keyboardController?.hide()
+                                        focusManager.clearFocus()
+
                                         viewModel.setId(task.id)
                                         viewModel.setTaskBeingEdited(true)
                                         viewModel.setShowBottomSheet(true)
