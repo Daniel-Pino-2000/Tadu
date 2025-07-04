@@ -30,10 +30,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavHostController
 
 @Composable
 fun AppBarView(
     title: String,
+    navController: NavHostController
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -57,13 +59,14 @@ fun AppBarView(
             ) {
                 Icon(Icons.Default.MoreVert, contentDescription = null)
             }
-            DropDownActionMenu(expanded = expanded, onDismissRequest = { expanded = false })
+            DropDownActionMenu(expanded = expanded, navController, onDismissRequest = { expanded = false })
 
         }
     )
 }
+
 @Composable
-fun DropDownActionMenu(expanded: Boolean = true, onDismissRequest: () -> Unit) {
+fun DropDownActionMenu(expanded: Boolean = true, navController: NavHostController, onDismissRequest: () -> Unit) {
 
     DropdownMenu(
         expanded = expanded,
@@ -72,7 +75,7 @@ fun DropDownActionMenu(expanded: Boolean = true, onDismissRequest: () -> Unit) {
         // offset = DpOffset(x = 0.dp, y = 0.dp)
     ) {
         DropdownMenuItem(onClick = {
-            onDismissRequest()
+            navController.navigate(Screen.History.route)
         }) {
             Icon(Icons.Outlined.History, contentDescription = null, tint = colorResource(id = R.color.dropMenuIcon_gray))
             Spacer(Modifier.padding(end = 5.dp))

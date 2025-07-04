@@ -78,6 +78,7 @@ class TaskViewModel(
     val getPendingTasks: Flow<List<Task>> = taskRepository.getPendingTasks()
     val getCompletedTasks: Flow<List<Task>> = taskRepository.getCompletedTasks()
     val getDeletedTasks: Flow<List<Task>> = taskRepository.getDeletedTasks()
+    val getFinishedTasks: Flow<List<Task>> = taskRepository.getFinishedTasks()
 
     fun addTask(task: Task) {
         viewModelScope.launch(Dispatchers.IO) {

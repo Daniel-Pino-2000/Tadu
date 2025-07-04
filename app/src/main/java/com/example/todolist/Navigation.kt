@@ -26,5 +26,9 @@ fun Navigation(viewModel: TaskViewModel = viewModel(),
         composable(Screen.BottomScreen.Search.bRoute) {
             HomeView(navController, viewModel)
         }
+
+        composable(Screen.History.route) {
+            TaskHistoryView(viewModel, navController)
+        }
     }
 }

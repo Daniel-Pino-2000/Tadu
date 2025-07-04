@@ -47,7 +47,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
             }
         },
         containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
-        topBar = { AppBarView(title = getScreenTitle(currentRoute)) },
+        topBar = { AppBarView(title = getScreenTitle(currentRoute), navController) },
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.padding(20.dp),

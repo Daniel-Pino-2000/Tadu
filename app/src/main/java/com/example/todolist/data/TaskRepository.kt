@@ -17,6 +17,8 @@ class TaskRepository(
 
     fun getDeletedTasks() : Flow<List<Task>> = taskDao.getDeletedTasks()
 
+    fun getFinishedTasks() : Flow<List<Task>> = taskDao.getFinishedTasks()
+
 
     // In TaskRepository
     suspend fun softDeleteTask(taskId: Long) {
