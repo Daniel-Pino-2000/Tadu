@@ -57,7 +57,7 @@ import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TaskItem(task: Task, viewModel: TaskViewModel, onClick: () -> Unit) {
+fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, onClick: () -> Unit) {
     var isChecked by remember { mutableStateOf(false) }
 
     val elevationValue = 8.dp
@@ -133,7 +133,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, onClick: () -> Unit) {
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     if (task.deadline.isNotEmpty()) {
-                        DeadlineItem(task)
+                        DeadlineItem(task, currentRoute)
                     }
 
                     Spacer(modifier = Modifier.weight(1f))
@@ -169,7 +169,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, onClick: () -> Unit) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun DeadlineItem(task: Task) {
+fun DeadlineItem(task: Task, currentRoute: String) {
     // Format the date for the comparison
     val today = LocalDate.now()
     val currentYear = today.year
@@ -209,21 +209,23 @@ fun DeadlineItem(task: Task) {
         task.deadline
     }
 
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        Icon(
-            imageVector = Icons.Default.DateRange,
-            contentDescription = null,
-            tint = iconColor,
-            modifier = Modifier.size(16.dp)
-        )
-        Spacer(modifier = Modifier.padding(end = 2.dp))
+    if (currentRoute != "today" || dateStatus != "Today") {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Icon(
+                imageVector = Icons.Default.DateRange,
+                contentDescription = null,
+                tint = iconColor,
+                modifier = Modifier.size(16.dp)
+            )
+            Spacer(modifier = Modifier.padding(end = 2.dp))
 
 
-        Text(
-            text = dateText,
-            color = iconColor,
-            style = MaterialTheme.typography.body2
-        )
+            Text(
+                text = dateText,
+                color = iconColor,
+                style = MaterialTheme.typography.body2
+            )
+        }
     }
 }
 

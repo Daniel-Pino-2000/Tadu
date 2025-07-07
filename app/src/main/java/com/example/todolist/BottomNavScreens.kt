@@ -142,6 +142,19 @@ fun BottomNavScreens(
             } else {
                 emptyList()
             }
+        } else if (currentRoute == "inbox") {
+            // No grouping or sorting; use tasks as-is
+            if (tasksToDisplay.isNotEmpty()) {
+                listOf(
+                    TaskGroup(
+                        title = "All Tasks",
+                        tasks = tasksToDisplay, // Keep default DB order
+                        color = Color.Gray
+                    )
+                )
+            } else {
+                emptyList()
+            }
         } else {
             val overdueTasks = mutableListOf<Task>()
             val todayTasks = mutableListOf<Task>()
@@ -397,7 +410,8 @@ fun BottomNavScreens(
                                 ),
                                 dismissThresholds = { FractionalThreshold(0.1f) },
                                 dismissContent = {
-                                    TaskItem(task, viewModel) {
+
+                                    TaskItem(task, viewModel, currentRoute) {
                                         // Clear focus and hide keyboard before editing
                                         keyboardController?.hide()
                                         focusManager.clearFocus()
