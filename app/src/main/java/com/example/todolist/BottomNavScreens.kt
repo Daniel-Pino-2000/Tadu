@@ -171,6 +171,9 @@ fun BottomNavScreens(
                 }
             }
 
+            val formatter = DateTimeFormatter.ofPattern("MMMM d", Locale.ENGLISH)
+            val nicerDate = today.format(formatter)
+
             listOfNotNull(
                 if (overdueTasks.isNotEmpty()) TaskGroup(
                     "Overdue",
@@ -178,7 +181,7 @@ fun BottomNavScreens(
                     Color.Red
                 ) else null,
                 if (todayTasks.isNotEmpty()) TaskGroup(
-                    "Today",
+                    "$nicerDate",
                     sortByPriority(todayTasks),
                     niceBlueColor
                 ) else null,

@@ -45,7 +45,11 @@ fun TaskHistoryView(viewModel: TaskViewModel, navController: NavHostController) 
                 title = {
                     Text(
                         text = "Task History",
+                        color = colorResource(id = R.color.black),
+                        style = MaterialTheme.typography.titleLarge, // Larger and bolder by default
+                        modifier = Modifier.padding(start = 8.dp)
                     )
+
                 },
                 navigationIcon = {
                     IconButton(onClick = { navController.popBackStack() }) {
@@ -54,7 +58,8 @@ fun TaskHistoryView(viewModel: TaskViewModel, navController: NavHostController) 
                             contentDescription = "Back",
                         )
                     }
-                }
+                },
+
 
             )
         }

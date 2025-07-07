@@ -42,12 +42,15 @@ fun AppBarView(
 
     TopAppBar(
         title = {
-            Text(text = title,
+            Text(
+                text = title,
                 color = colorResource(id = R.color.black),
-                modifier = Modifier
-                    .padding(start = 4.dp)
-                    .heightIn(max = 24.dp))
+                style = MaterialTheme.typography.h6, // Larger and bolder by default
+                modifier = Modifier.padding(start = 8.dp)
+            )
+
         },
+        elevation = 0.dp,
         backgroundColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
         actions = {
             IconButton(
@@ -61,7 +64,8 @@ fun AppBarView(
             }
             DropDownActionMenu(expanded = expanded, navController, onDismissRequest = { expanded = false })
 
-        }
+        },
+
     )
 }
 
@@ -75,6 +79,7 @@ fun DropDownActionMenu(expanded: Boolean = true, navController: NavHostControlle
         // offset = DpOffset(x = 0.dp, y = 0.dp)
     ) {
         DropdownMenuItem(onClick = {
+            onDismissRequest()
             navController.navigate(Screen.History.route)
         }) {
             Icon(Icons.Outlined.History, contentDescription = null, tint = colorResource(id = R.color.dropMenuIcon_gray))
