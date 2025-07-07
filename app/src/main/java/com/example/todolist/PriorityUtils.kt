@@ -27,6 +27,13 @@ object PriorityUtils {
         3 to R.color.priority_blue,
     )
 
+    val priorityCircleShape = mapOf(
+        1 to R.color.red_yesterday,
+        2 to R.color.orange,
+        3 to R.color.nice_blue,
+        4 to R.color.searchBar_gray
+    )
+
     val priorityBorderColor = mapOf(
         1 to R.color.red_yesterday,
         2 to R.color.orange,
@@ -54,6 +61,12 @@ object PriorityUtils {
     @Composable
     fun getBorderColor(priority: Int) :androidx.compose.ui.graphics.Color {
         val resId = priorityBorderColor[priority] ?: defaultColorRes
+        return colorResource(id = resId)
+    }
+
+    @Composable
+    fun getCircleColor(priority: Int) : androidx.compose.ui.graphics.Color {
+        val resId = priorityCircleShape[priority] ?: defaultColorRes
         return colorResource(id = resId)
     }
 
