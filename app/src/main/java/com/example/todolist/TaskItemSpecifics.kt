@@ -108,59 +108,66 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, onClick
 
             Spacer(modifier = Modifier.width(8.dp))
 
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = task.title,
-                    style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Light)
-                )
-
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                if (task.description.isNotEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(end = 24.dp) // leave space so text does not overlap icon
+                ) {
                     Text(
-                        text = task.description,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.body2
+                        text = task.title,
+                        style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Light)
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    if (task.description.isNotEmpty()) {
+                        Text(
+                            text = task.description,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.body2
+                        )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+                    }
+
+
+
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (task.deadline.isNotEmpty()) {
+                            DeadlineItem(task, currentRoute)
+                        }
+
+                        Spacer(modifier = Modifier.weight(1f))
+                    }
+                }
+
+                if (task.address.isNotEmpty()) {
+                    val context = LocalContext.current
+                    Icon(
+                        imageVector = Icons.Default.LocationOn,
+                        contentDescription = "Has address",
+                        modifier = Modifier
+                            .size(13.dp)
+                            .align(Alignment.BottomEnd)
+                            .clickable {
+                                openAddressInMaps(
+                                    context = context,
+                                    viewModel.taskAddressState
+                                )
+                            },
+                        tint = Color.Black,
                     )
                 }
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    if (task.deadline.isNotEmpty()) {
-                        DeadlineItem(task, currentRoute)
-                    }
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    if (task.address.isNotEmpty()) {
-                        val context = LocalContext.current
-                        Icon(
-                            imageVector = Icons.Default.LocationOn,
-                            contentDescription = "Has address",
-                            modifier = Modifier
-                                .size(16.dp)
-                                .clickable {
-                                    openAddressInMaps(
-                                        context = context,
-                                        viewModel.taskAddressState
-                                    )
-                                }
-                                .align(Alignment.CenterVertically),
-                            tint = Color.Black,
-                        )
-                    }
-
-
-                }
-
-
             }
+
         }
 
 
