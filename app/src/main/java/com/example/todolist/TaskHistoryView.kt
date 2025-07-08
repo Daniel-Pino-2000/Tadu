@@ -74,15 +74,14 @@ fun TaskHistoryView(viewModel: TaskViewModel, navController: NavHostController) 
                 },
 
 
-            )
+                )
         }
     ) { innerPadding ->
 
         LazyColumn(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding) // ✅ <-- This fixes the overlap
-                .padding(horizontal = 16.dp),
+                .padding(innerPadding), // ✅ <-- This fixes the overlap
             verticalArrangement = Arrangement.spacedBy(0.dp)
         ) {
             itemsIndexed(sortedTasks) { index, task ->
@@ -135,10 +134,10 @@ fun TaskHistoryItem(task: Task, viewModel: TaskViewModel, onClick: () -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 12.dp)
             .clickable {
                 onClick()
-            },
+            }
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         // Status icon

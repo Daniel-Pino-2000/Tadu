@@ -119,6 +119,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, onClick
                 ) {
                     Text(
                         text = task.title,
+                        maxLines = 1,
                         style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Light)
                     )
 
