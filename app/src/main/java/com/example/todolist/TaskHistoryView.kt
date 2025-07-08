@@ -46,6 +46,10 @@ fun TaskHistoryView(viewModel: TaskViewModel, navController: NavHostController) 
     // Observe UI state for keyboard management
     val uiState by viewModel.uiState.collectAsState()
 
+    val selectedTaskId = uiState.currentId
+    val selectedTask by viewModel.getTaskById(selectedTaskId).collectAsState(initial = null)
+
+
 
     // Sort tasks by completion/deletion date (most recent first)
     val sortedTasks = tasks.sortedByDescending { task ->
@@ -105,20 +109,23 @@ fun TaskHistoryView(viewModel: TaskViewModel, navController: NavHostController) 
         // Show bottom sheet UI conditionally:
         if (uiState.showBottomSheet) {
             AddTaskView(
-                uiState.currentId,
-                viewModel,
+                id = uiState.currentId,
+                viewModel = viewModel,
                 onDismiss = {
                     viewModel.setShowBottomSheet(false)
                     viewModel.setTaskBeingEdited(false)
                 },
                 onSubmit = { task ->
-                    if (!uiState.taskBeingEdited) {
-                        viewModel.addTask(task)
-                    } else {
-                        viewModel.updateTask(task)
-                    }
+                    // In history mode, we restore the task (make it active again)
+                    viewModel.restoreTask(task.id) // You'll need to implement this method
                     viewModel.setShowBottomSheet(false)
                     viewModel.setTaskBeingEdited(false)
+                },
+                isHistoryMode = true, // This is the key difference
+                onDelete = { taskId ->
+                    selectedTask?.let { task ->
+                        viewModel.permanentlyDeleteTask(task)
+                    }
                 }
             )
         }

@@ -8,9 +8,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
 import androidx.compose.material.Icon
-import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
@@ -25,51 +23,24 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.todolist.data.Task
-import android.app.DatePickerDialog
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.IconButton
-import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
-import androidx.lifecycle.ViewModel
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
-import java.util.Calendar
-import java.util.Date
-import android.content.Intent
-import android.net.Uri
-import android.util.Log
-import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.border
-import androidx.compose.foundation.focusable
-import androidx.compose.material.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.text.*
-import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.*
-import androidx.compose.material.icons.filled.Flag
-import androidx.compose.material.icons.filled.Launch
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.LaunchedEffect
@@ -80,9 +51,10 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.material.Checkbox
-import androidx.compose.material.CheckboxDefaults
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material3.MaterialTheme
 
 
 /**
@@ -106,13 +78,16 @@ fun AddTaskView(
     id: Long,
     viewModel: TaskViewModel,
     onDismiss: () -> Unit,
-    onSubmit: (task: Task) -> Unit
+    onSubmit: (task: Task) -> Unit,
+    isHistoryMode: Boolean = false, // New parameter to indicate if we're in history mode
+    onDelete: ((Long) -> Unit)? = null // Callback for delete action
 ) {
 
     val context = LocalContext.current
 
     // State for controlling the confirmation dialog visibility
     val openConfirmDialog = remember { mutableStateOf(false) }
+    val openDeleteDialog = remember { mutableStateOf(false) } // New delete confirmation dialog
 
     // Flag to control when dismissal should be allowed (bypasses confirmation)
     val allowDismiss = remember { mutableStateOf(false) }
@@ -122,7 +97,7 @@ fun AddTaskView(
         skipPartiallyExpanded = true,
         confirmValueChange = { newValue ->
             // When trying to hide the sheet, check if there are unsaved changes
-            if (newValue == SheetValue.Hidden && viewModel.taskHasBeenChanged && !allowDismiss.value) {
+            if (newValue == SheetValue.Hidden && viewModel.taskHasBeenChanged && !allowDismiss.value && !isHistoryMode) {
                 openConfirmDialog.value = true // Show confirmation dialog
                 false // Prevent the sheet from closing
             } else {
@@ -138,16 +113,16 @@ fun AddTaskView(
     // Handle hardware/gesture back button presses
     // Ensures consistent behavior with swipe-to-dismiss and tap-outside-to-dismiss
     BackHandler(enabled = true) {
-        if (viewModel.taskHasBeenChanged && !allowDismiss.value) {
+        if (viewModel.taskHasBeenChanged && !allowDismiss.value && !isHistoryMode) {
             openConfirmDialog.value = true // Show confirmation if there are unsaved changes
         } else {
             onDismiss() // Allow immediate dismissal if no changes or dismissal is allowed
         }
     }
 
-    // Auto-focus the title field and show keyboard when sheet becomes visible
+    // Auto-focus the title field and show keyboard when sheet becomes visible (only if not in history mode)
     LaunchedEffect(sheetState.isVisible) {
-        if (sheetState.isVisible) {
+        if (sheetState.isVisible && !isHistoryMode) {
             focusRequester.requestFocus()
             keyboardController?.show()
         }
@@ -178,7 +153,7 @@ fun AddTaskView(
     ModalBottomSheet(
         onDismissRequest = {
             // Handle tap-outside-to-dismiss with same logic as back button
-            if (viewModel.taskHasBeenChanged && !allowDismiss.value) {
+            if (viewModel.taskHasBeenChanged && !allowDismiss.value && !isHistoryMode) {
                 openConfirmDialog.value = true // Show confirmation if there are unsaved changes
             } else {
                 onDismiss() // Allow immediate dismissal if no changes or dismissal is allowed
@@ -190,7 +165,7 @@ fun AddTaskView(
     ) {
         // Intercept back press only while the sheet is visible
         BackHandler(enabled = sheetState.isVisible) {
-            if (viewModel.taskHasBeenChanged && !allowDismiss.value) {
+            if (viewModel.taskHasBeenChanged && !allowDismiss.value && !isHistoryMode) {
                 openConfirmDialog.value = true
             } else {
                 onDismiss()
@@ -223,8 +198,9 @@ fun AddTaskView(
                 modifier = Modifier.focusRequester(focusRequester),
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
                 keyboardActions = KeyboardActions(onDone = {
-                //keyboardController?.hide()
-                })
+                    //keyboardController?.hide()
+                }),
+                readOnly = isHistoryMode // Make read-only in history mode
             )
 
             // Task description input field
@@ -240,65 +216,102 @@ fun AddTaskView(
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     backgroundColor = Color.Transparent
-                )
+                ),
+                readOnly = isHistoryMode // Make read-only in history mode
             )
 
-            // Additional task options (priority, deadline, etc.)
-            ScrollableRow(viewModel)
+            // Additional task options (priority, deadline, etc.) - only show if not in history mode
+            //if (!isHistoryMode) {
+                ScrollableRow(viewModel, isHistoryMode)
+            //}
 
             Spacer(modifier = Modifier.height(6.dp))
 
             var addToCalendar by remember { mutableStateOf(false) } // Checkbox state
 
             // Submit button section
-            // Submit button section with modern Add to Calendar button
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                horizontalArrangement = if (isHistoryMode) Arrangement.SpaceBetween else Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
-                val hasDeadline = viewModel.taskDeadline.isNotBlank()
-                val taskTitle = viewModel.taskTitleState
-                val taskDeadline = viewModel.taskDeadline
+                if (isHistoryMode) {
+                    // Delete button for history mode
+                    Button(
+                        onClick = {
+                            openDeleteDialog.value = true
+                        },
+                        modifier = Modifier.height(48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Color.Transparent,
+                            contentColor = MaterialTheme.colorScheme.error,
+                            disabledBackgroundColor = Color.Transparent,
+                            disabledContentColor = Color.Gray
+                        ),
+                        elevation = ButtonDefaults.elevation(
+                            defaultElevation = 0.dp,
+                            pressedElevation = 0.dp,
+                            disabledElevation = 0.dp
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete Permanently",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Delete",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                } else {
+                    // Calendar button for normal mode
+                    val hasDeadline = viewModel.taskDeadline.isNotBlank()
+                    val taskTitle = viewModel.taskTitleState
+                    val taskDeadline = viewModel.taskDeadline
 
-                // Modern Add to Calendar Button - Inverted colors from submit button
-                Button(
-                    onClick = {
-                        addTaskToCalendar(context, taskTitle, taskDeadline)
-                    },
-                    enabled = hasDeadline && taskTitle.isNotEmpty(),
-                    modifier = Modifier.height(48.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = Color.Transparent,
-                        contentColor = if (hasDeadline && taskTitle.isNotEmpty())
-                            colorResource(id = R.color.nice_blue) else Color.Gray,
-                        disabledBackgroundColor = Color.Transparent,
-                        disabledContentColor = Color.Gray
-                    ),
-                    elevation = ButtonDefaults.elevation(
-                        defaultElevation = 0.dp,
-                        pressedElevation = 0.dp,
-                        disabledElevation = 0.dp
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Event,
-                        contentDescription = "Add to Calendar",
-                        modifier = Modifier.size(20.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text(
-                        text = "Add to Calendar",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium
-                    )
+                    Button(
+                        onClick = {
+                            addTaskToCalendar(context, taskTitle, taskDeadline)
+                        },
+                        enabled = hasDeadline && taskTitle.isNotEmpty(),
+                        modifier = Modifier.height(48.dp),
+                        colors = ButtonDefaults.buttonColors(
+                            backgroundColor = Color.Transparent,
+                            contentColor = if (hasDeadline && taskTitle.isNotEmpty())
+                                colorResource(id = R.color.nice_blue) else Color.Gray,
+                            disabledBackgroundColor = Color.Transparent,
+                            disabledContentColor = Color.Gray
+                        ),
+                        elevation = ButtonDefaults.elevation(
+                            defaultElevation = 0.dp,
+                            pressedElevation = 0.dp,
+                            disabledElevation = 0.dp
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Event,
+                            contentDescription = "Add to Calendar",
+                            modifier = Modifier.size(20.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Add to Calendar",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
                 }
 
-                // Determine button state based on form validation
+                // Submit/Restore button
                 val isValid = viewModel.taskTitleState.isNotBlank()
                 val buttonColor = if (isValid) {
                     colorResource(id = R.color.nice_blue)
@@ -306,7 +319,6 @@ fun AddTaskView(
                     Color.Gray
                 }
 
-                // Submit button - always enabled but ignores clicks when invalid
                 Button(
                     onClick = {
                         if (!isValid) return@Button // ignore click if not valid
@@ -335,8 +347,8 @@ fun AddTaskView(
                         // Submit the task
                         onSubmit(task)
 
-                        // Add to calendar if checked
-                        if (addToCalendar) {
+                        // Add to calendar if checked and not in history mode
+                        if (addToCalendar && !isHistoryMode) {
                             addTaskToCalendar(context = context, task.title, task.deadline)
                         }
                     },
@@ -348,8 +360,8 @@ fun AddTaskView(
                     shape = RoundedCornerShape(12.dp)
                 ) {
                     Icon(
-                        Icons.Default.Check,
-                        contentDescription = "Submit Task",
+                        imageVector = if (isHistoryMode) Icons.Default.Restore else Icons.Default.Check,
+                        contentDescription = if (isHistoryMode) "Restore Task" else "Submit Task",
                         tint = Color.White
                     )
                 }
@@ -357,9 +369,8 @@ fun AddTaskView(
 
         }
 
-        // Confirmation dialog for unsaved changes
-        // Shows when user tries to dismiss with unsaved changes via any method
-        if (openConfirmDialog.value) {
+        // Confirmation dialog for unsaved changes (only in normal mode)
+        if (openConfirmDialog.value && !isHistoryMode) {
             Dialog(onDismissRequest = { openConfirmDialog.value = false }) {
                 Box(
                     modifier = Modifier
@@ -434,6 +445,80 @@ fun AddTaskView(
             }
         }
 
+        // Delete confirmation dialog for history mode
+        if (openDeleteDialog.value && isHistoryMode) {
+            Dialog(onDismissRequest = { openDeleteDialog.value = false }) {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(Color(0x80000000)), // Semi-transparent backdrop
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .widthIn(min = 280.dp, max = 320.dp)
+                            .background(Color.White, shape = RoundedCornerShape(16.dp))
+                            .padding(20.dp),
+                        horizontalAlignment = Alignment.Start,
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        // Dialog title
+                        Text(
+                            text = "Delete permanently?",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Medium,
+                            color = Color.Black,
+                            lineHeight = 24.sp
+                        )
+                        // Dialog message
+                        Text(
+                            text = "This task will be permanently deleted and cannot be recovered.",
+                            fontSize = 14.sp,
+                            color = Color(0xFF757575),
+                            lineHeight = 20.sp
+                        )
+                        // Action buttons
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
+                        ) {
+                            // Cancel button
+                            TextButton(
+                                onClick = {
+                                    openDeleteDialog.value = false
+                                },
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            ) {
+                                Text(
+                                    text = "Cancel",
+                                    color = colorResource(id = R.color.nice_blue),
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                            // Delete button
+                            TextButton(
+                                onClick = {
+                                    openDeleteDialog.value = false
+                                    onDelete?.invoke(id)
+                                    onDismiss()
+                                },
+                                modifier = Modifier.padding(horizontal = 4.dp)
+                            ) {
+                                Text(
+                                    text = "Delete",
+                                    color = MaterialTheme.colorScheme.error,
+                                    fontSize = 14.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
     }
 }
-

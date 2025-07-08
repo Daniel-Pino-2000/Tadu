@@ -56,7 +56,7 @@ import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun ScrollableRow(viewModel: TaskViewModel) {
+fun ScrollableRow(viewModel: TaskViewModel, isHistoryMode: Boolean) {
 
     var scrollState = rememberScrollState()
 
@@ -78,6 +78,7 @@ fun ScrollableRow(viewModel: TaskViewModel) {
                     tint = Color.Gray
                 )
             },
+            readOnly = isHistoryMode,
             trailingIcon = {
                 val context = LocalContext.current
                 IconButton(
@@ -107,11 +108,11 @@ fun ScrollableRow(viewModel: TaskViewModel) {
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        DropUpPriorityButton(viewModel)
+        DropUpPriorityButton(viewModel, isHistoryMode)
 
         Spacer(modifier = Modifier.width(16.dp))
 
-        DeadlinePickerButton(viewModel) { selectedDate ->
+        DeadlinePickerButton(viewModel, isHistoryMode) { selectedDate ->
 
 
             viewModel.onTaskDeadlineChanged(selectedDate)
@@ -126,7 +127,11 @@ fun ScrollableRow(viewModel: TaskViewModel) {
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun DeadlinePickerButton(viewModel: TaskViewModel ,onDateSelected: (String) -> Unit) {
+fun DeadlinePickerButton(
+    viewModel: TaskViewModel,
+    isHistoryMode: Boolean,
+    onDateSelected: (String) -> Unit
+) {
     val context = LocalContext.current
     val calendar = Calendar.getInstance()
 
@@ -168,6 +173,7 @@ fun DeadlinePickerButton(viewModel: TaskViewModel ,onDateSelected: (String) -> U
         onClick = { showDialog = true },
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(1.dp, Color.Black),
+        enabled = !isHistoryMode,
         modifier = Modifier.height(62.dp).padding(top = 7.dp).focusable(false),  // Match typical TextField height
         colors = ButtonDefaults.outlinedButtonColors(
             backgroundColor = Color.Transparent,  // No background, like OutlinedTextField
@@ -187,7 +193,7 @@ fun DeadlinePickerButton(viewModel: TaskViewModel ,onDateSelected: (String) -> U
 }
 
 @Composable
-fun DropUpPriorityButton(viewModel: TaskViewModel) {
+fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
     var expanded by remember { mutableStateOf(false) }
     val buttonWidth = remember { mutableStateOf(0) }
 
@@ -213,6 +219,7 @@ fun DropUpPriorityButton(viewModel: TaskViewModel) {
             onClick = { expanded = true },
             shape = RoundedCornerShape(16.dp),
             border = BorderStroke(1.dp, Color.Black),
+            enabled = !isHistoryMode,
             modifier = Modifier
                 .height(62.dp)
                 .focusable(false)
