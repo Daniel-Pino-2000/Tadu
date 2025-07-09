@@ -10,12 +10,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.Icon
 import androidx.compose.material.IconButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.CleaningServices
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material.icons.outlined.DeleteForever
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -72,10 +76,21 @@ fun TaskHistoryView(viewModel: TaskViewModel, navController: NavHostController) 
                     IconButton(onClick = { navController.popBackStack() }) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back",
+                            contentDescription = "Back", tint = colorResource(id = R.color.dropMenuIcon_gray)
                         )
                     }
                 },
+                actions = {
+                    IconButton(
+                        onClick = {
+                            tasks.forEach { task ->
+                                viewModel.permanentlyDeleteTask(task)
+                            }
+                        }
+                    ) {
+                        Icon(Icons.Outlined.DeleteForever, contentDescription = null, tint = colorResource(id = R.color.dropMenuIcon_gray))
+                    }
+                }
 
 
                 )

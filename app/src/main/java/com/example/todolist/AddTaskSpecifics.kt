@@ -79,11 +79,14 @@ fun ScrollableRow(viewModel: TaskViewModel, isHistoryMode: Boolean) {
                 )
             },
             readOnly = isHistoryMode,
+            enabled = !isHistoryMode,
             trailingIcon = {
                 val context = LocalContext.current
                 IconButton(
                     onClick = {
-                        openAddressInMaps(context, viewModel.taskAddressState)
+                        if (!isHistoryMode) {
+                            openAddressInMaps(context, viewModel.taskAddressState)
+                        }
                     },
                     enabled = viewModel.taskAddressState.isNotBlank()
                 ) {
