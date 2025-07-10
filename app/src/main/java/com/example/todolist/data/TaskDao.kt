@@ -70,4 +70,12 @@ abstract class TaskDao {
 
     @Query("SELECT COUNT(*) FROM `task-table` WHERE `task-completed` = 1 AND `task-deleted` = 0")
     abstract fun getCompletedTaskCount(): Flow<Int>
+
+    // 1. Get all unique labels (for dropdown/filter options)
+    @Query("SELECT DISTINCT `task-label` FROM `task-table` WHERE `task-deleted` = 0 ORDER BY `task-label`")
+    abstract fun getAllLabels(): Flow<List<String>>
+
+    // 2. Get tasks by specific label
+    @Query("SELECT * FROM `task-table` WHERE `task-label` = :label AND `task-deleted` = 0")
+    abstract fun getTasksByLabel(label: String): Flow<List<Task>>
 }

@@ -28,6 +28,7 @@ class TaskViewModel(
     var taskAddressState by mutableStateOf("")
     var taskPriority: String by mutableStateOf("")
     var taskDeadline by mutableStateOf("")
+    var taskLabel: String by mutableStateOf("General") // Add label state
 
     @RequiresApi(Build.VERSION_CODES.O)
     private val _currentScreen: MutableState<Screen> = mutableStateOf(Screen.BottomScreen.Today)
@@ -73,6 +74,12 @@ class TaskViewModel(
         taskHasBeenChanged = true
     }
 
+    // Add label change handler
+    fun onTaskLabelChanged(newLabel: String) {
+        taskLabel = newLabel
+        taskHasBeenChanged = true
+    }
+
     // Initialize flows directly - they're already reactive
     val getAllTasks: Flow<List<Task>> = taskRepository.getTasks()
     val getPendingTasks: Flow<List<Task>> = taskRepository.getPendingTasks()
@@ -80,13 +87,16 @@ class TaskViewModel(
     val getDeletedTasks: Flow<List<Task>> = taskRepository.getDeletedTasks()
     val getFinishedTasks: Flow<List<Task>> = taskRepository.getFinishedTasks()
 
+    // Add label flows
+    val getAllLabels: Flow<List<String>> = taskRepository.getAllLabels()
+
     fun addTask(task: Task) {
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.addTask(task)
         }
     }
 
-    fun getTaskById(id: Long): Flow<Task> {
+    fun getTaskById(id: Long): Flow<Task?> {
         return taskRepository.getTaskById(id)
     }
 
@@ -131,6 +141,11 @@ class TaskViewModel(
         }
     }
 
+    // Add method to get tasks by label
+    fun getTasksByLabel(label: String): Flow<List<Task>> {
+        return taskRepository.getTasksByLabel(label)
+    }
+
     // UI setter functions
     fun setShowBottomSheet(show: Boolean) {
         _uiState.value = _uiState.value.copy(showBottomSheet = show)
@@ -152,3 +167,4 @@ class TaskViewModel(
         _uiState.value = _uiState.value.copy(currentId = id)
     }
 }
+

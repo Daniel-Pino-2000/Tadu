@@ -31,4 +31,7 @@ data class Task(
     @ColumnInfo(name = "task-completion-date")
     var completionDate: Long? = null,
 
+    @ColumnInfo(name = "task-label")
+    val label: String = "Inbox"// Default label
+
 )

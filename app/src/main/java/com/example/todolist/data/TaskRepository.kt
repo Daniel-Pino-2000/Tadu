@@ -19,6 +19,12 @@ class TaskRepository(
 
     fun getFinishedTasks() : Flow<List<Task>> = taskDao.getFinishedTasks()
 
+    // Get all labels for dropdown/filter
+    fun getAllLabels(): Flow<List<String>> = taskDao.getAllLabels()
+
+    // Get tasks by specific label
+    fun getTasksByLabel(label: String): Flow<List<Task>> = taskDao.getTasksByLabel(label)
+
 
     // In TaskRepository
     suspend fun softDeleteTask(taskId: Long) {
@@ -49,5 +55,7 @@ class TaskRepository(
     suspend fun deleteATask(task: Task) {
         taskDao.deleteATask(task)
     }
+
+
 
 }
