@@ -105,7 +105,13 @@ fun ScrollableRow(viewModel: TaskViewModel, isHistoryMode: Boolean) {
             colors = OutlinedTextFieldDefaults.colors(
                 cursorColor = colorResource(id = R.color.nice_blue),
                 focusedBorderColor = Color.Blue,
-                unfocusedBorderColor = Color.Black
+                unfocusedBorderColor = Color.Black,
+                // Add these lines to maintain consistent styling in history mode
+                disabledBorderColor = Color.Black,
+                disabledTextColor = Color.Black,
+                disabledLabelColor = Color.Black,
+                disabledLeadingIconColor = Color.Gray,
+                disabledTrailingIconColor = Color.LightGray
             ),
             modifier = Modifier.fillMaxWidth()
         )
