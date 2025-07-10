@@ -71,6 +71,7 @@ fun ScrollableRow(viewModel: TaskViewModel, isHistoryMode: Boolean) {
             onValueChange = { viewModel.onAddressChanged(it) },
             maxLines = 1,
             label = { Text("Address") },
+
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.LocationOn,
@@ -78,7 +79,7 @@ fun ScrollableRow(viewModel: TaskViewModel, isHistoryMode: Boolean) {
                     tint = Color.Gray
                 )
             },
-            readOnly = isHistoryMode,
+            //readOnly = isHistoryMode,
             enabled = !isHistoryMode,
             trailingIcon = {
                 val context = LocalContext.current
@@ -88,7 +89,7 @@ fun ScrollableRow(viewModel: TaskViewModel, isHistoryMode: Boolean) {
                             openAddressInMaps(context, viewModel.taskAddressState)
                         }
                     },
-                    enabled = viewModel.taskAddressState.isNotBlank()
+                    enabled = viewModel.taskAddressState.isNotBlank() && !isHistoryMode
                 ) {
                     Icon(
                         imageVector = Icons.Default.Launch,
