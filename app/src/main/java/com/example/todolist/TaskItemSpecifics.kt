@@ -47,6 +47,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.example.todolist.data.Task
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -71,7 +72,6 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, onClick
         shape = RoundedCornerShape(15.dp),
         elevation = elevationValue
     ) {
-
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -88,9 +88,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, onClick
                 4
             }
 
-
             CircularCheckbox(
-
                 checked = isChecked,
                 priority = priority,
                 onCheckedChange = { checked ->
@@ -100,28 +98,40 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, onClick
                             delay(350)
                             viewModel.completeTask(task.id)
                         }
-
                     }
                 }
             )
 
-
             Spacer(modifier = Modifier.width(8.dp))
 
             Box(
-                modifier = Modifier
-                    .fillMaxWidth()
+                modifier = Modifier.fillMaxWidth()
             ) {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(end = 24.dp) // leave space so text does not overlap icon
+                        .padding(end = if (task.address.isNotEmpty()) 24.dp else 0.dp)
                 ) {
-                    Text(
-                        text = task.title,
-                        maxLines = 1,
-                        style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Light)
-                    )
+                    // Title and Label Row
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = task.title,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Light),
+                            modifier = Modifier.weight(1f, fill = false)
+                        )
+
+                        if (task.label.isNotEmpty()) {
+                            Spacer(modifier = Modifier.width(8.dp))
+                            ModernLabel(
+                                text = task.label
+                            )
+                        }
+                    }
 
                     Spacer(modifier = Modifier.height(4.dp))
 
@@ -135,8 +145,6 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, onClick
 
                         Spacer(modifier = Modifier.height(4.dp))
                     }
-
-
 
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
@@ -156,7 +164,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, onClick
                         imageVector = Icons.Default.LocationOn,
                         contentDescription = "Has address",
                         modifier = Modifier
-                            .size(13.dp)
+                            .size(16.dp)
                             .align(Alignment.BottomEnd)
                             .clickable {
                                 openAddressInMaps(
@@ -168,10 +176,32 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, onClick
                     )
                 }
             }
-
         }
+    }
+}
 
-
+@Composable
+fun ModernLabel(
+    text: String,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .background(
+                color = Color.Black.copy(alpha = 0.08f),
+                shape = RoundedCornerShape(6.dp)
+            )
+            .padding(horizontal = 6.dp, vertical = 2.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(
+            text = text,
+            color = Color.Black.copy(alpha = 0.7f),
+            fontSize = 9.sp,
+            fontWeight = FontWeight.Medium,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis
+        )
     }
 }
 
@@ -234,28 +264,6 @@ fun DeadlineItem(task: Task, currentRoute: String) {
                 style = MaterialTheme.typography.body2
             )
         }
-    }
-}
-
-// This wont be used for now
-@Composable
-fun AddressItem(task: Task, modifier: Modifier = Modifier) {
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = modifier
-    ) {
-        Icon(
-            imageVector = Icons.Default.LocationOn,
-            contentDescription = null,
-            modifier = Modifier.size(16.dp)
-        )
-        Spacer(modifier = Modifier.width(2.dp))
-        Text(
-            text = task.address,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.body2
-        )
     }
 }
 

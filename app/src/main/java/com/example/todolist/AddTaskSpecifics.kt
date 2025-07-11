@@ -391,19 +391,22 @@ fun LabelButton(
             // Show labels first
             if (availableLabels.isNotEmpty()) {
                 availableLabels.forEach { label ->
-                    DropdownMenuItem(
-                        onClick = {
-                            viewModel.onTaskLabelsChanged(label)
+                    if (label.isNotEmpty()) {
+                        DropdownMenuItem(
+                            onClick = {
+                                viewModel.onTaskLabelsChanged(label)
+                                expanded = false
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Label,
+                                contentDescription = null,
+                                tint = colorResource(id = R.color.nice_blue),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(label)
                         }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Label,
-                            contentDescription = null,
-                            tint = colorResource(id = R.color.nice_blue),
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(label)
                     }
                 }
 
