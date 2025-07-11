@@ -32,6 +32,6 @@ data class Task(
     var completionDate: Long? = null,
 
     @ColumnInfo(name = "task-label")
-    val label: String = "Inbox"// Default label
+    val label: String = ""// Default label
 
 )

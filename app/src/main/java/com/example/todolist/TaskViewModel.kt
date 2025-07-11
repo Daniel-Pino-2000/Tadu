@@ -28,7 +28,9 @@ class TaskViewModel(
     var taskAddressState by mutableStateOf("")
     var taskPriority: String by mutableStateOf("")
     var taskDeadline by mutableStateOf("")
-    var taskLabel: String by mutableStateOf("General") // Add label state
+
+    // Changed from single label to list of labels
+    var taskLabel by mutableStateOf("")
 
     @RequiresApi(Build.VERSION_CODES.O)
     private val _currentScreen: MutableState<Screen> = mutableStateOf(Screen.BottomScreen.Today)
@@ -74,8 +76,8 @@ class TaskViewModel(
         taskHasBeenChanged = true
     }
 
-    // Add label change handler
-    fun onTaskLabelChanged(newLabel: String) {
+    // Updated label change handler to work with list
+    fun onTaskLabelsChanged(newLabel: String) {
         taskLabel = newLabel
         taskHasBeenChanged = true
     }
@@ -96,7 +98,7 @@ class TaskViewModel(
         }
     }
 
-    fun getTaskById(id: Long): Flow<Task?> {
+    fun getTaskById(id: Long): Flow<Task> {
         return taskRepository.getTaskById(id)
     }
 
@@ -167,4 +169,3 @@ class TaskViewModel(
         _uiState.value = _uiState.value.copy(currentId = id)
     }
 }
-
