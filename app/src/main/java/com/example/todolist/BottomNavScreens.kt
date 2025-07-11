@@ -4,8 +4,12 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -45,6 +49,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -60,7 +65,7 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
-@OptIn(ExperimentalMaterialApi::class)
+@OptIn(ExperimentalMaterialApi::class, ExperimentalLayoutApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun BottomNavScreens(
@@ -69,6 +74,7 @@ fun BottomNavScreens(
     modifier: Modifier = Modifier
 ) {
     var searchQuery by remember { mutableStateOf("") }
+    var selectedLabel by remember { mutableStateOf<String?>(null) }
     val keyboardController = LocalSoftwareKeyboardController.current
     val focusManager = LocalFocusManager.current
     val searchFocusRequester = remember { FocusRequester() }
@@ -105,12 +111,21 @@ fun BottomNavScreens(
             }
         }
         "search" -> {
-            if (searchQuery.isBlank()) {
-                emptyList() // show no tasks when search is empty
-            } else {
-                tasks.filter { task ->
-                    task.title.contains(searchQuery, ignoreCase = true)
+            when {
+                // If searching by text, filter by search query
+                searchQuery.isNotBlank() -> {
+                    tasks.filter { task ->
+                        task.title.contains(searchQuery, ignoreCase = true)
+                    }
                 }
+                // If a label is selected, filter by that label
+                selectedLabel != null -> {
+                    tasks.filter { task ->
+                        task.label.equals(selectedLabel, ignoreCase = true)
+                    }
+                }
+                // If no search query or label selected, show no tasks
+                else -> emptyList()
             }
         }
         "inbox" -> tasks
@@ -134,8 +149,13 @@ fun BottomNavScreens(
                 (if (task.priority.isBlank()) "4" else task.priority).toInt()
             }
             if (sortedTasks.isNotEmpty()) {
+                val title = when {
+                    searchQuery.isNotBlank() -> "Search Results"
+                    selectedLabel != null -> "Tasks with \"$selectedLabel\""
+                    else -> "Tasks"
+                }
                 listOf(TaskGroup(
-                    "Search Results",
+                    title,
                     sortedTasks,
                     niceBlueColor
                 ))
@@ -207,12 +227,28 @@ fun BottomNavScreens(
         }
     }
 
+    // Get all unique labels for search mode
+    val allLabels = remember(tasks) {
+        tasks.mapNotNull { task ->
+            if (task.label.isNotBlank()) task.label else null
+        }.distinct().sorted()
+    }
+
+    // Create label data with task counts
+    val labelData = remember(allLabels, tasks) {
+        allLabels.map { label ->
+            val count = tasks.count { task -> task.label.equals(label, ignoreCase = true) }
+            Pair(label, count)
+        }
+    }
+
     // Clear focus and hide keyboard when switching routes
     LaunchedEffect(currentRoute) {
         if (currentRoute != "search") {
             keyboardController?.hide()
             focusManager.clearFocus()
             searchQuery = "" // Clear search query when leaving search screen
+            selectedLabel = null // Clear selected label when leaving search screen
         }
     }
 
@@ -223,7 +259,13 @@ fun BottomNavScreens(
         if (currentRoute == "search") {
             OutlinedTextField(
                 value = searchQuery,
-                onValueChange = { searchQuery = it },
+                onValueChange = {
+                    searchQuery = it
+                    // Clear selected label when typing
+                    if (it.isNotBlank()) {
+                        selectedLabel = null
+                    }
+                },
                 placeholder = {
                     Text(
                         text = "Search tasks...",
@@ -276,13 +318,78 @@ fun BottomNavScreens(
                     }
                 )
             )
+
+            // Show labels section only when search is empty and no label is selected
+            if (currentRoute == "search" && searchQuery.isBlank() && selectedLabel == null) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
+                    if (labelData.isNotEmpty()) {
+                        Text(
+                            text = "Labels",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color(0xFF424242),
+                            modifier = Modifier.padding(bottom = 8.dp)
+                        )
+
+                        FlowRow(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            labelData.forEach { (label, count) ->
+                                Box(
+                                    modifier = Modifier
+                                        .clip(RoundedCornerShape(16.dp))
+                                        .background(Color(0xFFE3F2FD))
+                                        .clickable {
+                                            selectedLabel = label
+                                            keyboardController?.hide()
+                                            focusManager.clearFocus()
+                                        }
+                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                ) {
+                                    Text(
+                                        text = "$label ($count)",
+                                        fontSize = 14.sp,
+                                        color = Color(0xFF1976D2),
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(16.dp))
+                    }
+                }
+            }
+
+            // Show "Back to labels" button when a label is selected
+            if (selectedLabel != null) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(
+                        text = "← Back to labels",
+                        fontSize = 14.sp,
+                        color = niceBlueColor,
+                        modifier = Modifier.clickable {
+                            selectedLabel = null
+                        }
+                    )
+                }
+            }
         }
 
         // Task list
         LazyColumn(
             modifier = Modifier.fillMaxSize()
         ) {
-            if (currentRoute == "search" && searchQuery.isBlank()) {
+            if (currentRoute == "search" && searchQuery.isBlank() && selectedLabel == null) {
                 item {
                     Box(
                         modifier = Modifier
@@ -291,13 +398,15 @@ fun BottomNavScreens(
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
-                            text = "Start typing to search tasks",
+                            text = if (labelData.isEmpty()) "No labels found" else "Select a label above or start typing to search",
                             color = Color(0xFF9E9E9E),
                             fontSize = 16.sp
                         )
                     }
                 }
-            } else if (currentRoute == "search" && searchQuery.isNotEmpty() && groupedTasks.isEmpty()) {
+            } else if (currentRoute == "search" &&
+                ((searchQuery.isNotEmpty() && groupedTasks.isEmpty()) ||
+                        (selectedLabel != null && groupedTasks.isEmpty()))) {
                 item {
                     Box(
                         modifier = Modifier
@@ -305,8 +414,13 @@ fun BottomNavScreens(
                             .padding(32.dp),
                         contentAlignment = Alignment.Center
                     ) {
+                        val message = when {
+                            searchQuery.isNotEmpty() -> "No tasks found for \"$searchQuery\""
+                            selectedLabel != null -> "No tasks found with label \"$selectedLabel\""
+                            else -> "No tasks found"
+                        }
                         Text(
-                            text = "No tasks found for \"$searchQuery\"",
+                            text = message,
                             color = Color.Gray,
                             fontSize = 16.sp
                         )
