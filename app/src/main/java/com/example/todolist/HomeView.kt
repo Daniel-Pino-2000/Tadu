@@ -102,7 +102,9 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 date = uiState.taskToUpdate.date,
                 address = uiState.taskToUpdate.address,
                 priority = uiState.taskToUpdate.priority,
-                deadline = selectedDate
+                deadline = selectedDate,
+                label = uiState.taskToUpdate.label
+
             )
             viewModel.updateTask(newTask) // When the user picks a date, update the task:
         }

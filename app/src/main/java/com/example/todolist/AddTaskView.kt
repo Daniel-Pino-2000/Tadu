@@ -137,6 +137,7 @@ fun AddTaskView(
         viewModel.taskAddressState = task.value.address
         viewModel.taskDeadline = task.value.deadline
         viewModel.taskPriority = task.value.priority
+        viewModel.taskLabel = task.value.label
     }
     else {
         // Creating new task - reset fields to defaults
@@ -145,6 +146,7 @@ fun AddTaskView(
         viewModel.taskAddressState = ""
         viewModel.taskDeadline = ""
         viewModel.taskPriority = ""
+        viewModel.taskLabel = ""
     }
 
     // Reset the "has changed" flag since we just loaded initial values
@@ -330,7 +332,8 @@ fun AddTaskView(
                                 description = viewModel.taskDescriptionState,
                                 address = viewModel.taskAddressState,
                                 priority = viewModel.taskPriority,
-                                deadline = viewModel.taskDeadline
+                                deadline = viewModel.taskDeadline,
+                                label = viewModel.taskLabel
                             )
                         } else {
                             Task(
@@ -340,7 +343,8 @@ fun AddTaskView(
                                 date = viewModel.taskDateState,
                                 address = viewModel.taskAddressState,
                                 priority = viewModel.taskPriority,
-                                deadline = viewModel.taskDeadline
+                                deadline = viewModel.taskDeadline,
+                                label = viewModel.taskLabel
                             )
                         }
 
