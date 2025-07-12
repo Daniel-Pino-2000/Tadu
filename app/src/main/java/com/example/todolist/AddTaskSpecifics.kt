@@ -226,7 +226,7 @@ fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
     val red = colorResource(id = R.color.red_yesterday)
     val orange = colorResource(id = R.color.orange)
     val blue = colorResource(id = R.color.blue_today)
-    val black = Color.Black
+    val gray = Color.Gray
 
     val priority = viewModel.taskPriority
 
@@ -235,7 +235,7 @@ fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
         "1" -> Pair(red, "Priority 1")
         "2" -> Pair(orange, "Priority 2")
         "3" -> Pair(blue, "Priority 3")
-        "4" -> Pair(black, "Priority 4")
+        "4" -> Pair(gray, "Priority 4")
         else -> Pair(Color.Blue, "Priority")
     }
 
@@ -295,7 +295,7 @@ fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
                 expanded = false
                 viewModel.onTaskPriorityChanged("4")
             }) {
-                Icon(Icons.Default.Flag, contentDescription = null, tint = black)
+                Icon(Icons.Default.Flag, contentDescription = null, tint = gray)
                 Spacer(modifier = Modifier.width(4.dp))
                 Text("Priority 4")
             }

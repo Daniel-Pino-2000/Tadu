@@ -322,40 +322,45 @@ fun AddTaskView(
                 }
 
                 Button(
-                    onClick = {
-                        if (!isValid) return@Button // ignore click if not valid
+                        onClick = {
+                            if (!isValid) return@Button // ignore click if not valid
 
-                        // Create task object based on whether we're editing or creating
-                        val task = if (id == 0L) {
-                            Task(
-                                title = viewModel.taskTitleState,
-                                description = viewModel.taskDescriptionState,
-                                address = viewModel.taskAddressState,
-                                priority = viewModel.taskPriority,
-                                deadline = viewModel.taskDeadline,
-                                label = viewModel.taskLabel
-                            )
-                        } else {
-                            Task(
-                                id = id,
-                                title = viewModel.taskTitleState,
-                                description = viewModel.taskDescriptionState,
-                                date = viewModel.taskDateState,
-                                address = viewModel.taskAddressState,
-                                priority = viewModel.taskPriority,
-                                deadline = viewModel.taskDeadline,
-                                label = viewModel.taskLabel
-                            )
-                        }
 
-                        // Submit the task
-                        onSubmit(task)
+                                // Create task object based on whether we're editing or creating
+                                val task = if (id == 0L) {
+                                    Task(
+                                        title = viewModel.taskTitleState,
+                                        description = viewModel.taskDescriptionState,
+                                        address = viewModel.taskAddressState,
+                                        priority = viewModel.taskPriority,
+                                        deadline = viewModel.taskDeadline,
+                                        label = viewModel.taskLabel
+                                    )
+                                } else {
+                                    Task(
+                                        id = id,
+                                        title = viewModel.taskTitleState,
+                                        description = viewModel.taskDescriptionState,
+                                        date = viewModel.taskDateState,
+                                        address = viewModel.taskAddressState,
+                                        priority = viewModel.taskPriority,
+                                        deadline = viewModel.taskDeadline,
+                                        label = viewModel.taskLabel
+                                    )
+                                }
 
-                        // Add to calendar if checked and not in history mode
-                        if (addToCalendar && !isHistoryMode) {
-                            addTaskToCalendar(context = context, task.title, task.deadline)
-                        }
-                    },
+                                // Submit the task
+                                onSubmit(task)
+
+
+                                // Add to calendar if checked and not in history mode
+                                if (addToCalendar && !isHistoryMode) {
+                                    addTaskToCalendar(context = context, task.title, task.deadline)
+                                }
+
+
+                        },
+
                     enabled = true, // always enabled so appearance never changes
                     modifier = Modifier.size(48.dp),
                     colors = ButtonDefaults.buttonColors(

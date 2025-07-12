@@ -57,7 +57,7 @@ abstract class TaskDao {
     abstract suspend fun markTaskPending(id: Long)
 
     // Restore deleted task
-    @Query("UPDATE `task-table` SET `task-deleted` = 0, `task-deletion-date` = NULL WHERE id = :id")
+    @Query("UPDATE `task-table` SET `task-deleted` = 0, `task-deletion-date` = NULL, `task-completed` = 0, `task-completion-date` = NULL WHERE id = :id")
     abstract suspend fun restoreTask(id: Long)
 
     // Permanently delete old completed/deleted tasks
