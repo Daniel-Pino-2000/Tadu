@@ -30,6 +30,8 @@ import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.FractionalThreshold
 import androidx.compose.material.SwipeToDismiss
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
@@ -58,6 +60,7 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.todolist.data.Task
@@ -255,7 +258,9 @@ fun BottomNavScreens(
     Column(
         modifier = modifier.fillMaxSize()
     ) {
-        // Search bar - only show when current route is "search"
+        // Replace the search screen section in your BottomNavScreens composable
+
+// Search bar - only show when current route is "search"
         if (currentRoute == "search") {
             OutlinedTextField(
                 value = searchQuery,
@@ -319,19 +324,110 @@ fun BottomNavScreens(
                 )
             )
 
+            // Show back button and selected label info when a label is selected
+            if (selectedLabel != null) {
+                Column(
+                    modifier = Modifier.padding(horizontal = 16.dp)
+                ) {
+                    // Back navigation row with better design
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clip(RoundedCornerShape(8.dp))
+                            .clickable {
+                                selectedLabel = null
+                            }
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Back arrow icon
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.ArrowBack, // You'll need to import this
+                            contentDescription = "Back",
+                            tint = niceBlueColor,
+                            modifier = Modifier.size(18.dp)
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Text(
+                            text = "Back to labels",
+                            fontSize = 14.sp,
+                            color = niceBlueColor,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+
+                    // Current filter indicator
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "Showing tasks with label:",
+                            fontSize = 14.sp,
+                            color = Color(0xFF757575),
+                            fontWeight = FontWeight.Normal
+                        )
+
+                        Spacer(modifier = Modifier.width(8.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Color(0xFFE8F5E8))
+                                .padding(horizontal = 12.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                text = selectedLabel ?: "",
+                                fontSize = 14.sp,
+                                color = Color(0xFF2E7D32),
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+            }
+
             // Show labels section only when search is empty and no label is selected
             if (currentRoute == "search" && searchQuery.isBlank() && selectedLabel == null) {
                 Column(
                     modifier = Modifier.padding(horizontal = 16.dp)
                 ) {
                     if (labelData.isNotEmpty()) {
-                        Text(
-                            text = "Labels",
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
-                            color = Color(0xFF424242),
-                            modifier = Modifier.padding(bottom = 8.dp)
-                        )
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(bottom = 12.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Filter by Labels",
+                                fontSize = 16.sp,
+                                fontWeight = FontWeight.SemiBold,
+                                color = Color(0xFF424242)
+                            )
+
+                            Spacer(modifier = Modifier.width(8.dp))
+
+                            Box(
+                                modifier = Modifier
+                                    .clip(RoundedCornerShape(10.dp))
+                                    .background(Color(0xFFE3F2FD))
+                                    .padding(horizontal = 8.dp, vertical = 2.dp)
+                            ) {
+                                Text(
+                                    text = "${labelData.size} label${if (labelData.size != 1) "s" else ""}",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFF1976D2),
+                                    fontWeight = FontWeight.Medium
+                                )
+                            }
+                        }
 
                         FlowRow(
                             modifier = Modifier.fillMaxWidth(),
@@ -348,39 +444,47 @@ fun BottomNavScreens(
                                             keyboardController?.hide()
                                             focusManager.clearFocus()
                                         }
-                                        .padding(horizontal = 12.dp, vertical = 6.dp)
+                                        .padding(horizontal = 14.dp, vertical = 8.dp)
                                 ) {
-                                    Text(
-                                        text = "$label ($count)",
-                                        fontSize = 14.sp,
-                                        color = Color(0xFF1976D2),
-                                        fontWeight = FontWeight.Medium
-                                    )
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Text(
+                                            text = label,
+                                            fontSize = 14.sp,
+                                            color = Color(0xFF1976D2),
+                                            fontWeight = FontWeight.Medium
+                                        )
+
+                                        Spacer(modifier = Modifier.width(6.dp))
+
+                                        Box(
+                                            modifier = Modifier
+                                                .size(18.dp)
+                                                .clip(CircleShape)
+                                                .background(Color(0xFF1976D2)),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = count.toString(),
+                                                fontSize = 10.sp,
+                                                color = Color.White,
+                                                fontWeight = FontWeight.Bold,
+                                                // Add lineHeight to help center small text better
+                                                lineHeight = 10.sp,
+                                                textAlign = TextAlign.Center,
+                                                maxLines = 1
+                                            )
+                                        }
+
+
+                                    }
                                 }
                             }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp))
                     }
-                }
-            }
-
-            // Show "Back to labels" button when a label is selected
-            if (selectedLabel != null) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(
-                        text = "← Back to labels",
-                        fontSize = 14.sp,
-                        color = niceBlueColor,
-                        modifier = Modifier.clickable {
-                            selectedLabel = null
-                        }
-                    )
                 }
             }
         }
