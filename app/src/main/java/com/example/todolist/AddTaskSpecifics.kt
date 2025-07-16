@@ -5,6 +5,7 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -35,6 +36,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Alarm
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Label
 import androidx.compose.material.icons.filled.Launch
@@ -51,6 +53,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -74,7 +77,6 @@ import android.widget.Toast
 import java.time.ZoneId
 import java.util.Locale
 
-// Update your ScrollableRow function to include the label button
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun ScrollableRow(viewModel: TaskViewModel, isHistoryMode: Boolean) {
@@ -191,14 +193,13 @@ fun DeadlinePickerButton(
                 }
             }.show()
 
-            // Ensure this gets reset even if selection listener doesn't trigger (e.g., user taps outside)
             showDialog = false
         }
     }
 
     // Use OutlinedButton to match OutlinedTextField appearance
     OutlinedButton(
-        onClick = { showDialog = true },
+        onClick = { if (!isHistoryMode) showDialog = true },
         shape = RoundedCornerShape(16.dp),
         border = BorderStroke(1.dp, Color.Black),
         enabled = !isHistoryMode,
@@ -215,6 +216,28 @@ fun DeadlinePickerButton(
             Text("Deadline")
         } else {
             Text(viewModel.taskDeadline)
+
+            // Enhanced delete button with better design
+            if (!isHistoryMode) {
+                Spacer(modifier = Modifier.width(6.dp))
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color.Gray.copy(alpha = 0.15f))
+                        .clickable {
+                            viewModel.onTaskDeadlineChanged("")
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Clear deadline",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
+            }
         }
     }
 }
@@ -336,7 +359,6 @@ fun addTaskToCalendar(context: Context, title: String, deadline: String) {
     }
 }
 
-
 // Label Button Component
 @Composable
 fun LabelButton(
@@ -380,6 +402,28 @@ fun LabelButton(
             )
             Spacer(modifier = Modifier.width(4.dp))
             Text(displayText)
+
+            // Enhanced delete button with better design
+            if (viewModel.taskLabel.isNotEmpty() && !isHistoryMode) {
+                Spacer(modifier = Modifier.width(6.dp))
+                Box(
+                    modifier = Modifier
+                        .size(20.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(Color.Gray.copy(alpha = 0.15f))
+                        .clickable {
+                            viewModel.onTaskLabelsChanged("")
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Close,
+                        contentDescription = "Clear label",
+                        tint = Color.Gray,
+                        modifier = Modifier.size(12.dp)
+                    )
+                }
+            }
         }
 
         DropdownMenu(
@@ -388,7 +432,7 @@ fun LabelButton(
             offset = DpOffset(x = 0.dp, y = (-200).dp),
             modifier = Modifier.widthIn(min = 200.dp)
         ) {
-            // Show labels first
+            // Show available labels
             if (availableLabels.isNotEmpty()) {
                 availableLabels.forEach { label ->
                     if (label.isNotEmpty()) {
@@ -409,18 +453,10 @@ fun LabelButton(
                         }
                     }
                 }
-
-                if (availableLabels.isNotEmpty()) {
-                    Divider()
-                }
-            }
-
-
-
-            // Add new label option
-            if (availableLabels.isNotEmpty()) {
                 Divider()
             }
+
+            // Add new label option
             DropdownMenuItem(
                 onClick = {
                     expanded = false
