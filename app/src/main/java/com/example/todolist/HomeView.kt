@@ -10,10 +10,13 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.colorResource
@@ -22,8 +25,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.todolist.data.Task
 
-
-
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -31,6 +32,12 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
 
     val uiState by viewModel.uiState.collectAsState()
 
+    // Add undo toast manager setup with Material 3 components
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val undoToastManager = remember {
+        UndoToastManager(snackbarHostState, coroutineScope)
+    }
 
     val currentScreen = remember {
         viewModel.currentScreen.value
@@ -38,7 +45,6 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
-
 
     Scaffold(
         bottomBar = {
@@ -48,6 +54,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
         },
         containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
         topBar = { AppBarView(title = getScreenTitle(currentRoute), navController) },
+        snackbarHost = { SnackbarHost(snackbarHostState) }, // Now using Material 3 SnackbarHost
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.padding(20.dp),
@@ -70,6 +77,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 BottomNavScreens(
                     viewModel = viewModel,
                     currentRoute = currentRoute,
+                    undoToastManager = undoToastManager, // Pass the undo toast manager
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -77,6 +85,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 BottomNavScreens(
                     viewModel = viewModel,
                     currentRoute = currentRoute,
+                    undoToastManager = undoToastManager, // Pass the undo toast manager
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -85,12 +94,12 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 BottomNavScreens(
                     viewModel = viewModel,
                     currentRoute = "search",
+                    undoToastManager = undoToastManager, // Pass the undo toast manager
                     modifier = Modifier.padding(innerPadding)
                 )
             }
         }
     }
-
 
     if (uiState.showDatePicker) {
         DatePicker { selectedDate ->
@@ -104,7 +113,6 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 priority = uiState.taskToUpdate.priority,
                 deadline = selectedDate,
                 label = uiState.taskToUpdate.label
-
             )
             viewModel.updateTask(newTask) // When the user picks a date, update the task:
         }
@@ -137,4 +145,3 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
 fun getScreenTitle(route: String?): String {
     return screenInBottom.find { it.bRoute == route }?.bTitle ?: "Today"
 }
-

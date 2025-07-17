@@ -31,7 +31,6 @@ import androidx.compose.material.FractionalThreshold
 import androidx.compose.material.SwipeToDismiss
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Delete
@@ -48,6 +47,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -64,6 +64,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.todolist.data.Task
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -74,8 +76,10 @@ import java.util.Locale
 fun BottomNavScreens(
     viewModel: TaskViewModel,
     currentRoute: String,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    undoToastManager: UndoToastManager
 ) {
+    val coroutineScope = rememberCoroutineScope()
     var searchQuery by remember { mutableStateOf("") }
     var selectedLabel by remember { mutableStateOf<String?>(null) }
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -569,8 +573,20 @@ fun BottomNavScreens(
                                     }
 
                                     DismissValue.DismissedToStart -> {
-                                        // Delete the task
-                                        viewModel.deleteTask(task.id)
+                                        // Show undo toast and delete the task immediately
+                                        coroutineScope.launch {
+                                            undoToastManager.showTaskDeletedToast(
+                                                taskName = task.title,
+                                                onDelete = {
+                                                    // This executes immediately - delete the task
+                                                    viewModel.deleteTask(task.id)
+                                                },
+                                                onRestore = {
+                                                    // This executes if user taps undo
+                                                    viewModel.restoreTask(task.id)
+                                                }
+                                            )
+                                        }
                                         true // allow swipe to delete
                                     }
 
@@ -629,7 +645,7 @@ fun BottomNavScreens(
                                 dismissThresholds = { FractionalThreshold(0.1f) },
                                 dismissContent = {
 
-                                    TaskItem(task, viewModel, currentRoute) {
+                                    TaskItem(task, viewModel, currentRoute, undoToastManager) {
                                         // Clear focus and hide keyboard before editing
                                         keyboardController?.hide()
                                         focusManager.clearFocus()

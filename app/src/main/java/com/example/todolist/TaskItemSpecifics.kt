@@ -58,8 +58,9 @@ import java.util.Locale
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, onClick: () -> Unit) {
-    var isChecked by remember { mutableStateOf(false) }
+fun TaskItem(task: Task, viewModel: TaskViewModel,  currentRoute: String, undoToastManager: UndoToastManager, onClick: () -> Unit) {
+    var isChecked by remember { mutableStateOf(task.isCompleted) }
+    val coroutineScope = rememberCoroutineScope()
 
     val elevationValue = 8.dp
 
@@ -80,8 +81,6 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, onClick
         ) {
             Spacer(modifier = Modifier.width(6.dp))
 
-            val coroutineScope = rememberCoroutineScope()
-
             val priority: Int = if (task.priority.isNotEmpty()) {
                 task.priority.toInt()
             } else {
@@ -90,14 +89,33 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, onClick
 
             CircularCheckbox(
                 checked = isChecked,
-                priority = priority,
+                priority = task.priority,
                 onCheckedChange = { checked ->
-                    isChecked = checked
                     if (checked) {
+                        // Start the animation immediately
+                        isChecked = checked
+
                         coroutineScope.launch {
+                            // Wait for animation to complete
                             delay(350)
-                            viewModel.completeTask(task.id)
+
+                            // Show undo toast and complete the task immediately
+                            undoToastManager.showTaskCompletedToast(
+                                taskName = task.title,
+                                onComplete = {
+                                    // This executes immediately - complete the task
+                                    viewModel.completeTask(task.id)
+                                },
+                                onRestore = {
+                                    // This executes if user taps undo
+                                    isChecked = false // Reset checkbox state
+                                    viewModel.restoreTask(task.id) // Your existing restore function
+                                }
+                            )
                         }
+                    } else {
+                        // Handle unchecking if needed
+                        isChecked = checked
                     }
                 }
             )
@@ -271,24 +289,29 @@ fun DeadlineItem(task: Task, currentRoute: String) {
 @Composable
 fun CircularCheckbox(
     checked: Boolean,
-    priority: Int = 4,
+    priority: String = "4",
     onCheckedChange: (Boolean) -> Unit,
 
     ) {
     val size: Dp = 23.dp
     val checkedColor: Color = colorResource(id = R.color.nice_blue)
     val checkmarkColor: Color = Color.White
+    var intPriority = 4
 
-    val borderColor: Color = if(priority < 4) {
-        PriorityUtils.getBorderColor(priority)
+    if (priority.isNotEmpty()) {
+        intPriority = priority.toInt()
+    }
+
+    val borderColor: Color = if(intPriority < 4) {
+        PriorityUtils.getBorderColor(intPriority)
     } else {
         Color.Gray
     }
 
     // Track uncheckedColor reactively based on priority
-    var uncheckedColor = PriorityUtils.getColor(priority)
+    var uncheckedColor = PriorityUtils.getColor(intPriority)
 
-    var border: Dp = if(priority < 4) {
+    var border: Dp = if(intPriority < 4) {
         2.dp
     } else {
         1.dp
