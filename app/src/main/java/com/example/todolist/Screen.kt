@@ -12,6 +12,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 sealed class Screen(val title: String, val route: String) {
 
     object History: Screen("History", "history")
+    object Calendar: Screen("Calendar", "calendar")
 
     sealed class BottomScreen(
         val bTitle: String,
