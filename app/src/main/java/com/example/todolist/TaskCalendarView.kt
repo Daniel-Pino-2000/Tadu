@@ -39,7 +39,7 @@ import java.util.*
 @Composable
 fun TaskCalendarView(
     viewModel: TaskViewModel,
-    onTaskClick: (Task) -> Unit,
+    onTaskClick: (task: Task) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var currentYearMonth by remember { mutableStateOf(YearMonth.now()) }
