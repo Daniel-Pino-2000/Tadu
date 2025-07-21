@@ -47,7 +47,7 @@ fun TaskCalendarView(
     var currentYearMonth by remember { mutableStateOf(YearMonth.now()) }
     var selectedDate by remember { mutableStateOf(LocalDate.now()) }
     val today = LocalDate.now()
-    val tasks by viewModel.getAllTasks.collectAsState(initial = listOf())
+    val tasks by viewModel.getPendingTasks.collectAsState(initial = listOf())
 
     // Group tasks by date with improved date parsing
     val tasksByDate = remember(tasks) {
@@ -416,81 +416,108 @@ private fun SelectedDayTasks(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 20.dp, vertical = 16.dp)
+            .padding(horizontal = 20.dp)
+            .padding(top = 20.dp, bottom = 24.dp) // Added more bottom padding
     ) {
-        // Compact header
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        // Compact header with consistent height
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(48.dp) // Fixed height to prevent compression
         ) {
-            // Smaller date indicator
-            Box(
-                modifier = Modifier
-                    .size(32.dp)
-                    .background(
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(8.dp)
-                    ),
-                contentAlignment = Alignment.Center
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.fillMaxSize()
             ) {
-                Text(
-                    text = selectedDate.dayOfMonth.toString(),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onPrimary
-                )
-            }
-
-            Column {
-                Text(
-                    text = selectedDate.format(DateTimeFormatter.ofPattern("EEE, MMM dd")),
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                if (tasks.isNotEmpty()) {
+                // Smaller date indicator
+                Box(
+                    modifier = Modifier
+                        .size(32.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primary,
+                            shape = RoundedCornerShape(8.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
                     Text(
-                        text = "${tasks.size} ${if (tasks.size == 1) "task" else "tasks"}",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = selectedDate.dayOfMonth.toString(),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onPrimary
                     )
+                }
+
+                Column {
+                    Text(
+                        text = selectedDate.format(DateTimeFormatter.ofPattern("EEE, MMM dd")),
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    if (tasks.isNotEmpty()) {
+                        Text(
+                            text = "${tasks.size} ${if (tasks.size == 1) "task" else "tasks"}",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(12.dp))
+        Spacer(modifier = Modifier.height(16.dp))
 
-        // Tasks list
-        if (tasks.isEmpty()) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                Column(
-                    horizontalAlignment = Alignment.CenterHorizontally
+        // Tasks list with proper spacing and minimum height
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .weight(1f)
+                .heightIn(min = 200.dp) // Minimum height to prevent compression
+        ) {
+            if (tasks.isEmpty()) {
+                // Empty state centered in the available space
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "📅",
-                        style = MaterialTheme.typography.displaySmall
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "No tasks for this day",
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Text(
+                            text = "📅",
+                            style = MaterialTheme.typography.displaySmall
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "No tasks for this day",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
-            }
-        } else {
-            LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(6.dp)
-            ) {
-                items(tasks) { task ->
-                    CompactTaskItem(
-                        task = task,
-                        onClick = { onTaskClick(task) }
+            } else {
+                LazyColumn(
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(
+                        top = 8.dp,
+                        bottom = 16.dp // Extra bottom padding to prevent cutoff
                     )
+                ) {
+                    items(tasks) { task ->
+                        CompactTaskItem(
+                            task = task,
+                            onClick = { onTaskClick(task) }
+                        )
+                    }
+
+                    // Add extra spacing after the last item for single task scenarios
+                    if (tasks.size == 1) {
+                        item {
+                            Spacer(modifier = Modifier.height(40.dp))
+                        }
+                    }
                 }
             }
         }
@@ -502,12 +529,8 @@ private fun CompactTaskItem(
     task: Task,
     onClick: () -> Unit
 ) {
-    val priorityColor = when (task.priority.lowercase()) {
-        "high" -> Color(0xFFE53E3E)
-        "medium" -> Color(0xFFFF9800)
-        "low" -> Color(0xFF38A169)
-        else -> Color(0xFF718096)
-    }
+
+    val priorityColor = PriorityUtils.getCircleColor(task.priority.toInt())
 
     Card(
         modifier = Modifier
@@ -638,17 +661,4 @@ private fun CompactTaskItem(
             }
         }
     }
-}
-
-// Usage example in your screen/activity
-@RequiresApi(Build.VERSION_CODES.O)
-@Composable
-fun CalendarScreen(
-    viewModel: TaskViewModel,
-    onTaskClick: (Task) -> Unit
-) {
-    TaskCalendarView(
-        viewModel = viewModel,
-        onTaskClick = onTaskClick
-    )
 }
