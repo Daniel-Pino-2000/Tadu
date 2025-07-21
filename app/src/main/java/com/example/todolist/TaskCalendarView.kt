@@ -21,6 +21,8 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -68,51 +70,74 @@ fun TaskCalendarView(
             }
     }
 
-    Column(modifier = modifier.fillMaxSize()) {
-        // Calendar Header
-        CalendarHeader(
-            currentYearMonth = currentYearMonth,
-            onPreviousMonth = { currentYearMonth = currentYearMonth.minusMonths(1) },
-            onNextMonth = { currentYearMonth = currentYearMonth.plusMonths(1) }
-        )
-
-        // Days of week header
-        DaysOfWeekHeader()
-
-        // Calendar grid - takes up 60% of the screen
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.6f)
+    Surface(
+        modifier = modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background
+    ) {
+        Column(
+            modifier = Modifier.fillMaxSize()
         ) {
-            CalendarGrid(
-                yearMonth = currentYearMonth,
-                today = today,
-                selectedDate = selectedDate,
-                tasksByDate = tasksByDate,
-                onDateClick = { date -> selectedDate = date },
-                onTaskClick = onTaskClick
-            )
-        }
+            // Modern Calendar Header with elevation
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shadowElevation = 4.dp,
+                color = MaterialTheme.colorScheme.surface
+            ) {
+                CalendarHeader(
+                    currentYearMonth = currentYearMonth,
+                    onPreviousMonth = { currentYearMonth = currentYearMonth.minusMonths(1) },
+                    onNextMonth = { currentYearMonth = currentYearMonth.plusMonths(1) }
+                )
+            }
 
-        // Divider
-        HorizontalDivider(
-            modifier = Modifier.padding(horizontal = 16.dp),
-            thickness = 1.dp,
-            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
-        )
+            // Days of week header with modern styling
+            DaysOfWeekHeader()
 
-        // Selected day tasks - takes up 40% of the screen
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .weight(0.4f)
-        ) {
-            SelectedDayTasks(
-                selectedDate = selectedDate,
-                tasks = tasksByDate[selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))] ?: emptyList(),
-                onTaskClick = onTaskClick
+            // Calendar grid - takes up 55% of the screen with proper padding
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.55f)
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            ) {
+                CalendarGrid(
+                    yearMonth = currentYearMonth,
+                    today = today,
+                    selectedDate = selectedDate,
+                    tasksByDate = tasksByDate,
+                    onDateClick = { date -> selectedDate = date },
+                    onTaskClick = onTaskClick
+                )
+            }
+
+            // Modern divider with gradient
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(1.dp)
+                    .background(
+                        Brush.horizontalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                                Color.Transparent
+                            )
+                        )
+                    )
             )
+
+            // Selected day tasks - takes up 45% of the screen
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(0.45f)
+            ) {
+                SelectedDayTasks(
+                    selectedDate = selectedDate,
+                    tasks = tasksByDate[selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))] ?: emptyList(),
+                    onTaskClick = onTaskClick
+                )
+            }
         }
     }
 }
@@ -152,27 +177,59 @@ private fun CalendarHeader(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(16.dp),
+            .padding(20.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        IconButton(onClick = onPreviousMonth) {
+        // Modern navigation button
+        IconButton(
+            onClick = onPreviousMonth,
+            modifier = Modifier
+                .size(48.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                    shape = CircleShape
+                )
+        ) {
             Icon(
                 imageVector = Icons.Default.ChevronLeft,
-                contentDescription = "Previous month"
+                contentDescription = "Previous month",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
 
-        Text(
-            text = currentYearMonth.format(DateTimeFormatter.ofPattern("MMMM yyyy")),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.Bold
-        )
+        // Enhanced month/year display
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = currentYearMonth.format(DateTimeFormatter.ofPattern("MMMM")),
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+            Text(
+                text = currentYearMonth.year.toString(),
+                style = MaterialTheme.typography.bodyLarge,
+                fontWeight = FontWeight.Medium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
 
-        IconButton(onClick = onNextMonth) {
+        // Modern navigation button
+        IconButton(
+            onClick = onNextMonth,
+            modifier = Modifier
+                .size(48.dp)
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.6f),
+                    shape = CircleShape
+                )
+        ) {
             Icon(
                 imageVector = Icons.Default.ChevronRight,
-                contentDescription = "Next month"
+                contentDescription = "Next month",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
@@ -182,20 +239,26 @@ private fun CalendarHeader(
 private fun DaysOfWeekHeader() {
     val daysOfWeek = listOf("Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat")
 
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 8.dp)
+    Surface(
+        modifier = Modifier.fillMaxWidth(),
+        color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
     ) {
-        daysOfWeek.forEach { day ->
-            Text(
-                text = day,
-                modifier = Modifier.weight(1f),
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 16.dp)
+        ) {
+            daysOfWeek.forEach { day ->
+                Text(
+                    text = day,
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    letterSpacing = 0.5.sp
+                )
+            }
         }
     }
 }
@@ -229,9 +292,10 @@ private fun CalendarGrid(
 
     LazyVerticalGrid(
         columns = GridCells.Fixed(7),
-        modifier = Modifier.padding(horizontal = 16.dp),
-        verticalArrangement = Arrangement.spacedBy(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp)
+        modifier = Modifier.fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        contentPadding = PaddingValues(vertical = 4.dp)
     ) {
         items(calendarDays) { date ->
             CalendarDay(
@@ -242,7 +306,7 @@ private fun CalendarGrid(
                 onDateClick = onDateClick,
                 modifier = Modifier
                     .aspectRatio(1f)
-                    .height(80.dp)
+                    .height(60.dp)
             )
         }
     }
@@ -258,20 +322,31 @@ private fun CalendarDay(
     onDateClick: (LocalDate) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val backgroundColor = when {
+        isSelected -> MaterialTheme.colorScheme.primary
+        isToday -> MaterialTheme.colorScheme.primaryContainer
+        else -> MaterialTheme.colorScheme.surface
+    }
+
+    val textColor = when {
+        isSelected -> MaterialTheme.colorScheme.onPrimary
+        isToday -> MaterialTheme.colorScheme.onPrimaryContainer
+        else -> MaterialTheme.colorScheme.onSurface
+    }
+
     Box(
         modifier = modifier
-            .border(
-                width = if (isSelected) 2.dp else 0.5.dp,
-                color = if (isSelected) MaterialTheme.colorScheme.primary
-                else MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                shape = RoundedCornerShape(4.dp)
+            .shadow(
+                elevation = if (isSelected) 8.dp else if (isToday) 4.dp else 1.dp,
+                shape = RoundedCornerShape(12.dp)
             )
             .background(
-                color = if (isSelected) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
-                else MaterialTheme.colorScheme.surface,
-                shape = RoundedCornerShape(4.dp)
+                color = backgroundColor,
+                shape = RoundedCornerShape(12.dp)
             )
-            .clickable { date?.let { onDateClick(it) } }
+            .clickable(enabled = date != null) {
+                date?.let { onDateClick(it) }
+            }
             .padding(4.dp),
         contentAlignment = Alignment.Center
     ) {
@@ -280,44 +355,50 @@ private fun CalendarDay(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                // Day number
-                Box(
-                    modifier = Modifier
-                        .size(24.dp)
-                        .background(
-                            color = if (isToday) MaterialTheme.colorScheme.primary else Color.Transparent,
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = date.dayOfMonth.toString(),
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        color = if (isToday) MaterialTheme.colorScheme.onPrimary
-                        else MaterialTheme.colorScheme.onSurface
-                    )
-                }
+                // Day number with modern typography
+                Text(
+                    text = date.dayOfMonth.toString(),
+                    style = MaterialTheme.typography.bodyLarge,
+                    fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Medium,
+                    color = textColor,
+                    fontSize = 16.sp
+                )
 
-                // Task count indicator
+                // Task count indicator with modern design
                 if (taskCount > 0) {
-                    Spacer(modifier = Modifier.height(2.dp))
-                    Box(
-                        modifier = Modifier
-                            .size(16.dp)
-                            .background(
-                                color = MaterialTheme.colorScheme.secondary,
-                                shape = CircleShape
-                            ),
-                        contentAlignment = Alignment.Center
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    // Multiple dots for multiple tasks (max 3 dots)
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(2.dp)
                     ) {
-                        Text(
-                            text = if (taskCount > 9) "9+" else taskCount.toString(),
-                            style = MaterialTheme.typography.labelSmall,
-                            fontSize = 8.sp,
-                            color = MaterialTheme.colorScheme.onSecondary,
-                            fontWeight = FontWeight.Bold
-                        )
+                        repeat(minOf(taskCount, 3)) {
+                            Box(
+                                modifier = Modifier
+                                    .size(4.dp)
+                                    .background(
+                                        color = if (isSelected)
+                                            MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                                        else
+                                            MaterialTheme.colorScheme.secondary,
+                                        shape = CircleShape
+                                    )
+                            )
+                        }
+
+                        // Show "+" if more than 3 tasks
+                        if (taskCount > 3) {
+                            Text(
+                                text = "+",
+                                style = MaterialTheme.typography.labelSmall,
+                                fontSize = 8.sp,
+                                color = if (isSelected)
+                                    MaterialTheme.colorScheme.onPrimary.copy(alpha = 0.8f)
+                                else
+                                    MaterialTheme.colorScheme.secondary,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
                     }
                 }
             }
@@ -335,15 +416,47 @@ private fun SelectedDayTasks(
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(horizontal = 20.dp, vertical = 16.dp)
     ) {
-        // Header
-        Text(
-            text = "Tasks for ${selectedDate.format(DateTimeFormatter.ofPattern("MMMM dd, yyyy"))}",
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface
-        )
+        // Compact header
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            // Smaller date indicator
+            Box(
+                modifier = Modifier
+                    .size(32.dp)
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(8.dp)
+                    ),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = selectedDate.dayOfMonth.toString(),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+
+            Column {
+                Text(
+                    text = selectedDate.format(DateTimeFormatter.ofPattern("EEE, MMM dd")),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+                if (tasks.isNotEmpty()) {
+                    Text(
+                        text = "${tasks.size} ${if (tasks.size == 1) "task" else "tasks"}",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -353,18 +466,28 @@ private fun SelectedDayTasks(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "No tasks for this day",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "📅",
+                        style = MaterialTheme.typography.displaySmall
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "No tasks for this day",
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
         } else {
             LazyColumn(
-                verticalArrangement = Arrangement.spacedBy(8.dp)
+                verticalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 items(tasks) { task ->
-                    DetailedTaskItem(
+                    CompactTaskItem(
                         task = task,
                         onClick = { onTaskClick(task) }
                     )
@@ -375,7 +498,7 @@ private fun SelectedDayTasks(
 }
 
 @Composable
-private fun DetailedTaskItem(
+private fun CompactTaskItem(
     task: Task,
     onClick: () -> Unit
 ) {
@@ -392,12 +515,14 @@ private fun DetailedTaskItem(
             .clickable { onClick() },
         colors = CardDefaults.cardColors(
             containerColor = if (task.isCompleted)
-                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
             else
                 MaterialTheme.colorScheme.surface
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
-        shape = RoundedCornerShape(8.dp)
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (task.isCompleted) 1.dp else 2.dp
+        ),
+        shape = RoundedCornerShape(12.dp)
     ) {
         Row(
             modifier = Modifier
@@ -405,13 +530,17 @@ private fun DetailedTaskItem(
                 .padding(12.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            // Priority indicator
+            // Priority indicator with completed state
             Box(
                 modifier = Modifier
-                    .size(12.dp)
+                    .width(3.dp)
+                    .height(28.dp)
                     .background(
-                        color = priorityColor,
-                        shape = CircleShape
+                        color = if (task.isCompleted)
+                            priorityColor.copy(alpha = 0.3f)
+                        else
+                            priorityColor,
+                        shape = RoundedCornerShape(2.dp)
                     )
             )
 
@@ -424,45 +553,87 @@ private fun DetailedTaskItem(
                 Text(
                     text = task.title,
                     style = MaterialTheme.typography.bodyMedium,
-                    fontWeight = FontWeight.Medium,
+                    fontWeight = if (task.isCompleted) FontWeight.Normal else FontWeight.SemiBold,
                     textDecoration = if (task.isCompleted) TextDecoration.LineThrough else TextDecoration.None,
                     color = if (task.isCompleted)
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
                     else
-                        MaterialTheme.colorScheme.onSurface
+                        MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
                 )
 
                 if (task.description.isNotEmpty()) {
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.height(2.dp))
                     Text(
                         text = task.description,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 2,
+                        color = if (task.isCompleted)
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f)
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
 
-                Spacer(modifier = Modifier.height(4.dp))
+                // Compact priority and label row
+                if (!task.isCompleted && (task.priority.isNotEmpty() || task.label.isNotEmpty())) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        // Compact priority chip
+                        if (task.priority.isNotEmpty()) {
+                            Surface(
+                                color = priorityColor.copy(alpha = 0.12f),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Text(
+                                    text = task.priority.first().uppercase(),
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = priorityColor,
+                                    fontWeight = FontWeight.Bold,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
+                                    fontSize = 10.sp
+                                )
+                            }
+                        }
 
-                // Priority and label row
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        // Compact label
+                        if (task.label.isNotEmpty()) {
+                            Text(
+                                text = task.label,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontSize = 10.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
+                    }
+                }
+            }
+
+            // Completion status indicator
+            if (task.isCompleted) {
+                Spacer(modifier = Modifier.width(8.dp))
+                Box(
+                    modifier = Modifier
+                        .size(16.dp)
+                        .background(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
+                            shape = CircleShape
+                        ),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "${task.priority} Priority",
+                        text = "✓",
                         style = MaterialTheme.typography.labelSmall,
-                        color = priorityColor,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontSize = 10.sp,
                         fontWeight = FontWeight.Bold
                     )
-
-                    if (task.label.isNotEmpty()) {
-                        Text(
-                            text = task.label,
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
                 }
             }
         }
@@ -476,13 +647,8 @@ fun CalendarScreen(
     viewModel: TaskViewModel,
     onTaskClick: (Task) -> Unit
 ) {
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background
-    ) {
-        TaskCalendarView(
-            viewModel = viewModel,
-            onTaskClick = onTaskClick
-        )
-    }
+    TaskCalendarView(
+        viewModel = viewModel,
+        onTaskClick = onTaskClick
+    )
 }
