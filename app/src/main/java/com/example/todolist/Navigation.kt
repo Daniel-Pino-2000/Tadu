@@ -2,6 +2,8 @@ package com.example.todolist
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.Composable
@@ -17,7 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.todolist.data.Task
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun Navigation(viewModel: TaskViewModel = viewModel(),
@@ -25,25 +27,220 @@ fun Navigation(viewModel: TaskViewModel = viewModel(),
 
     val uiState by viewModel.uiState.collectAsState()
 
+    // Animation configuration
+    val animationDuration = 350
+    val slideDistance = 300
+
     NavHost(
         navController = navController,
         startDestination = Screen.BottomScreen.Today.bRoute
     ) {
-        composable(Screen.BottomScreen.Today.bRoute) {
-            HomeView(navController, viewModel)
-        }
-        composable(Screen.BottomScreen.Inbox.bRoute) {
-            HomeView(navController, viewModel)
-        }
-        composable(Screen.BottomScreen.Search.bRoute) {
+        // Bottom navigation screens with horizontal slide animations
+        composable(
+            Screen.BottomScreen.Today.bRoute,
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth ->
+                        when (initialState.destination.route) {
+                            Screen.BottomScreen.Inbox.bRoute -> -slideDistance
+                            Screen.BottomScreen.Search.bRoute -> -slideDistance
+                            else -> slideDistance
+                        }
+                    },
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                )
+            },
+            exitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth ->
+                        when (targetState.destination.route) {
+                            Screen.BottomScreen.Inbox.bRoute -> -slideDistance
+                            Screen.BottomScreen.Search.bRoute -> -slideDistance
+                            else -> slideDistance
+                        }
+                    },
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                ) + fadeOut(
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                )
+            }
+        ) {
             HomeView(navController, viewModel)
         }
 
-        composable(Screen.History.route) {
+        composable(
+            Screen.BottomScreen.Inbox.bRoute,
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth ->
+                        when (initialState.destination.route) {
+                            Screen.BottomScreen.Today.bRoute -> slideDistance
+                            Screen.BottomScreen.Search.bRoute -> -slideDistance
+                            else -> slideDistance
+                        }
+                    },
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                )
+            },
+            exitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth ->
+                        when (targetState.destination.route) {
+                            Screen.BottomScreen.Today.bRoute -> slideDistance
+                            Screen.BottomScreen.Search.bRoute -> -slideDistance
+                            else -> slideDistance
+                        }
+                    },
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                ) + fadeOut(
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                )
+            }
+        ) {
+            HomeView(navController, viewModel)
+        }
+
+        composable(
+            Screen.BottomScreen.Search.bRoute,
+            enterTransition = {
+                slideInHorizontally(
+                    initialOffsetX = { fullWidth ->
+                        when (initialState.destination.route) {
+                            Screen.BottomScreen.Today.bRoute -> slideDistance
+                            Screen.BottomScreen.Inbox.bRoute -> slideDistance
+                            else -> -slideDistance
+                        }
+                    },
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                )
+            },
+            exitTransition = {
+                slideOutHorizontally(
+                    targetOffsetX = { fullWidth ->
+                        when (targetState.destination.route) {
+                            Screen.BottomScreen.Today.bRoute -> slideDistance
+                            Screen.BottomScreen.Inbox.bRoute -> slideDistance
+                            else -> -slideDistance
+                        }
+                    },
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                ) + fadeOut(
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                )
+            }
+        ) {
+            HomeView(navController, viewModel)
+        }
+
+        // History screen with vertical slide from bottom
+        composable(
+            Screen.History.route,
+            enterTransition = {
+                slideInVertically(
+                    initialOffsetY = { fullHeight -> fullHeight },
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                )
+            },
+            exitTransition = {
+                slideOutVertically(
+                    targetOffsetY = { fullHeight -> fullHeight },
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                ) + fadeOut(
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                )
+            }
+        ) {
             TaskHistoryView(viewModel, navController)
         }
 
-        composable(Screen.Calendar.route) {
+        // Calendar screen with scale and fade animation
+        composable(
+            Screen.Calendar.route,
+            enterTransition = {
+                scaleIn(
+                    initialScale = 0.8f,
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                ) + fadeIn(
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                )
+            },
+            exitTransition = {
+                scaleOut(
+                    targetScale = 0.8f,
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                ) + fadeOut(
+                    animationSpec = tween(
+                        durationMillis = animationDuration,
+                        easing = FastOutSlowInEasing
+                    )
+                )
+            }
+        ) {
             val uiState by viewModel.uiState.collectAsState()
             var selectedTaskId by remember { mutableStateOf<Long?>(null) }
 
@@ -64,6 +261,7 @@ fun Navigation(viewModel: TaskViewModel = viewModel(),
                 }
             )
 
+            // Animated bottom sheet
             if (uiState.showBottomSheet) {
                 ModalBottomSheet(
                     onDismissRequest = {
@@ -72,27 +270,44 @@ fun Navigation(viewModel: TaskViewModel = viewModel(),
                         selectedTaskId = null
                     }
                 ) {
-                    AddTaskView(
-                        selectedTaskId ?: uiState.currentId, // Use selected task ID if editing, otherwise use currentId
-                        viewModel,
-                        onDismiss = {
-                            viewModel.setShowBottomSheet(false)
-                            viewModel.setTaskBeingEdited(false)
-                            selectedTaskId = null
-                            viewModel.resetFormFields()
-                        },
-                        onSubmit = { task ->
-                            if (!uiState.taskBeingEdited) {
-                                viewModel.addTask(task)
-                            } else {
-                                viewModel.updateTask(task)
+                    // Animate the content inside the bottom sheet
+                    AnimatedVisibility(
+                        visible = uiState.showBottomSheet,
+                        enter = slideInVertically(
+                            initialOffsetY = { it / 2 },
+                            animationSpec = tween(300, easing = EaseOutQuart)
+                        ) + fadeIn(
+                            animationSpec = tween(300, easing = EaseOutQuart)
+                        ),
+                        exit = slideOutVertically(
+                            targetOffsetY = { it / 2 },
+                            animationSpec = tween(200, easing = EaseInQuart)
+                        ) + fadeOut(
+                            animationSpec = tween(200, easing = EaseInQuart)
+                        )
+                    ) {
+                        AddTaskView(
+                            selectedTaskId ?: uiState.currentId,
+                            viewModel,
+                            onDismiss = {
+                                viewModel.setShowBottomSheet(false)
+                                viewModel.setTaskBeingEdited(false)
+                                selectedTaskId = null
+                                viewModel.resetFormFields()
+                            },
+                            onSubmit = { task ->
+                                if (!uiState.taskBeingEdited) {
+                                    viewModel.addTask(task)
+                                } else {
+                                    viewModel.updateTask(task)
+                                }
+                                viewModel.setShowBottomSheet(false)
+                                viewModel.setTaskBeingEdited(false)
+                                selectedTaskId = null
+                                viewModel.resetFormFields()
                             }
-                            viewModel.setShowBottomSheet(false)
-                            viewModel.setTaskBeingEdited(false)
-                            selectedTaskId = null
-                            viewModel.resetFormFields()
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
