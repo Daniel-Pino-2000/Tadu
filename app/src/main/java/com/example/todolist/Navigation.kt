@@ -50,9 +50,17 @@ fun Navigation(viewModel: TaskViewModel = viewModel(),
             TaskCalendarView(
                 viewModel,
                 onTaskClick = { task ->
-                    selectedTaskId = task.id // Store the task ID locally
-                    viewModel.setTaskBeingEdited(true)
-                    viewModel.setShowBottomSheet(true)
+                    if (task != null) {
+                        // Editing existing task
+                        selectedTaskId = task.id
+                        viewModel.setTaskBeingEdited(true)
+                        viewModel.setShowBottomSheet(true)
+                    } else {
+                        // Adding new task
+                        selectedTaskId = null
+                        viewModel.setTaskBeingEdited(false)
+                        viewModel.setShowBottomSheet(true)
+                    }
                 }
             )
 
@@ -65,7 +73,7 @@ fun Navigation(viewModel: TaskViewModel = viewModel(),
                     }
                 ) {
                     AddTaskView(
-                        selectedTaskId ?: uiState.currentId, // Use selected task ID if editing
+                        selectedTaskId ?: uiState.currentId, // Use selected task ID if editing, otherwise use currentId
                         viewModel,
                         onDismiss = {
                             viewModel.setShowBottomSheet(false)
@@ -86,7 +94,5 @@ fun Navigation(viewModel: TaskViewModel = viewModel(),
                 }
             }
         }
-
-
     }
 }

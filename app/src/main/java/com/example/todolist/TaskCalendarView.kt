@@ -14,6 +14,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material3.*
@@ -30,6 +31,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.todolist.data.Task
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -41,7 +43,7 @@ import java.util.*
 @Composable
 fun TaskCalendarView(
     viewModel: TaskViewModel,
-    onTaskClick: (task: Task) -> Unit,
+    onTaskClick: (task: Task?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var currentYearMonth by remember { mutableStateOf(YearMonth.now()) }
@@ -49,22 +51,18 @@ fun TaskCalendarView(
     val today = LocalDate.now()
     val tasks by viewModel.getPendingTasks.collectAsState(initial = listOf())
 
-    // Group tasks by date with improved date parsing
+    // Group tasks by date with improved date parsing - only include tasks with deadlines
     val tasksByDate = remember(tasks) {
         val currentYear = LocalDate.now().year
 
-        tasks.filter { !it.isDeleted }
+        tasks.filter { !it.isDeleted && it.deadline.isNotEmpty() } // Only include tasks with deadlines
             .groupBy { task ->
-                if (task.deadline.isNotEmpty()) {
-                    try {
-                        // Parse deadline format like "Jun 5", "Jul 18"
-                        val deadlineDate = parseDeadlineString(task.deadline, currentYear)
-                        deadlineDate?.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                            ?: selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                    } catch (e: Exception) {
-                        selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                    }
-                } else {
+                try {
+                    // Parse deadline format like "Jun 5", "Jul 18"
+                    val deadlineDate = parseDeadlineString(task.deadline, currentYear)
+                    deadlineDate?.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                        ?: selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                } catch (e: Exception) {
                     selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
                 }
             }
@@ -135,7 +133,13 @@ fun TaskCalendarView(
                 SelectedDayTasks(
                     selectedDate = selectedDate,
                     tasks = tasksByDate[selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))] ?: emptyList(),
-                    onTaskClick = onTaskClick
+                    onTaskClick = onTaskClick,
+                    onAddTaskClick = {
+                        // Set the deadline in the viewModel before triggering add task
+                        val deadlineString = selectedDate.format(DateTimeFormatter.ofPattern("MMM d"))
+                        viewModel.onTaskDeadlineChanged(deadlineString)
+                        onTaskClick(null)
+                    }
                 )
             }
         }
@@ -271,7 +275,7 @@ private fun CalendarGrid(
     selectedDate: LocalDate,
     tasksByDate: Map<String, List<Task>>,
     onDateClick: (LocalDate) -> Unit,
-    onTaskClick: (Task) -> Unit
+    onTaskClick: (Task?) -> Unit
 ) {
     val firstDayOfMonth = yearMonth.atDay(1)
     val lastDayOfMonth = yearMonth.atEndOfMonth()
@@ -364,7 +368,7 @@ private fun CalendarDay(
                     fontSize = 16.sp
                 )
 
-                // Task count indicator with modern design
+                // Task count indicator with modern design - only show if there are tasks with deadlines
                 if (taskCount > 0) {
                     Spacer(modifier = Modifier.height(4.dp))
 
@@ -411,7 +415,8 @@ private fun CalendarDay(
 private fun SelectedDayTasks(
     selectedDate: LocalDate,
     tasks: List<Task>,
-    onTaskClick: (Task) -> Unit
+    onTaskClick: (Task?) -> Unit,
+    onAddTaskClick: () -> Unit // New parameter for add task with date
 ) {
     Column(
         modifier = Modifier
@@ -448,7 +453,9 @@ private fun SelectedDayTasks(
                     )
                 }
 
-                Column {
+                Column(
+                    modifier = Modifier.weight(1f) // Takes available space
+                ) {
                     Text(
                         text = selectedDate.format(DateTimeFormatter.ofPattern("EEE, MMM dd")),
                         style = MaterialTheme.typography.titleSmall,
@@ -462,6 +469,19 @@ private fun SelectedDayTasks(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
+                }
+
+                // Add task button - now calls onAddTaskClick to set deadline
+                IconButton(
+                    onClick = onAddTaskClick,
+                    modifier = Modifier.size(32.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = "Add task",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
                 }
             }
         }
@@ -479,7 +499,7 @@ private fun SelectedDayTasks(
                 // Empty state centered in the available space
                 Box(
                     modifier = Modifier.fillMaxSize(),
-                    contentAlignment = Alignment.Center
+                    contentAlignment = Alignment.Center,
                 ) {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally

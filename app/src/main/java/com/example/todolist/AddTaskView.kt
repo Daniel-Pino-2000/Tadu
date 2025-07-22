@@ -129,24 +129,26 @@ fun AddTaskView(
     }
 
     // Initialize form fields based on whether we're editing an existing task or creating a new one
-    if (id != 0L) {
-        // Editing existing task - populate fields with current values
-        val task = viewModel.getTaskById(id).collectAsState(initial = Task(0L, "", "", "", "", "4", ""))
-        viewModel.taskTitleState = task.value.title
-        viewModel.taskDescriptionState = task.value.description
-        viewModel.taskAddressState = task.value.address
-        viewModel.taskDeadline = task.value.deadline
-        viewModel.taskPriority = task.value.priority
-        viewModel.taskLabel = task.value.label
-    }
-    else {
-        // Creating new task - reset fields to defaults
-        viewModel.taskTitleState = ""
-        viewModel.taskDescriptionState = ""
-        viewModel.taskAddressState = ""
-        viewModel.taskDeadline = ""
-        viewModel.taskPriority = ""
-        viewModel.taskLabel = ""
+    // Remove all the direct assignments and replace with:
+    val task by viewModel.getTaskById(id).collectAsState(
+        initial = Task(0L, "", "", "", "", "4", "")
+    )
+
+    LaunchedEffect(id, task) {
+        if (id != 0L && task.id != 0L) {
+            // Editing existing task
+            viewModel.populateFieldsWithTask(task)
+        } else if (id == 0L) {
+            // Creating new task - only reset if fields haven't been set from calendar
+            if (viewModel.taskDeadline.isEmpty()) {
+                viewModel.resetFormFields()
+            } else {
+                // Keep the deadline from calendar but reset other fields
+                val currentDeadline = viewModel.taskDeadline
+                viewModel.resetFormFields()
+                viewModel.onTaskDeadlineChanged(currentDeadline)
+            }
+        }
     }
 
     // Reset the "has changed" flag since we just loaded initial values

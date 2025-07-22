@@ -82,6 +82,29 @@ class TaskViewModel(
         taskHasBeenChanged = true
     }
 
+    // ADD THIS: Function to reset all form fields
+    fun resetFormFields() {
+        taskTitleState = ""
+        taskDescriptionState = ""
+        taskDateState = ""
+        taskAddressState = ""
+        taskPriority = ""
+        taskDeadline = ""
+        taskLabel = ""
+        taskHasBeenChanged = false
+    }
+
+    // ADD THIS: Function to populate fields with existing task data
+    fun populateFieldsWithTask(task: Task) {
+        taskTitleState = task.title
+        taskDescriptionState = task.description
+        taskAddressState = task.address
+        taskDeadline = task.deadline
+        taskPriority = task.priority
+        taskLabel = task.label
+        taskHasBeenChanged = false
+    }
+
     // Initialize flows directly - they're already reactive
     val getAllTasks: Flow<List<Task>> = taskRepository.getTasks()
     val getPendingTasks: Flow<List<Task>> = taskRepository.getPendingTasks()
