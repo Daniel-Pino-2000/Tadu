@@ -173,6 +173,7 @@ class TaskViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.restoreTask(taskId)
         }
+        resetFormFields()
     }
 
     // Add method to get tasks by label

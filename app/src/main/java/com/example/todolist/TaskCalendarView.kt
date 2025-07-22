@@ -5,6 +5,7 @@ import androidx.annotation.RequiresApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -17,6 +18,8 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ChevronLeft
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -25,19 +28,25 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.todolist.data.Task
+import kotlinx.coroutines.delay
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.YearMonth
 import java.time.format.DateTimeFormatter
 import java.util.*
+import kotlin.math.roundToInt
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -134,6 +143,9 @@ fun TaskCalendarView(
                     selectedDate = selectedDate,
                     tasks = tasksByDate[selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))] ?: emptyList(),
                     onTaskClick = onTaskClick,
+                    onTaskDelete = { task ->
+                        viewModel.deleteTask(task.id)
+                    },
                     onAddTaskClick = {
                         // Set the deadline in the viewModel before triggering add task
                         val deadlineString = selectedDate.format(DateTimeFormatter.ofPattern("MMM d"))
@@ -416,6 +428,7 @@ private fun SelectedDayTasks(
     selectedDate: LocalDate,
     tasks: List<Task>,
     onTaskClick: (Task?) -> Unit,
+    onTaskDelete: (Task) -> Unit,
     onAddTaskClick: () -> Unit // New parameter for add task with date
 ) {
     Column(
@@ -525,10 +538,11 @@ private fun SelectedDayTasks(
                         bottom = 16.dp // Extra bottom padding to prevent cutoff
                     )
                 ) {
-                    items(tasks) { task ->
-                        CompactTaskItem(
+                    items(tasks, key = { it.id }) { task ->
+                        TaskItemWithDelete(
                             task = task,
-                            onClick = { onTaskClick(task) }
+                            onClick = { onTaskClick(task) },
+                            onDelete = { onTaskDelete(task) }
                         )
                     }
 
@@ -545,16 +559,77 @@ private fun SelectedDayTasks(
 }
 
 @Composable
+private fun TaskItemWithDelete(
+    task: Task,
+    onClick: () -> Unit,
+    onDelete: () -> Unit
+) {
+    var showDeleteDialog by remember { mutableStateOf(false) }
+    val haptic = LocalHapticFeedback.current
+
+    CompactTaskItem(
+        task = task,
+        onClick = onClick,
+        onDeleteClick = { showDeleteDialog = true }
+    )
+
+    // Delete confirmation dialog
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.Delete,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error
+                )
+            },
+            title = {
+                Text(
+                    text = "Delete Task",
+                    style = MaterialTheme.typography.headlineSmall
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete \"${task.title}\"?.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        onDelete()
+                        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+                    },
+                    colors = ButtonDefaults.textButtonColors(
+                        contentColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Delete")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showDeleteDialog = false }
+                ) {
+                    Text("Cancel")
+                }
+            }
+        )
+    }
+}
+
+@Composable
 private fun CompactTaskItem(
     task: Task,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onDeleteClick: (() -> Unit)? = null
 ) {
-
-
     val priorityColor = PriorityUtils.getCircleColor(
         if (task.priority.isEmpty()) 4 else task.priority.toInt()
     )
-
 
     Card(
         modifier = Modifier
@@ -662,24 +737,17 @@ private fun CompactTaskItem(
                 }
             }
 
-            // Completion status indicator
-            if (task.isCompleted) {
-                Spacer(modifier = Modifier.width(8.dp))
-                Box(
-                    modifier = Modifier
-                        .size(16.dp)
-                        .background(
-                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.6f),
-                            shape = CircleShape
-                        ),
-                    contentAlignment = Alignment.Center
+            // Direct delete icon button
+            if (onDeleteClick != null) {
+                IconButton(
+                    onClick = onDeleteClick,
+                    modifier = Modifier.size(32.dp)
                 ) {
-                    Text(
-                        text = "✓",
-                        style = MaterialTheme.typography.labelSmall,
-                        color = MaterialTheme.colorScheme.onPrimary,
-                        fontSize = 10.sp,
-                        fontWeight = FontWeight.Bold
+                    Icon(
+                        imageVector = Icons.Outlined.Delete,
+                        contentDescription = "Delete task",
+                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
