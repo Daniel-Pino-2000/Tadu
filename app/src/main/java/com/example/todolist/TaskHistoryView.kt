@@ -139,12 +139,14 @@ fun TaskHistoryView(viewModel: TaskViewModel, navController: NavHostController) 
                 onDismiss = {
                     viewModel.setShowBottomSheet(false)
                     viewModel.setTaskBeingEdited(false)
+                    viewModel.resetFormFields()
                 },
                 onSubmit = { task ->
                     // In history mode, we restore the task (make it active again)
                     viewModel.restoreTask(task.id) // You'll need to implement this method
                     viewModel.setShowBottomSheet(false)
                     viewModel.setTaskBeingEdited(false)
+                    viewModel.resetFormFields()
                 },
                 isHistoryMode = true, // This is the key difference
                 onDelete = { taskId ->

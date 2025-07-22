@@ -126,6 +126,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
             onDismiss = {
                 viewModel.setShowBottomSheet(false)
                 viewModel.setTaskBeingEdited(false)
+                viewModel.resetFormFields()
             },
             onSubmit = { task ->
                 if (!uiState.taskBeingEdited) {
@@ -135,6 +136,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 }
                 viewModel.setShowBottomSheet(false)
                 viewModel.setTaskBeingEdited(false)
+                viewModel.resetFormFields()
             }
         )
     }

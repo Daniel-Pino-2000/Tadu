@@ -79,6 +79,7 @@ fun Navigation(viewModel: TaskViewModel = viewModel(),
                             viewModel.setShowBottomSheet(false)
                             viewModel.setTaskBeingEdited(false)
                             selectedTaskId = null
+                            viewModel.resetFormFields()
                         },
                         onSubmit = { task ->
                             if (!uiState.taskBeingEdited) {
@@ -89,6 +90,7 @@ fun Navigation(viewModel: TaskViewModel = viewModel(),
                             viewModel.setShowBottomSheet(false)
                             viewModel.setTaskBeingEdited(false)
                             selectedTaskId = null
+                            viewModel.resetFormFields()
                         }
                     )
                 }
