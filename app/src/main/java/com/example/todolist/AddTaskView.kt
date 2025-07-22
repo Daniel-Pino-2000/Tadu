@@ -161,6 +161,7 @@ fun AddTaskView(
                 openConfirmDialog.value = true // Show confirmation if there are unsaved changes
             } else {
                 onDismiss() // Allow immediate dismissal if no changes or dismissal is allowed
+                viewModel.resetFormFields()
             }
         },
         sheetState = sheetState,
@@ -173,6 +174,7 @@ fun AddTaskView(
                 openConfirmDialog.value = true
             } else {
                 onDismiss()
+                viewModel.resetFormFields()
             }
         }
 

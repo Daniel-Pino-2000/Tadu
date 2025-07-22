@@ -592,7 +592,7 @@ private fun TaskItemWithDelete(
             },
             text = {
                 Text(
-                    text = "Are you sure you want to delete \"${task.title}\"?.",
+                    text = "Are you sure you want to delete \"${task.title}\"?",
                     style = MaterialTheme.typography.bodyMedium
                 )
             },
