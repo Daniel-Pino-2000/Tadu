@@ -94,6 +94,11 @@ class TaskViewModel(
         taskHasBeenChanged = false
     }
 
+    fun resetUiState() {
+        _uiState.value = UiState()
+    }
+
+
     // ADD THIS: Function to populate fields with existing task data
     fun populateFieldsWithTask(task: Task) {
         taskTitleState = task.title
@@ -119,6 +124,8 @@ class TaskViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.addTask(task)
         }
+        resetFormFields()
+        resetUiState()
     }
 
     fun getTaskById(id: Long): Flow<Task> {
@@ -129,6 +136,8 @@ class TaskViewModel(
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.updateATask(task)
         }
+        resetFormFields()
+        resetUiState()
     }
 
     // Hard delete - permanently removes from database
