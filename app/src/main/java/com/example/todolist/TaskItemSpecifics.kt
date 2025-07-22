@@ -20,6 +20,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
@@ -146,7 +147,8 @@ fun TaskItem(task: Task, viewModel: TaskViewModel,  currentRoute: String, undoTo
                         if (task.label.isNotEmpty()) {
                             Spacer(modifier = Modifier.width(8.dp))
                             ModernLabel(
-                                text = task.label
+                                text = task.label,
+                                modifier = Modifier.widthIn(max = 120.dp) // Limits label width
                             )
                         }
                     }
