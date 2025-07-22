@@ -550,7 +550,11 @@ private fun CompactTaskItem(
     onClick: () -> Unit
 ) {
 
-    val priorityColor = PriorityUtils.getCircleColor(task.priority.toInt())
+
+    val priorityColor = PriorityUtils.getCircleColor(
+        if (task.priority.isEmpty()) 4 else task.priority.toInt()
+    )
+
 
     Card(
         modifier = Modifier
