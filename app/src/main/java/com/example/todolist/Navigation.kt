@@ -37,143 +37,26 @@ fun Navigation(
         navController = navController,
         startDestination = Screen.BottomScreen.Today.bRoute
     ) {
-        // Bottom navigation screens with horizontal slide animations
-        composable(
-            Screen.BottomScreen.Today.bRoute,
-            enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth ->
-                        when (initialState.destination.route) {
-                            Screen.BottomScreen.Inbox.bRoute -> -slideDistance
-                            Screen.BottomScreen.Search.bRoute -> -slideDistance
-                            else -> slideDistance
-                        }
-                    },
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = FastOutSlowInEasing
+        listOf(
+            Screen.BottomScreen.Today,
+            Screen.BottomScreen.Inbox,
+            Screen.BottomScreen.Search
+        ).forEach { screen ->
+            composable(
+                route = screen.bRoute,
+                enterTransition = {
+                    fadeIn(
+                        animationSpec = tween(animationDuration, easing = FastOutSlowInEasing)
                     )
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = FastOutSlowInEasing
+                },
+                exitTransition = {
+                    fadeOut(
+                        animationSpec = tween(animationDuration, easing = FastOutSlowInEasing)
                     )
-                )
-            },
-            exitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { fullWidth ->
-                        when (targetState.destination.route) {
-                            Screen.BottomScreen.Inbox.bRoute -> -slideDistance
-                            Screen.BottomScreen.Search.bRoute -> -slideDistance
-                            else -> slideDistance
-                        }
-                    },
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = FastOutSlowInEasing
-                    )
-                ) + fadeOut(
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = FastOutSlowInEasing
-                    )
-                )
+                }
+            ) {
+                HomeView(navController, viewModel)
             }
-        ) {
-            HomeView(navController, viewModel)
-        }
-
-        composable(
-            Screen.BottomScreen.Inbox.bRoute,
-            enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth ->
-                        when (initialState.destination.route) {
-                            Screen.BottomScreen.Today.bRoute -> slideDistance
-                            Screen.BottomScreen.Search.bRoute -> -slideDistance
-                            else -> slideDistance
-                        }
-                    },
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = FastOutSlowInEasing
-                    )
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-            },
-            exitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { fullWidth ->
-                        when (targetState.destination.route) {
-                            Screen.BottomScreen.Today.bRoute -> slideDistance
-                            Screen.BottomScreen.Search.bRoute -> -slideDistance
-                            else -> slideDistance
-                        }
-                    },
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = FastOutSlowInEasing
-                    )
-                ) + fadeOut(
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-            }
-        ) {
-            HomeView(navController, viewModel)
-        }
-
-        composable(
-            Screen.BottomScreen.Search.bRoute,
-            enterTransition = {
-                slideInHorizontally(
-                    initialOffsetX = { fullWidth ->
-                        when (initialState.destination.route) {
-                            Screen.BottomScreen.Today.bRoute -> slideDistance
-                            Screen.BottomScreen.Inbox.bRoute -> slideDistance
-                            else -> -slideDistance
-                        }
-                    },
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = FastOutSlowInEasing
-                    )
-                ) + fadeIn(
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-            },
-            exitTransition = {
-                slideOutHorizontally(
-                    targetOffsetX = { fullWidth ->
-                        when (targetState.destination.route) {
-                            Screen.BottomScreen.Today.bRoute -> slideDistance
-                            Screen.BottomScreen.Inbox.bRoute -> slideDistance
-                            else -> -slideDistance
-                        }
-                    },
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = FastOutSlowInEasing
-                    )
-                ) + fadeOut(
-                    animationSpec = tween(
-                        durationMillis = animationDuration,
-                        easing = FastOutSlowInEasing
-                    )
-                )
-            }
-        ) {
-            HomeView(navController, viewModel)
         }
 
         // History screen with vertical slide from bottom
