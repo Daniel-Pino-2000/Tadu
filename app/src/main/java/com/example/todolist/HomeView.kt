@@ -13,6 +13,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -32,29 +33,39 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
 
     val uiState by viewModel.uiState.collectAsState()
 
-    // Add undo toast manager setup with Material 3 components
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
-    val undoToastManager = remember {
-        UndoToastManager(snackbarHostState, coroutineScope)
-    }
+    val undoToastManager = remember { UndoToastManager(snackbarHostState, coroutineScope) }
 
-    val currentScreen = remember {
-        viewModel.currentScreen.value
-    }
+    val currentScreen by viewModel.currentScreen.collectAsState()
 
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
+    // Sync currentScreen in ViewModel with the currentRoute whenever it changes
+    LaunchedEffect(currentRoute) {
+        currentRoute?.let { route ->
+            val screen = screenInBottom.find { it.bRoute == route }
+                ?: when (route) {
+                    Screen.History.route -> Screen.History
+                    Screen.Calendar.route -> Screen.Calendar
+                    else -> null
+                }
+            screen?.let {
+                viewModel.setCurrentScreen(it)
+            }
+        }
+    }
+
     Scaffold(
         bottomBar = {
-            if (currentRoute != null) {
+            if (currentRoute != null && currentScreen is Screen.BottomScreen) {
                 BottomBar(currentScreen, currentRoute, navController)
             }
         },
         containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
         topBar = { AppBarView(title = getScreenTitle(currentRoute), navController) },
-        snackbarHost = { SnackbarHost(snackbarHostState) }, // Now using Material 3 SnackbarHost
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.padding(20.dp),
@@ -65,36 +76,27 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                     viewModel.setTaskBeingEdited(false)
                     viewModel.setShowBottomSheet(true)
                     viewModel.setId(0L)
-                }) {
+                }
+            ) {
                 Icon(imageVector = Icons.Default.Add, contentDescription = null, tint = Color.White)
             }
         }
-
     ) { innerPadding ->
-        // Use the existing navigation logic and show content based on current route
         when (currentRoute) {
-            Screen.BottomScreen.Today.bRoute -> {
-                BottomNavScreens(
-                    viewModel = viewModel,
-                    currentRoute = currentRoute,
-                    undoToastManager = undoToastManager, // Pass the undo toast manager
-                    modifier = Modifier.padding(innerPadding)
-                )
-            }
+            Screen.BottomScreen.Today.bRoute,
             Screen.BottomScreen.Inbox.bRoute -> {
                 BottomNavScreens(
                     viewModel = viewModel,
                     currentRoute = currentRoute,
-                    undoToastManager = undoToastManager, // Pass the undo toast manager
+                    undoToastManager = undoToastManager,
                     modifier = Modifier.padding(innerPadding)
                 )
             }
-
             else -> {
                 BottomNavScreens(
                     viewModel = viewModel,
                     currentRoute = "search",
-                    undoToastManager = undoToastManager, // Pass the undo toast manager
+                    undoToastManager = undoToastManager,
                     modifier = Modifier.padding(innerPadding)
                 )
             }
@@ -114,7 +116,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 deadline = selectedDate,
                 label = uiState.taskToUpdate.label
             )
-            viewModel.updateTask(newTask) // When the user picks a date, update the task:
+            viewModel.updateTask(newTask)
         }
         viewModel.setShowDatePicker(false)
     }
@@ -131,9 +133,9 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
             },
             onSubmit = { task ->
                 if (!uiState.taskBeingEdited) {
-                    viewModel.addTask(task)  // ← Add to DB
+                    viewModel.addTask(task)
                 } else {
-                    viewModel.updateTask(task)  // ← Update in DB
+                    viewModel.updateTask(task)
                 }
                 viewModel.setShowBottomSheet(false)
                 viewModel.setTaskBeingEdited(false)
@@ -144,8 +146,12 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     }
 }
 
-// Option 2: More elegant approach using your screenInBottom list
 @RequiresApi(Build.VERSION_CODES.O)
 fun getScreenTitle(route: String?): String {
-    return screenInBottom.find { it.bRoute == route }?.bTitle ?: "Today"
+    return screenInBottom.find { it.bRoute == route }?.bTitle
+        ?: when (route) {
+            Screen.History.route -> Screen.History.title
+            Screen.Calendar.route -> Screen.Calendar.title
+            else -> "Today"
+        }
 }

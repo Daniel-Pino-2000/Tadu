@@ -22,8 +22,10 @@ import com.example.todolist.data.Task
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun Navigation(viewModel: TaskViewModel = viewModel(),
-               navController: NavHostController = rememberNavController()) {
+fun Navigation(
+    viewModel: TaskViewModel = viewModel(),
+    navController: NavHostController  // ✅ now passed from above
+) {
 
     val uiState by viewModel.uiState.collectAsState()
 

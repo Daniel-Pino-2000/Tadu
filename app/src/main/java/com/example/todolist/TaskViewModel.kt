@@ -2,40 +2,32 @@ package com.example.todolist
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todolist.data.Task
 import com.example.todolist.data.TaskRepository
 import com.example.todolist.data.UiState
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class TaskViewModel(
     private val taskRepository: TaskRepository = Graph.taskRepository
-): ViewModel() {
+) : ViewModel() {
 
     var taskHasBeenChanged by mutableStateOf(false)
     var taskTitleState by mutableStateOf("")
     var taskDescriptionState by mutableStateOf("")
     var taskDateState by mutableStateOf("")
     var taskAddressState by mutableStateOf("")
-    var taskPriority: String by mutableStateOf("")
+    var taskPriority by mutableStateOf("")
     var taskDeadline by mutableStateOf("")
-
-    // Changed from single label to list of labels
     var taskLabel by mutableStateOf("")
 
     @RequiresApi(Build.VERSION_CODES.O)
-    private val _currentScreen: MutableState<Screen> = mutableStateOf(Screen.BottomScreen.Today)
-
-    val currentScreen: MutableState<Screen> @RequiresApi(Build.VERSION_CODES.O)
+    private val _currentScreen = MutableStateFlow<Screen>(Screen.BottomScreen.Today)
+    val currentScreen: StateFlow<Screen> @RequiresApi(Build.VERSION_CODES.O)
     get() = _currentScreen
 
     private val _uiState = MutableStateFlow(UiState())
@@ -46,12 +38,12 @@ class TaskViewModel(
         _currentScreen.value = screen
     }
 
-    fun onTaskTitleChanged(newString:String){
+    fun onTaskTitleChanged(newString: String) {
         taskTitleState = newString
         taskHasBeenChanged = true
     }
 
-    fun onTaskDescriptionChanged(newString: String){
+    fun onTaskDescriptionChanged(newString: String) {
         taskDescriptionState = newString
         taskHasBeenChanged = true
     }
@@ -76,13 +68,11 @@ class TaskViewModel(
         taskHasBeenChanged = true
     }
 
-    // Updated label change handler to work with list
     fun onTaskLabelsChanged(newLabel: String) {
         taskLabel = newLabel
         taskHasBeenChanged = true
     }
 
-    // ADD THIS: Function to reset all form fields
     fun resetFormFields() {
         taskTitleState = ""
         taskDescriptionState = ""
@@ -98,8 +88,6 @@ class TaskViewModel(
         _uiState.value = UiState()
     }
 
-
-    // ADD THIS: Function to populate fields with existing task data
     fun populateFieldsWithTask(task: Task) {
         taskTitleState = task.title
         taskDescriptionState = task.description
@@ -110,14 +98,11 @@ class TaskViewModel(
         taskHasBeenChanged = false
     }
 
-    // Initialize flows directly - they're already reactive
     val getAllTasks: Flow<List<Task>> = taskRepository.getTasks()
     val getPendingTasks: Flow<List<Task>> = taskRepository.getPendingTasks()
     val getCompletedTasks: Flow<List<Task>> = taskRepository.getCompletedTasks()
     val getDeletedTasks: Flow<List<Task>> = taskRepository.getDeletedTasks()
     val getFinishedTasks: Flow<List<Task>> = taskRepository.getFinishedTasks()
-
-    // Add label flows
     val getAllLabels: Flow<List<String>> = taskRepository.getAllLabels()
 
     fun addTask(task: Task) {
@@ -140,35 +125,30 @@ class TaskViewModel(
         resetUiState()
     }
 
-    // Hard delete - permanently removes from database
     fun permanentlyDeleteTask(task: Task) {
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.deleteATask(task)
         }
     }
 
-    // Soft delete - marks as deleted but keeps in database
     fun deleteTask(taskId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.softDeleteTask(taskId)
         }
     }
 
-    // Mark task as completed
     fun completeTask(taskId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.markTaskCompleted(taskId)
         }
     }
 
-    // Mark task as pending (uncompleted)
     fun uncompleteTask(taskId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.markTaskPending(taskId)
         }
     }
 
-    // Restore deleted task
     fun restoreTask(taskId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.restoreTask(taskId)
@@ -176,12 +156,10 @@ class TaskViewModel(
         resetFormFields()
     }
 
-    // Add method to get tasks by label
     fun getTasksByLabel(label: String): Flow<List<Task>> {
         return taskRepository.getTasksByLabel(label)
     }
 
-    // UI setter functions
     fun setShowBottomSheet(show: Boolean) {
         _uiState.value = _uiState.value.copy(showBottomSheet = show)
     }

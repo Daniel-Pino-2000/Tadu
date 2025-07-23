@@ -21,6 +21,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
+import androidx.navigation.compose.rememberNavController
 import com.example.mytodoapp.ui.theme.MyToDoAppTheme
 
 class MainActivity : ComponentActivity() {
@@ -33,8 +34,10 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             MyToDoAppTheme {
-                // ✅ Apply system bar colors AFTER theme is set
                 SetSystemBarsColor(color = MaterialTheme.colorScheme.background)
+
+                // ✅ Create navController here
+                val navController = rememberNavController()
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -45,11 +48,14 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .windowInsetsPadding(WindowInsets.systemBars)
                     ) {
-                        Navigation()
+                        Navigation(
+                            navController = navController  // ✅ Pass it down
+                        )
                     }
                 }
             }
         }
+
     }
 }
 
