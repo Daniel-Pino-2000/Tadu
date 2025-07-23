@@ -3,6 +3,8 @@ package com.example.todolist
 import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -30,32 +32,26 @@ import com.example.todolist.data.Task
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
-
     val uiState by viewModel.uiState.collectAsState()
-
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val undoToastManager = remember { UndoToastManager(snackbarHostState, coroutineScope) }
-
     val currentScreen by viewModel.currentScreen.collectAsState()
-
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
 
-    // Sync currentScreen in ViewModel with the currentRoute whenever it changes
     LaunchedEffect(currentRoute) {
         currentRoute?.let { route ->
-            val screen = screenInBottom.find { it.bRoute == route }
-                ?: when (route) {
-                    Screen.History.route -> Screen.History
-                    Screen.Calendar.route -> Screen.Calendar
-                    else -> null
+            if (route != Screen.History.route && route != Screen.Calendar.route) {
+                val screen = screenInBottom.find { it.bRoute == route }
+                if (screen != null) {
+                    viewModel.setCurrentScreen(screen)
                 }
-            screen?.let {
-                viewModel.setCurrentScreen(it)
             }
         }
     }
+
+
 
     Scaffold(
         bottomBar = {
@@ -64,7 +60,21 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
             }
         },
         containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
-        topBar = { AppBarView(title = getScreenTitle(currentRoute), navController) },
+
+        topBar = {
+            if (currentRoute in setOf(
+                    Screen.BottomScreen.Today.bRoute,
+                    Screen.BottomScreen.Inbox.bRoute,
+                    Screen.BottomScreen.Search.bRoute,
+                    Screen.History.route,
+                    Screen.Calendar.route
+                )
+            ) {
+                (currentScreen as? Screen.BottomScreen)?.let { screen ->
+                    AppBarView(title = screen.title, navController = navController)
+                }
+            }
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
             FloatingActionButton(
@@ -144,14 +154,4 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
             }
         )
     }
-}
-
-@RequiresApi(Build.VERSION_CODES.O)
-fun getScreenTitle(route: String?): String {
-    return screenInBottom.find { it.bRoute == route }?.bTitle
-        ?: when (route) {
-            Screen.History.route -> Screen.History.title
-            Screen.Calendar.route -> Screen.Calendar.title
-            else -> "Today"
-        }
 }
