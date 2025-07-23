@@ -94,7 +94,8 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     ) { innerPadding ->
         when (currentRoute) {
             Screen.BottomScreen.Today.bRoute,
-            Screen.BottomScreen.Inbox.bRoute -> {
+            Screen.BottomScreen.Inbox.bRoute,
+            Screen.BottomScreen.Search.bRoute-> {
                 BottomNavScreens(
                     viewModel = viewModel,
                     currentRoute = currentRoute,
@@ -102,14 +103,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                     modifier = Modifier.padding(innerPadding)
                 )
             }
-            else -> {
-                BottomNavScreens(
-                    viewModel = viewModel,
-                    currentRoute = "search",
-                    undoToastManager = undoToastManager,
-                    modifier = Modifier.padding(innerPadding)
-                )
-            }
+
         }
     }
 
