@@ -25,6 +25,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Divider
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -57,6 +58,7 @@ import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Locale
 
+@OptIn(ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun TaskItem(task: Task, viewModel: TaskViewModel,  currentRoute: String, undoToastManager: UndoToastManager, onClick: () -> Unit) {
@@ -68,8 +70,8 @@ fun TaskItem(task: Task, viewModel: TaskViewModel,  currentRoute: String, undoTo
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 15.dp, end = 15.dp)
-            .clickable { onClick() },
+            .padding(start = 15.dp, end = 15.dp),
+        onClick =  { onClick() },
         backgroundColor = colorResource(id = R.color.light_gray),
         shape = RoundedCornerShape(15.dp),
         elevation = elevationValue
