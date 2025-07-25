@@ -49,7 +49,7 @@ class MainActivity : ComponentActivity() {
                             .windowInsetsPadding(WindowInsets.systemBars)
                     ) {
                         Navigation(
-                            navController = navController  // ✅ Pass it down
+                            navController = navController  // Pass it down
                         )
                     }
                 }
