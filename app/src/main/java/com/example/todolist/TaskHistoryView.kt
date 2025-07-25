@@ -58,6 +58,8 @@ fun TaskHistoryView(viewModel: TaskViewModel, navController: NavHostController) 
 
     var showDeleteDialog by remember { mutableStateOf(false) }
 
+    var backPressed by remember { mutableStateOf(false) }
+
     // Sort tasks by completion/deletion date (most recent first)
     val sortedTasks = tasks.sortedByDescending { task ->
         task.completionDate ?: task.deletionDate
@@ -76,7 +78,14 @@ fun TaskHistoryView(viewModel: TaskViewModel, navController: NavHostController) 
 
                 },
                 navigationIcon = {
-                    IconButton(onClick = { navController.popBackStack() }) {
+                    IconButton(onClick = {
+                        if (!backPressed) {
+                            backPressed = true
+                            navController.popBackStack()
+                        }
+                    },
+                    enabled = !backPressed
+                    ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                             contentDescription = "Back", tint = colorResource(id = R.color.dropMenuIcon_gray)
