@@ -702,13 +702,20 @@ private fun SwipeableTaskItem(
     keyboardController: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusManager: androidx.compose.ui.focus.FocusManager
 ) {
+    // State to trigger reset
+    var shouldResetDismissState by remember { mutableStateOf(false) }
+
     val dismissState = rememberDismissState(
         confirmStateChange = { dismissValue ->
             when (dismissValue) {
                 DismissValue.DismissedToEnd -> {
                     viewModel.setTaskToUpdate(task)
                     viewModel.setShowDatePicker(true)
-                    false
+
+                    // Set flag to reset outside lambda
+                    shouldResetDismissState = true
+
+                    false // prevent dismissal
                 }
                 DismissValue.DismissedToStart -> {
                     coroutineScope.launch {
@@ -718,31 +725,43 @@ private fun SwipeableTaskItem(
                             onRestore = { viewModel.restoreTask(task.id) }
                         )
                     }
-                    true
+                    true // allow dismissal
                 }
                 else -> false
             }
         }
     )
 
+    // Reset dismiss state when flag is set
+    LaunchedEffect(shouldResetDismissState) {
+        if (shouldResetDismissState) {
+            dismissState.reset()
+            shouldResetDismissState = false
+        }
+    }
+
     Box(modifier = Modifier.padding(vertical = 4.dp)) {
         SwipeToDismiss(
             state = dismissState,
+            directions = setOf(DismissDirection.StartToEnd, DismissDirection.EndToStart),
+            dismissThresholds = { FractionalThreshold(0.4f) },
             background = {
+                val direction = dismissState.dismissDirection
+
                 val color by animateColorAsState(
-                    targetValue = when (dismissState.targetValue) {
-                        DismissValue.DismissedToStart -> Color.Red
-                        DismissValue.DismissedToEnd -> colorResource(id = R.color.orange)
-                        else -> Color.Transparent
+                    targetValue = when (direction) {
+                        DismissDirection.StartToEnd -> colorResource(id = R.color.orange)
+                        DismissDirection.EndToStart -> Color.Red
+                        null -> Color.Transparent
                     },
-                    animationSpec = tween(durationMillis = 200),
+                    animationSpec = tween(200),
                     label = "swipe_background_color"
                 )
 
-                val alignment = when (dismissState.targetValue) {
-                    DismissValue.DismissedToStart -> Alignment.CenterEnd
-                    DismissValue.DismissedToEnd -> Alignment.CenterStart
-                    else -> Alignment.Center
+                val alignment = when (direction) {
+                    DismissDirection.StartToEnd -> Alignment.CenterStart
+                    DismissDirection.EndToStart -> Alignment.CenterEnd
+                    null -> Alignment.Center
                 }
 
                 Box(
@@ -752,23 +771,21 @@ private fun SwipeableTaskItem(
                         .padding(horizontal = 20.dp),
                     contentAlignment = alignment
                 ) {
-                    when (dismissState.targetValue) {
-                        DismissValue.DismissedToStart -> Icon(
-                            Icons.Default.Delete,
-                            contentDescription = "Delete Icon",
-                            tint = Color.White
-                        )
-                        DismissValue.DismissedToEnd -> Icon(
-                            Icons.Default.DateRange,
+                    when (direction) {
+                        DismissDirection.StartToEnd -> Icon(
+                            imageVector = Icons.Default.DateRange,
                             contentDescription = "Date Icon",
                             tint = Color.White
                         )
-                        else -> {}
+                        DismissDirection.EndToStart -> Icon(
+                            imageVector = Icons.Default.Delete,
+                            contentDescription = "Delete Icon",
+                            tint = Color.White
+                        )
+                        null -> {}
                     }
                 }
             },
-            directions = setOf(DismissDirection.EndToStart, DismissDirection.StartToEnd),
-            dismissThresholds = { FractionalThreshold(0.1f) },
             dismissContent = {
                 TaskItem(task, viewModel, currentRoute, undoToastManager) {
                     keyboardController?.hide()
