@@ -35,28 +35,11 @@ fun Navigation(
 
     NavHost(
         navController = navController,
-        startDestination = Screen.BottomScreen.Today.bRoute
+        startDestination = Screen.Home.route
     ) {
-        listOf(
-            Screen.BottomScreen.Today,
-            Screen.BottomScreen.Inbox,
-            Screen.BottomScreen.Search
-        ).forEach { screen ->
-            composable(
-                route = screen.bRoute,
-                enterTransition = {
-                    fadeIn(
-                        animationSpec = tween(animationDuration, easing = FastOutSlowInEasing)
-                    )
-                },
-                exitTransition = {
-                    fadeOut(
-                        animationSpec = tween(animationDuration, easing = FastOutSlowInEasing)
-                    )
-                }
-            ) {
-                HomeView(navController, viewModel)
-            }
+        // Home screen
+        composable(Screen.Home.route) {
+            HomeView(navController, viewModel)
         }
 
         // History screen with vertical slide from bottom

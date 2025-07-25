@@ -38,7 +38,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     val undoToastManager = remember { UndoToastManager(snackbarHostState, coroutineScope) }
     val currentScreen by viewModel.currentScreen.collectAsState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val currentRoute = navBackStackEntry?.destination?.route
+    val currentRoute by viewModel.currentRoute.collectAsState()
 
     LaunchedEffect(currentRoute) {
         currentRoute?.let { route ->
@@ -56,7 +56,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     Scaffold(
         bottomBar = {
             if (currentRoute != null && currentScreen is Screen.BottomScreen) {
-                BottomBar(currentScreen, currentRoute, navController)
+                BottomBar(currentScreen, currentRoute, viewModel)
             }
         },
         containerColor = androidx.compose.material3.MaterialTheme.colorScheme.background,

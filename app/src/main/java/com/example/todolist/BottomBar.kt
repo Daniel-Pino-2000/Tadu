@@ -31,11 +31,12 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun BottomBar(currentScreen: Screen, currentRoute: String, navController: NavHostController) {
+fun BottomBar(currentScreen: Screen, currentRoute: String, viewModel: TaskViewModel) {
     if (currentScreen is Screen.BottomScreen.Today ||
         currentScreen is Screen.BottomScreen.Inbox ||
         currentScreen is Screen.BottomScreen.Search) {
@@ -99,13 +100,7 @@ fun BottomBar(currentScreen: Screen, currentRoute: String, navController: NavHos
                                 .scale(scale)
                                 .clickable {
                                     if (currentRoute != item.bRoute) {
-                                        navController.navigate(item.bRoute) {
-                                            popUpTo(navController.graph.startDestinationId) {
-                                                saveState = true
-                                            }
-                                            launchSingleTop = true
-                                            restoreState = true
-                                        }
+                                        viewModel.setCurrentRoute(item.bRoute)
                                     }
                                 }
                                 .then(

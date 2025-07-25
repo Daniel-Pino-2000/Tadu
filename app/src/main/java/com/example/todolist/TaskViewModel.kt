@@ -30,12 +30,22 @@ class TaskViewModel(
     val currentScreen: StateFlow<Screen> @RequiresApi(Build.VERSION_CODES.O)
     get() = _currentScreen
 
+    @RequiresApi(Build.VERSION_CODES.O)
+    private val _currentRoute = MutableStateFlow<String>(Screen.BottomScreen.Today.route)
+    val currentRoute: StateFlow<String> @RequiresApi(Build.VERSION_CODES.O)
+    get() = _currentRoute
+
     private val _uiState = MutableStateFlow(UiState())
     val uiState: StateFlow<UiState> = _uiState
 
     @RequiresApi(Build.VERSION_CODES.O)
     fun setCurrentScreen(screen: Screen) {
         _currentScreen.value = screen
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    fun setCurrentRoute(route: String) {
+        _currentRoute.value = route
     }
 
     fun onTaskTitleChanged(newString: String) {

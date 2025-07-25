@@ -13,6 +13,7 @@ sealed class Screen(val title: String, val route: String) {
 
     object History: Screen("History", "history")
     object Calendar: Screen("Calendar", "calendar")
+    object Home: Screen("Home", "home")
 
     sealed class BottomScreen(
         val bTitle: String,
