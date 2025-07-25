@@ -70,6 +70,9 @@ import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.LazyListState
+
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalLayoutApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -99,6 +102,13 @@ fun BottomNavScreens(
             currentYear = today.year,
             nicerDate = today.format(niceFormatter)
         )
+    }
+
+    val listState = rememberLazyListState()
+
+    // Scroll to top on screen change
+    LaunchedEffect(currentRoute) {
+        listState.scrollToItem(0)
     }
 
     val taskList = viewModel.getPendingTasks.collectAsState(initial = listOf())
@@ -186,7 +196,8 @@ fun BottomNavScreens(
             viewModel = viewModel,
             undoToastManager = undoToastManager,
             keyboardController = keyboardController,
-            focusManager = focusManager
+            focusManager = focusManager,
+            listState
         )
     }
 }
@@ -584,11 +595,12 @@ private fun TaskList(
     viewModel: TaskViewModel,
     undoToastManager: UndoToastManager,
     keyboardController: androidx.compose.ui.platform.SoftwareKeyboardController?,
-    focusManager: androidx.compose.ui.focus.FocusManager
+    focusManager: androidx.compose.ui.focus.FocusManager,
+    listState: LazyListState
 ) {
     val coroutineScope = rememberCoroutineScope()
 
-    LazyColumn(modifier = Modifier.fillMaxSize()) {
+    LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
         when {
             currentRoute == "search" && searchQuery.isBlank() && selectedLabel == null -> {
                 item {
