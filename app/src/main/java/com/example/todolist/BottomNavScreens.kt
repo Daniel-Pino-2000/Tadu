@@ -87,7 +87,7 @@ fun BottomNavScreens(
     val focusManager = LocalFocusManager.current
     val searchFocusRequester = remember { FocusRequester() }
 
-    // Memoize date calculations
+    // Memorize date calculations
     val dateInfo = remember {
         val today = LocalDate.now()
         val formatter = DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH)
@@ -208,6 +208,7 @@ private data class TaskGroup(
 )
 
 // Separate function for filtering tasks - more efficient
+@RequiresApi(Build.VERSION_CODES.O)
 private fun filterTasks(
     tasks: List<Task>,
     currentRoute: String,
@@ -249,6 +250,7 @@ private fun filterTasks(
 }
 
 // Separate function for grouping tasks - more efficient
+@RequiresApi(Build.VERSION_CODES.O)
 private fun groupTasks(
     tasksToDisplay: List<Task>,
     currentRoute: String,
@@ -299,6 +301,7 @@ private fun groupTasks(
 }
 
 // Helper function to categorize tasks by date
+@RequiresApi(Build.VERSION_CODES.O)
 private fun categorizeTasksByDate(tasks: List<Task>, dateInfo: DateInfo): Triple<MutableList<Task>, MutableList<Task>, MutableList<Task>> {
     val overdueTasks = mutableListOf<Task>()
     val todayTasks = mutableListOf<Task>()
@@ -570,6 +573,7 @@ private fun LabelChip(
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun TaskList(
     currentRoute: String,
@@ -674,6 +678,7 @@ private fun TaskGroupHeader(group: TaskGroup) {
     }
 }
 
+@RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
 private fun SwipeableTaskItem(
@@ -708,7 +713,7 @@ private fun SwipeableTaskItem(
         }
     )
 
-    Box(modifier = Modifier.padding(vertical = 2.dp)) {
+    Box(modifier = Modifier.padding(vertical = 4.dp)) {
         SwipeToDismiss(
             state = dismissState,
             background = {
