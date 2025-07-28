@@ -70,6 +70,8 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import kotlin.math.sin
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 
 @OptIn(ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -314,6 +316,8 @@ fun CircularCheckbox(
     val checkmarkColor: Color = Color.White
     var intPriority = 4
 
+    val hapticFeedback = LocalHapticFeedback.current
+
     if (priority.isNotEmpty()) {
         intPriority = priority.toInt()
     }
@@ -386,7 +390,9 @@ fun CircularCheckbox(
                 )
             )
             .border(border, borderColor, CircleShape)
-            .clickable { onCheckedChange(!checked) },
+            .clickable {
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress) // Vibration
+                onCheckedChange(!checked) },
         contentAlignment = Alignment.Center
     ) {
         // Clean checkmark animation

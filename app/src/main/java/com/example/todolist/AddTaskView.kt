@@ -55,6 +55,8 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 
 
 /**
@@ -110,6 +112,8 @@ fun AddTaskView(
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
 
+
+
     // Handle hardware/gesture back button presses
     // Ensures consistent behavior with swipe-to-dismiss and tap-outside-to-dismiss
     BackHandler(enabled = true) {
@@ -135,6 +139,7 @@ fun AddTaskView(
     )
 
     LaunchedEffect(id, task) {
+
         if (id != 0L && task.id != 0L) {
             // Editing existing task
             viewModel.populateFieldsWithTask(task)

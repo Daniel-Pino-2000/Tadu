@@ -22,6 +22,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -39,6 +41,8 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     val currentScreen by viewModel.currentScreen.collectAsState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute by viewModel.currentRoute.collectAsState()
+
+    val hapticFeedback = LocalHapticFeedback.current
 
     LaunchedEffect(currentRoute) {
         currentRoute?.let { route ->
@@ -83,6 +87,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 shape = RoundedCornerShape(16.dp),
                 containerColor = colorResource(id = R.color.nice_blue),
                 onClick = {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                     viewModel.setTaskBeingEdited(false)
                     viewModel.setShowBottomSheet(true)
                     viewModel.setId(0L)

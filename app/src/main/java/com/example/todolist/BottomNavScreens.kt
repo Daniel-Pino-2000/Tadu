@@ -82,6 +82,8 @@ import androidx.compose.material.Card
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import kotlin.math.sin
 
 
@@ -716,10 +718,13 @@ private fun SwipeableTaskItem(
     // State to trigger reset
     var shouldResetDismissState by remember { mutableStateOf(false) }
 
+    val hapticFeedback = LocalHapticFeedback.current
+
     val dismissState = rememberDismissState(
         confirmStateChange = { dismissValue ->
             when (dismissValue) {
                 DismissValue.DismissedToEnd -> {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress) // Vibration
                     viewModel.setTaskToUpdate(task)
                     viewModel.setShowDatePicker(true)
                     // Set flag to reset outside lambda
@@ -730,8 +735,13 @@ private fun SwipeableTaskItem(
                     coroutineScope.launch {
                         undoToastManager.showTaskDeletedToast(
                             taskName = task.title,
-                            onDelete = { viewModel.deleteTask(task.id) },
-                            onRestore = { viewModel.restoreTask(task.id) }
+                            onDelete = {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress) // Vibration
+                                viewModel.deleteTask(task.id)
+                                       },
+                            onRestore = {
+                                viewModel.restoreTask(task.id)
+                            }
                         )
                     }
                     true // allow dismissal
