@@ -3,6 +3,11 @@ package com.example.todolist
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -16,6 +21,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -72,6 +78,11 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.material.Card
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.draw.scale
+import kotlin.math.sin
 
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalLayoutApi::class)
@@ -711,10 +722,8 @@ private fun SwipeableTaskItem(
                 DismissValue.DismissedToEnd -> {
                     viewModel.setTaskToUpdate(task)
                     viewModel.setShowDatePicker(true)
-
                     // Set flag to reset outside lambda
                     shouldResetDismissState = true
-
                     false // prevent dismissal
                 }
                 DismissValue.DismissedToStart -> {
@@ -744,17 +753,26 @@ private fun SwipeableTaskItem(
         SwipeToDismiss(
             state = dismissState,
             directions = setOf(DismissDirection.StartToEnd, DismissDirection.EndToStart),
-            dismissThresholds = { FractionalThreshold(0.4f) },
+            // Increased threshold for less sensitivity - requires 60% swipe to trigger
+            dismissThresholds = { FractionalThreshold(0.6f) },
             background = {
                 val direction = dismissState.dismissDirection
+                val progress = dismissState.progress.fraction
+
+                // Only show color when actually swiping and past a certain threshold
+                val shouldShowBackground = direction != null && progress > 0.2f
 
                 val color by animateColorAsState(
-                    targetValue = when (direction) {
-                        DismissDirection.StartToEnd -> colorResource(id = R.color.orange)
-                        DismissDirection.EndToStart -> Color.Red
-                        null -> Color.Transparent
+                    targetValue = if (shouldShowBackground) {
+                        when (direction) {
+                            DismissDirection.StartToEnd -> colorResource(id = R.color.orange)
+                            DismissDirection.EndToStart -> Color.Red
+                            null -> Color.Transparent
+                        }
+                    } else {
+                        Color.Transparent
                     },
-                    animationSpec = tween(200),
+                    animationSpec = tween(150), // Faster animation for more responsive feel
                     label = "swipe_background_color"
                 )
 
@@ -764,6 +782,54 @@ private fun SwipeableTaskItem(
                     null -> Alignment.Center
                 }
 
+                // Smooth icon animations without jarring transitions
+                val iconScale by animateFloatAsState(
+                    targetValue = if (shouldShowBackground) {
+                        // Smooth continuous scaling curve
+                        val baseScale = 0.4f + (progress * 0.8f) // Linear base from 0.4 to 1.2
+                        val pulseMultiplier = if (progress > 0.7f) {
+                            1f + (sin((progress - 0.7f) * 15f) * 0.05f) // Very subtle pulse
+                        } else 1f
+                        baseScale * pulseMultiplier
+                    } else 0f,
+                    animationSpec = tween(
+                        durationMillis = 100,
+                        easing = LinearOutSlowInEasing
+                    ),
+                    label = "icon_scale"
+                )
+
+                val iconAlpha by animateFloatAsState(
+                    targetValue = if (shouldShowBackground) {
+                        // Smooth fade curve
+                        when {
+                            progress < 0.2f -> 0f
+                            progress < 0.5f -> (progress - 0.2f) / 0.3f // Smooth fade from 0.2 to 0.5
+                            else -> 1f
+                        }
+                    } else 0f,
+                    animationSpec = tween(
+                        durationMillis = 100,
+                        easing = LinearOutSlowInEasing
+                    ),
+                    label = "icon_alpha"
+                )
+
+                val iconRotation by animateFloatAsState(
+                    targetValue = if (shouldShowBackground) {
+                        when (direction) {
+                            DismissDirection.StartToEnd -> progress * 12f // Smooth rotation
+                            DismissDirection.EndToStart -> -progress * 15f
+                            null -> 0f
+                        }
+                    } else 0f,
+                    animationSpec = tween(
+                        durationMillis = 100,
+                        easing = LinearOutSlowInEasing
+                    ),
+                    label = "icon_rotation"
+                )
+
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -771,29 +837,73 @@ private fun SwipeableTaskItem(
                         .padding(horizontal = 20.dp),
                     contentAlignment = alignment
                 ) {
-                    when (direction) {
-                        DismissDirection.StartToEnd -> Icon(
-                            imageVector = Icons.Default.DateRange,
-                            contentDescription = "Date Icon",
-                            tint = Color.White
-                        )
-                        DismissDirection.EndToStart -> Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete Icon",
-                            tint = Color.White
-                        )
-                        null -> {}
+                    if (shouldShowBackground && iconScale > 0f) {
+                        when (direction) {
+                            DismissDirection.StartToEnd -> {
+                                Box(
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    // Smooth scaling background circle
+                                    Box(
+                                        modifier = Modifier
+                                            .size((40f + (iconScale * 20f)).dp) // Smooth size progression
+                                            .background(
+                                                Color.White.copy(alpha = 0.15f * iconAlpha),
+                                                CircleShape
+                                            )
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.DateRange,
+                                        contentDescription = "Set Date",
+                                        tint = Color.White,
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .scale(iconScale)
+                                            .alpha(iconAlpha)
+                                            .rotate(iconRotation)
+                                    )
+                                }
+                            }
+                            DismissDirection.EndToStart -> {
+                                Box(
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    // Single smooth scaling background - no secondary ring
+                                    Box(
+                                        modifier = Modifier
+                                            .size((40f + (iconScale * 25f)).dp)
+                                            .background(
+                                                Color.White.copy(alpha = 0.2f * iconAlpha),
+                                                CircleShape
+                                            )
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = "Delete Task",
+                                        tint = Color.White,
+                                        modifier = Modifier
+                                            .size(24.dp)
+                                            .scale(iconScale)
+                                            .alpha(iconAlpha)
+                                            .rotate(iconRotation)
+                                    )
+                                }
+                            }
+                            null -> {}
+                        }
                     }
                 }
             },
             dismissContent = {
-                TaskItem(task, viewModel, currentRoute, undoToastManager) {
-                    keyboardController?.hide()
-                    focusManager.clearFocus()
-                    viewModel.setId(task.id)
-                    viewModel.setTaskBeingEdited(true)
-                    viewModel.setShowBottomSheet(true)
-                }
+
+                    TaskItem(task, viewModel, currentRoute, undoToastManager) {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                        viewModel.setId(task.id)
+                        viewModel.setTaskBeingEdited(true)
+                        viewModel.setShowBottomSheet(true)
+                    }
+
             }
         )
     }
