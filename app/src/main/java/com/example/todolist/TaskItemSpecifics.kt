@@ -57,6 +57,19 @@ import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Locale
+import androidx.compose.animation.core.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.runtime.*
+import androidx.compose.ui.draw.*
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.res.colorResource
+import androidx.compose.ui.unit.dp
+import kotlin.math.sin
 
 @OptIn(ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -295,8 +308,7 @@ fun CircularCheckbox(
     checked: Boolean,
     priority: String = "4",
     onCheckedChange: (Boolean) -> Unit,
-
-    ) {
+) {
     val size: Dp = 23.dp
     val checkedColor: Color = colorResource(id = R.color.nice_blue)
     val checkmarkColor: Color = Color.White
@@ -312,31 +324,81 @@ fun CircularCheckbox(
         Color.Gray
     }
 
-    // Track uncheckedColor reactively based on priority
-    var uncheckedColor = PriorityUtils.getColor(intPriority)
+    val uncheckedColor = PriorityUtils.getColor(intPriority)
 
-    var border: Dp = if(intPriority < 4) {
+    val border: Dp = if(intPriority < 4) {
         2.dp
     } else {
         1.dp
     }
 
+    // Smooth scale animation for the whole checkbox
+    val checkboxScale by animateFloatAsState(
+        targetValue = if (checked) 1.05f else 1f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessHigh
+        ),
+        label = "checkbox_scale"
+    )
+
+    // Background color transition
+    val backgroundProgress by animateFloatAsState(
+        targetValue = if (checked) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = 200,
+            easing = FastOutSlowInEasing
+        ),
+        label = "background_progress"
+    )
+
+    // Checkmark animations
+    val checkmarkScale by animateFloatAsState(
+        targetValue = if (checked) 1f else 0f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioLowBouncy,
+            stiffness = Spring.StiffnessHigh
+        ),
+        label = "checkmark_scale"
+    )
+
+    val checkmarkRotation by animateFloatAsState(
+        targetValue = if (checked) 0f else -90f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessMedium
+        ),
+        label = "checkmark_rotation"
+    )
 
     Box(
         modifier = Modifier
             .size(size)
+            .scale(checkboxScale)
             .clip(CircleShape)
-            .background(if (checked) borderColor else uncheckedColor)
-            .border(border, borderColor, CircleShape) // Add border
+            .background(
+                // Smooth color interpolation
+                Color(
+                    red = uncheckedColor.red + (borderColor.red - uncheckedColor.red) * backgroundProgress,
+                    green = uncheckedColor.green + (borderColor.green - uncheckedColor.green) * backgroundProgress,
+                    blue = uncheckedColor.blue + (borderColor.blue - uncheckedColor.blue) * backgroundProgress,
+                    alpha = 1f
+                )
+            )
+            .border(border, borderColor, CircleShape)
             .clickable { onCheckedChange(!checked) },
         contentAlignment = Alignment.Center
     ) {
-        if (checked) {
+        // Clean checkmark animation
+        if (checkmarkScale > 0f) {
             Icon(
                 imageVector = Icons.Default.Check,
                 contentDescription = "Checked",
                 tint = checkmarkColor,
-                modifier = Modifier.size(size * 1f)
+                modifier = Modifier
+                    .size(size * 0.7f)
+                    .scale(checkmarkScale)
+                    .rotate(checkmarkRotation)
             )
         }
     }
