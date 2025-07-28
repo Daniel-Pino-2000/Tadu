@@ -728,42 +728,43 @@ private fun CompactTaskItem(
                     )
                 }
 
-                // Compact priority and label row
-                if (!task.isCompleted && (task.priority.isNotEmpty() || task.label.isNotEmpty())) {
+                if (!task.isCompleted) {
                     Spacer(modifier = Modifier.height(4.dp))
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
                         // Compact priority chip
-                        if (task.priority.isNotEmpty()) {
-                            Surface(
-                                color = priorityColor.copy(alpha = 0.12f),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = task.priority.first().uppercase(),
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = priorityColor,
+                        Surface(
+                            color = priorityColor.copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = if (task.priority.isNotEmpty()) task.priority.first().uppercase() else "4",
+                                style = MaterialTheme.typography.labelSmall.copy(
                                     fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
                                     fontSize = 10.sp
-                                )
-                            }
+                                ),
+                                color = priorityColor,
+                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            )
                         }
 
                         // Compact label
                         if (task.label.isNotEmpty()) {
                             Text(
                                 text = task.label,
-                                style = MaterialTheme.typography.labelSmall,
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 10.sp
+                                ),
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                fontSize = 10.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis
                             )
                         }
                     }
                 }
+
             }
 
             // Direct delete icon button
