@@ -149,6 +149,7 @@ fun TaskHistoryView(viewModel: TaskViewModel, navController: NavHostController) 
                     viewModel.setShowBottomSheet(false)
                     viewModel.setTaskBeingEdited(false)
                     viewModel.resetFormFields()
+                    viewModel.resetUiState()
                 },
                 onSubmit = { task ->
                     // In history mode, we restore the task (make it active again)
@@ -156,12 +157,15 @@ fun TaskHistoryView(viewModel: TaskViewModel, navController: NavHostController) 
                     viewModel.setShowBottomSheet(false)
                     viewModel.setTaskBeingEdited(false)
                     viewModel.resetFormFields()
+                    viewModel.resetUiState()
                 },
                 isHistoryMode = true, // This is the key difference
                 onDelete = { taskId ->
                     selectedTask?.let { task ->
                         viewModel.permanentlyDeleteTask(task)
                     }
+                    viewModel.resetFormFields()
+                    viewModel.resetUiState()
                 }
             )
         }

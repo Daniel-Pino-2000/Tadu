@@ -61,20 +61,22 @@ fun TaskCalendarView(
     val tasks by viewModel.getPendingTasks.collectAsState(initial = listOf())
 
     // Group tasks by date with improved date parsing - only include tasks with deadlines
-    val tasksByDate = remember(tasks) {
-        val currentYear = LocalDate.now().year
+    val tasksByDate = remember(tasks, currentYearMonth) {
+        val currentYear = currentYearMonth.year // Use the calendar's current year instead of today's year
 
         tasks.filter { !it.isDeleted && it.deadline.isNotEmpty() } // Only include tasks with deadlines
-            .groupBy { task ->
+            .mapNotNull { task ->
                 try {
                     // Parse deadline format like "Jun 5", "Jul 18"
                     val deadlineDate = parseDeadlineString(task.deadline, currentYear)
-                    deadlineDate?.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
-                        ?: selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                    deadlineDate?.let { date ->
+                        date.format(DateTimeFormatter.ofPattern("yyyy-MM-dd")) to task
+                    }
                 } catch (e: Exception) {
-                    selectedDate.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))
+                    null // Skip tasks with invalid dates instead of using fallback
                 }
             }
+            .groupBy({ it.first }, { it.second })
     }
 
     Surface(
@@ -148,7 +150,8 @@ fun TaskCalendarView(
                     },
                     onAddTaskClick = {
                         // Set the deadline in the viewModel before triggering add task
-                        val deadlineString = selectedDate.format(DateTimeFormatter.ofPattern("MMM d"))
+                        // Use zero-padded day format to match DeadlineItem expectations
+                        val deadlineString = selectedDate.format(DateTimeFormatter.ofPattern("MMM dd", Locale.ENGLISH))
                         viewModel.onTaskDeadlineChanged(deadlineString)
                         onTaskClick(null)
                     }
@@ -158,26 +161,50 @@ fun TaskCalendarView(
     }
 }
 
-// Helper function to parse deadline strings like "Jun 5", "Jul 18"
+// Improved helper function to parse deadline strings like "Jun 05", "Jul 18"
 @RequiresApi(Build.VERSION_CODES.O)
-private fun parseDeadlineString(deadline: String, currentYear: Int): LocalDate? {
+private fun parseDeadlineString(deadline: String, yearContext: Int): LocalDate? {
     return try {
-        // Try parsing formats like "Jun 5", "Jul 18"
-        val formatter = SimpleDateFormat("MMM d", Locale.getDefault())
-        val date = formatter.parse(deadline)
+        val cleanDeadline = deadline.trim()
 
-        if (date != null) {
-            val calendar = Calendar.getInstance()
-            calendar.time = date
-            calendar.set(Calendar.YEAR, currentYear)
+        // Try multiple formats to handle both zero-padded and non-zero-padded days
+        val formatters = listOf(
+            SimpleDateFormat("MMM dd", Locale.ENGLISH), // Primary format: "Jan 01"
+            SimpleDateFormat("MMM d", Locale.ENGLISH),  // Fallback format: "Jan 1"
+            SimpleDateFormat("MMM dd", Locale.US),
+            SimpleDateFormat("MMM d", Locale.US),
+            SimpleDateFormat("MMM dd", Locale.getDefault()),
+            SimpleDateFormat("MMM d", Locale.getDefault())
+        )
 
-            val month = calendar.get(Calendar.MONTH) + 1
-            val day = calendar.get(Calendar.DAY_OF_MONTH)
+        for (formatter in formatters) {
+            try {
+                val date = formatter.parse(cleanDeadline)
+                if (date != null) {
+                    val calendar = Calendar.getInstance()
+                    calendar.time = date
 
-            LocalDate.of(currentYear, month, day)
-        } else {
-            null
+                    val month = calendar.get(Calendar.MONTH) + 1
+                    val day = calendar.get(Calendar.DAY_OF_MONTH)
+
+                    // Use the provided year context (usually the calendar's current year)
+                    val targetDate = LocalDate.of(yearContext, month, day)
+
+                    // Validate that the date is reasonable (not more than 2 years in the past/future)
+                    val currentDate = LocalDate.now()
+                    val yearDiff = kotlin.math.abs(targetDate.year - currentDate.year)
+
+                    if (yearDiff <= 2) {
+                        return targetDate
+                    }
+                }
+            } catch (e: Exception) {
+                // Try next formatter
+                continue
+            }
         }
+
+        null // If all formatters fail
     } catch (e: Exception) {
         null
     }
@@ -318,7 +345,9 @@ private fun CalendarGrid(
                 date = date,
                 isToday = date == today,
                 isSelected = date == selectedDate,
-                taskCount = date?.let { tasksByDate[it.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))]?.size } ?: 0,
+                taskCount = date?.let {
+                    tasksByDate[it.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))]?.size
+                } ?: 0,
                 onDateClick = onDateClick,
                 modifier = Modifier
                     .aspectRatio(1f)
