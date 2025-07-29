@@ -54,9 +54,16 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Restore
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
+import androidx.compose.material3.Surface
+import androidx.compose.ui.draw.scale
 
 
 /**
@@ -93,6 +100,10 @@ fun AddTaskView(
 
     // Flag to control when dismissal should be allowed (bypasses confirmation)
     val allowDismiss = remember { mutableStateOf(false) }
+
+    // Reminder states
+    var reminderEnabled by remember { mutableStateOf(false) }
+    var selectedReminderTime by remember { mutableStateOf("15 minutes before") }
 
     // Configure the bottom sheet state with custom dismiss behavior
     var sheetState: SheetState = rememberModalBottomSheetState(
@@ -231,12 +242,28 @@ fun AddTaskView(
                 readOnly = isHistoryMode // Make read-only in history mode
             )
 
-            // Additional task options (priority, deadline, etc.) - only show if not in history mode
-            //if (!isHistoryMode) {
-                ScrollableRow(viewModel, isHistoryMode)
-            //}
+            // Additional task options (priority, deadline, etc.)
+            ScrollableRow(viewModel, isHistoryMode)
 
+            // Add this state at the top of your AddTaskView composable (replace the old reminder states)
+            var reminderConfig by remember { mutableStateOf(ReminderConfig()) }
+
+            // Then in your Column, replace the old reminder section with:
             Spacer(modifier = Modifier.height(6.dp))
+
+            // Use the new ReminderSection composable
+            ReminderSection(
+                onReminderChange = { config ->
+                    reminderConfig = config
+                    // TODO: Handle reminder configuration change
+                    // You can access:
+                    // - config.enabled (Boolean)
+                    // - config.type (ReminderType.PRESET or ReminderType.CUSTOM)
+                    // - config.presetTime (String like "15 minutes before")
+                    // - config.customDateTime (LocalDateTime? for custom reminders)
+                },
+                initialConfig = reminderConfig
+            )
 
             var addToCalendar by remember { mutableStateOf(false) } // Checkbox state
 
@@ -245,7 +272,7 @@ fun AddTaskView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = if (isHistoryMode) Arrangement.SpaceBetween else Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
@@ -283,7 +310,7 @@ fun AddTaskView(
                         )
                     }
                 } else {
-                    // Calendar button for normal mode
+                    // Calendar button - now with better visual hierarchy
                     val hasDeadline = viewModel.taskDeadline.isNotBlank()
                     val taskTitle = viewModel.taskTitleState
                     val taskDeadline = viewModel.taskDeadline
@@ -306,7 +333,13 @@ fun AddTaskView(
                             pressedElevation = 0.dp,
                             disabledElevation = 0.dp
                         ),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(
+                            1.dp,
+                            if (hasDeadline && taskTitle.isNotEmpty())
+                                colorResource(id = R.color.nice_blue).copy(alpha = 0.3f)
+                            else Color.Gray.copy(alpha = 0.3f)
+                        )
                     ) {
                         Icon(
                             imageVector = Icons.Default.Event,
@@ -331,44 +364,44 @@ fun AddTaskView(
                 }
 
                 Button(
-                        onClick = {
-                            if (!isValid) return@Button // ignore click if not valid
+                    onClick = {
+                        if (!isValid) return@Button // ignore click if not valid
 
 
-                                // Create task object based on whether we're editing or creating
-                                val task = if (id == 0L) {
-                                    Task(
-                                        title = viewModel.taskTitleState,
-                                        description = viewModel.taskDescriptionState,
-                                        address = viewModel.taskAddressState,
-                                        priority = viewModel.taskPriority,
-                                        deadline = viewModel.taskDeadline,
-                                        label = viewModel.taskLabel
-                                    )
-                                } else {
-                                    Task(
-                                        id = id,
-                                        title = viewModel.taskTitleState,
-                                        description = viewModel.taskDescriptionState,
-                                        date = viewModel.taskDateState,
-                                        address = viewModel.taskAddressState,
-                                        priority = viewModel.taskPriority,
-                                        deadline = viewModel.taskDeadline,
-                                        label = viewModel.taskLabel
-                                    )
-                                }
+                        // Create task object based on whether we're editing or creating
+                        val task = if (id == 0L) {
+                            Task(
+                                title = viewModel.taskTitleState,
+                                description = viewModel.taskDescriptionState,
+                                address = viewModel.taskAddressState,
+                                priority = viewModel.taskPriority,
+                                deadline = viewModel.taskDeadline,
+                                label = viewModel.taskLabel
+                            )
+                        } else {
+                            Task(
+                                id = id,
+                                title = viewModel.taskTitleState,
+                                description = viewModel.taskDescriptionState,
+                                date = viewModel.taskDateState,
+                                address = viewModel.taskAddressState,
+                                priority = viewModel.taskPriority,
+                                deadline = viewModel.taskDeadline,
+                                label = viewModel.taskLabel
+                            )
+                        }
 
-                                // Submit the task
-                                onSubmit(task)
-
-
-                                // Add to calendar if checked and not in history mode
-                                if (addToCalendar && !isHistoryMode) {
-                                    addTaskToCalendar(context = context, task.title, task.deadline)
-                                }
+                        // Submit the task
+                        onSubmit(task)
 
 
-                        },
+                        // Add to calendar if checked and not in history mode
+                        if (addToCalendar && !isHistoryMode) {
+                            addTaskToCalendar(context = context, task.title, task.deadline)
+                        }
+
+
+                    },
 
                     enabled = true, // always enabled so appearance never changes
                     modifier = Modifier.size(48.dp),
@@ -384,7 +417,6 @@ fun AddTaskView(
                     )
                 }
             }
-
         }
 
         // Confirmation dialog for unsaved changes (only in normal mode)
