@@ -16,36 +16,23 @@ class ReminderNotificationService(
 
     private val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-    fun showNotification(task: Task) {
+    fun showNotification(taskTitle: String) {
         val activityIntent = Intent(context, MainActivity::class.java)
-        val activityPendingIntent = PendingIntent.getActivity(context, 1, activityIntent,
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0)
-
-        val checkIntent = PendingIntent.getBroadcast(
-            context,
-            2,
-            Intent(context, ReminderNotificationReceiver::class.java),
+        val activityPendingIntent = PendingIntent.getActivity(
+            context, 1, activityIntent,
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) PendingIntent.FLAG_IMMUTABLE else 0
         )
 
         val notification = NotificationCompat.Builder(context, TASK_CHANNEL_ID)
             .setSmallIcon(R.mipmap.ic_launcher)
             .setContentTitle("Task Reminder")
-            .setContentText("You have not finished with ${task.title}")
+            .setContentText("You have not finished: $taskTitle")
             .setContentIntent(activityPendingIntent)
             .build()
-            /*
-            .addAction(
-                R.drawable.baseline_check_24,
-                "Mark as Done",
-                checkIntent
-            )
 
-            //.setStyle() for the future
-
-             */
         notificationManager.notify(1, notification)
     }
+
 
     companion object {
         const val TASK_CHANNEL_ID = "task_channel"

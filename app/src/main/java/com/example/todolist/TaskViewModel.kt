@@ -1,5 +1,6 @@
 package com.example.todolist
 
+import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
@@ -8,6 +9,7 @@ import androidx.lifecycle.viewModelScope
 import com.example.todolist.data.Task
 import com.example.todolist.data.TaskRepository
 import com.example.todolist.data.UiState
+import com.example.todolist.notifications.scheduleReminder
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -24,7 +26,11 @@ class TaskViewModel(
     var taskPriority by mutableStateOf("")
     var taskDeadline by mutableStateOf("")
     var taskLabel by mutableStateOf("")
-    var taskReminder by mutableStateOf(0L)
+    var taskReminderEnabled by mutableStateOf(false)
+    var taskReminderPreset by mutableStateOf("")
+    var taskReminderPresetTime by mutableStateOf("")
+    var taskReminderCustomDateTime by mutableStateOf<Long?>(null)
+    var taskReminderTriggerTime by mutableStateOf<Long?>(null)
 
     @RequiresApi(Build.VERSION_CODES.O)
     private val _currentScreen = MutableStateFlow<Screen>(Screen.BottomScreen.Today)
@@ -84,10 +90,27 @@ class TaskViewModel(
         taskHasBeenChanged = true
     }
 
-    fun onTaskReminderChanged(newReminder: Long) {
-        taskReminder = newReminder
+    fun onReminderEnabledChanged(enabled: Boolean) {
+        taskReminderEnabled = enabled
         taskHasBeenChanged = true
     }
+
+    fun onReminderPresetChanged(preset: String, time: String) {
+        taskReminderPreset = preset
+        taskReminderPresetTime = time
+        taskHasBeenChanged = true
+    }
+
+    fun onReminderCustomDateTimeChanged(timestamp: Long) {
+        taskReminderCustomDateTime = timestamp
+        taskHasBeenChanged = true
+    }
+
+    fun onReminderTriggerTimeChanged(trigger: Long) {
+        taskReminderTriggerTime = trigger
+        taskHasBeenChanged = true
+    }
+
 
     fun resetFormFields() {
         taskTitleState = ""
@@ -97,7 +120,11 @@ class TaskViewModel(
         taskPriority = ""
         taskDeadline = ""
         taskLabel = ""
-        taskReminder = 0L
+        taskReminderEnabled = false
+        taskReminderPreset = ""
+        taskReminderPresetTime = ""
+        taskReminderCustomDateTime = 0L
+        taskReminderTriggerTime = 0L
         taskHasBeenChanged = false
     }
 
@@ -112,34 +139,51 @@ class TaskViewModel(
         taskDeadline = task.deadline
         taskPriority = task.priority
         taskLabel = task.label
+        taskReminderEnabled = task.reminderEnabled
+        taskReminderPreset = task.reminderType
+        taskReminderPresetTime = task.reminderPresetTime
+        taskReminderCustomDateTime = task.reminderCustomDateTime
+        taskReminderTriggerTime = task.reminderTriggerTime
         taskHasBeenChanged = false
     }
 
+
     val getAllTasks: Flow<List<Task>> = taskRepository.getTasks()
     val getPendingTasks: Flow<List<Task>> = taskRepository.getPendingTasks()
+    val getTasksWithReminders: Flow<List<Task>> = taskRepository.getTasksWithReminders()
     val getCompletedTasks: Flow<List<Task>> = taskRepository.getCompletedTasks()
     val getDeletedTasks: Flow<List<Task>> = taskRepository.getDeletedTasks()
     val getFinishedTasks: Flow<List<Task>> = taskRepository.getFinishedTasks()
     val getAllLabels: Flow<List<String>> = taskRepository.getAllLabels()
 
+    @SuppressLint("ScheduleExactAlarm")
     fun addTask(task: Task) {
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.addTask(task)
+
+            if (task.reminderEnabled) {
+                tryScheduleReminder(task)
+            }
         }
         resetFormFields()
         resetUiState()
-    }
-
-    fun getTaskById(id: Long): Flow<Task> {
-        return taskRepository.getTaskById(id)
     }
 
     fun updateTask(task: Task) {
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.updateATask(task)
+
+            if (task.reminderEnabled) {
+                tryScheduleReminder(task)
+            }
         }
         resetFormFields()
         resetUiState()
+    }
+
+
+    fun getTaskById(id: Long): Flow<Task> {
+        return taskRepository.getTaskById(id)
     }
 
     fun permanentlyDeleteTask(task: Task) {
@@ -196,4 +240,27 @@ class TaskViewModel(
     fun setId(id: Long) {
         _uiState.value = _uiState.value.copy(currentId = id)
     }
+
+    private fun tryScheduleReminder(task: Task) {
+        val context = Graph.appContext
+        val alarmManager = context.getSystemService(android.app.AlarmManager::class.java)
+
+        val canSchedule = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            alarmManager?.canScheduleExactAlarms() == true
+        } else {
+            true
+        }
+
+        if (canSchedule) {
+            try {
+                scheduleReminder(context, task)
+            } catch (e: SecurityException) {
+                // Log or inform the user
+                e.printStackTrace()
+            }
+        } else {
+            // Could log or notify that exact alarm can't be scheduled
+        }
+    }
+
 }

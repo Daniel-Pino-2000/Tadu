@@ -48,6 +48,9 @@ abstract class TaskDao {
     @Query("Select * from `task-table` where `task-deleted` = 1 OR `task-completed` = 1")
     abstract fun  getFinishedTasks():Flow<List<Task>>
 
+    @Query("SELECT * FROM `task-table` WHERE `reminder-enabled` = 1")
+    abstract fun getTasksWithReminders():Flow<List<Task>>
+
     // Mark task as completed
     @Query("UPDATE `task-table` SET `task-completed` = 1, `task-completion-date` = :timestamp WHERE id = :id")
     abstract suspend fun markTaskCompleted(id: Long, timestamp: Long = System.currentTimeMillis())

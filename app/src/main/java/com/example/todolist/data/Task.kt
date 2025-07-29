@@ -34,7 +34,21 @@ data class Task(
     @ColumnInfo(name = "task-label")
     val label: String = "",// Default label
 
-    /*@ColumnInfo(name = "task-reminder")
-    val reminder: Long? = null*/
+
+    // Reminder data
+    @ColumnInfo(name = "reminder-enabled")
+    val reminderEnabled: Boolean = false,
+
+    @ColumnInfo(name = "reminder-type")
+    val reminderType: String = "PRESET",  // or enum stored as string/int
+
+    @ColumnInfo(name = "reminder-preset-time")
+    val reminderPresetTime: String = "15 minutes before",
+
+    @ColumnInfo(name = "reminder-custom-datetime")
+    val reminderCustomDateTime: Long? = null,  // store as epoch millis for LocalDateTime
+
+    @ColumnInfo(name = "reminder-trigger-time")
+    val reminderTriggerTime: Long? = null  // absolute time when alarm should trigger
 
 )

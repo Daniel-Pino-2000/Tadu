@@ -64,7 +64,11 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.ui.draw.scale
-
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.Duration
+import java.time.Instant
+import java.util.*
 
 /**
  * A composable that displays a modal bottom sheet for adding or editing tasks.
@@ -101,9 +105,16 @@ fun AddTaskView(
     // Flag to control when dismissal should be allowed (bypasses confirmation)
     val allowDismiss = remember { mutableStateOf(false) }
 
-    // Reminder states
-    var reminderEnabled by remember { mutableStateOf(false) }
-    var selectedReminderTime by remember { mutableStateOf("15 minutes before") }
+    // State for reminder configuration - will be updated when task loads
+    var reminderResult by remember(id) {
+        mutableStateOf(
+            ReminderResult(
+                config = ReminderConfig(),
+                triggerTime = null,
+                isValid = false
+            )
+        )
+    }
 
     // Configure the bottom sheet state with custom dismiss behavior
     var sheetState: SheetState = rememberModalBottomSheetState(
@@ -122,8 +133,6 @@ fun AddTaskView(
     // Focus management for automatic keyboard display
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
-
-
 
     // Handle hardware/gesture back button presses
     // Ensures consistent behavior with swipe-to-dismiss and tap-outside-to-dismiss
@@ -144,25 +153,51 @@ fun AddTaskView(
     }
 
     // Initialize form fields based on whether we're editing an existing task or creating a new one
-    // Remove all the direct assignments and replace with:
     val task by viewModel.getTaskById(id).collectAsState(
         initial = Task(0L, "", "", "", "", "4", "")
     )
 
     LaunchedEffect(id, task) {
-
         if (id != 0L && task.id != 0L) {
             // Editing existing task
             viewModel.populateFieldsWithTask(task)
+
+            // Initialize reminder configuration from task data
+            val taskReminderType = if (task.reminderType == "PRESET") ReminderType.PRESET else ReminderType.CUSTOM
+            val taskCustomDateTime = task.reminderCustomDateTime?.let {
+                Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDateTime()
+            }
+
+            reminderResult = ReminderResult(
+                config = ReminderConfig(
+                    enabled = task.reminderEnabled,
+                    type = taskReminderType,
+                    presetTime = task.reminderPresetTime,
+                    customDateTime = taskCustomDateTime
+                ),
+                triggerTime = taskCustomDateTime,
+                isValid = task.reminderEnabled
+            )
+
         } else if (id == 0L) {
             // Creating new task - only reset if fields haven't been set from calendar
             if (viewModel.taskDeadline.isEmpty()) {
                 viewModel.resetFormFields()
+                reminderResult = ReminderResult(
+                    config = ReminderConfig(),
+                    triggerTime = null,
+                    isValid = false
+                )
             } else {
                 // Keep the deadline from calendar but reset other fields
                 val currentDeadline = viewModel.taskDeadline
                 viewModel.resetFormFields()
                 viewModel.onTaskDeadlineChanged(currentDeadline)
+                reminderResult = ReminderResult(
+                    config = ReminderConfig(),
+                    triggerTime = null,
+                    isValid = false
+                )
             }
         }
     }
@@ -245,24 +280,27 @@ fun AddTaskView(
             // Additional task options (priority, deadline, etc.)
             ScrollableRow(viewModel, isHistoryMode)
 
-            // Add this state at the top of your AddTaskView composable (replace the old reminder states)
-            var reminderConfig by remember { mutableStateOf(ReminderConfig()) }
-
-            // Then in your Column, replace the old reminder section with:
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Use the new ReminderSection composable
+            // Reminder UI - Fixed to use the updated ReminderSection
             ReminderSection(
-                onReminderChange = { config ->
-                    reminderConfig = config
-                    // TODO: Handle reminder configuration change
-                    // You can access:
-                    // - config.enabled (Boolean)
-                    // - config.type (ReminderType.PRESET or ReminderType.CUSTOM)
-                    // - config.presetTime (String like "15 minutes before")
-                    // - config.customDateTime (LocalDateTime? for custom reminders)
+                taskDeadline = viewModel.taskDeadline, // Pass the deadline as String
+                onReminderChange = { result ->
+                    reminderResult = result
+
+                    // Update viewModel with reminder configuration
+                    viewModel.taskReminderEnabled = result.config.enabled
+                    viewModel.taskReminderPreset = result.config.type.name
+                    viewModel.taskReminderPresetTime = result.config.presetTime
+                    viewModel.taskReminderCustomDateTime = result.config.customDateTime
+                        ?.atZone(ZoneId.systemDefault())
+                        ?.toInstant()
+                        ?.toEpochMilli()
+
+                    // Set the trigger time from the result
+                    viewModel.taskReminderTriggerTime = result.getTriggerTimeMillis()
                 },
-                initialConfig = reminderConfig
+                initialConfig = reminderResult.config
             )
 
             var addToCalendar by remember { mutableStateOf(false) } // Checkbox state
@@ -367,7 +405,6 @@ fun AddTaskView(
                     onClick = {
                         if (!isValid) return@Button // ignore click if not valid
 
-
                         // Create task object based on whether we're editing or creating
                         val task = if (id == 0L) {
                             Task(
@@ -376,7 +413,15 @@ fun AddTaskView(
                                 address = viewModel.taskAddressState,
                                 priority = viewModel.taskPriority,
                                 deadline = viewModel.taskDeadline,
-                                label = viewModel.taskLabel
+                                label = viewModel.taskLabel,
+                                reminderEnabled = reminderResult.config.enabled,
+                                reminderType = reminderResult.config.type.name,
+                                reminderPresetTime = reminderResult.config.presetTime ?: "",
+                                reminderCustomDateTime = reminderResult.config.customDateTime
+                                    ?.atZone(ZoneId.systemDefault())
+                                    ?.toInstant()
+                                    ?.toEpochMilli(),
+                                reminderTriggerTime = reminderResult.getTriggerTimeMillis() ?: 0L
                             )
                         } else {
                             Task(
@@ -387,22 +432,26 @@ fun AddTaskView(
                                 address = viewModel.taskAddressState,
                                 priority = viewModel.taskPriority,
                                 deadline = viewModel.taskDeadline,
-                                label = viewModel.taskLabel
+                                label = viewModel.taskLabel,
+                                reminderEnabled = reminderResult.config.enabled,
+                                reminderType = reminderResult.config.type.name,
+                                reminderPresetTime = reminderResult.config.presetTime ?: "",
+                                reminderCustomDateTime = reminderResult.config.customDateTime
+                                    ?.atZone(ZoneId.systemDefault())
+                                    ?.toInstant()
+                                    ?.toEpochMilli(),
+                                reminderTriggerTime = reminderResult.getTriggerTimeMillis() ?: 0L
                             )
                         }
 
                         // Submit the task
                         onSubmit(task)
 
-
                         // Add to calendar if checked and not in history mode
                         if (addToCalendar && !isHistoryMode) {
                             addTaskToCalendar(context = context, task.title, task.deadline)
                         }
-
-
                     },
-
                     enabled = true, // always enabled so appearance never changes
                     modifier = Modifier.size(48.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -569,6 +618,5 @@ fun AddTaskView(
                 }
             }
         }
-
     }
 }
