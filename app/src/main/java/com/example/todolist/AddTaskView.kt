@@ -58,7 +58,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 
-
 /**
  * A composable that displays a modal bottom sheet for adding or editing tasks.
  *
@@ -67,6 +66,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
  * - Handles back button, swipe-to-dismiss, and tap-outside-to-dismiss consistently
  * - Auto-focuses title field and shows keyboard when opened
  * - Validates input and disables submit for invalid tasks
+ * - Properly handles reminder data collection and scheduling
  *
  * @param id The task ID (0L for new task, existing ID for editing)
  * @param viewModel The TaskViewModel that manages task state
@@ -94,6 +94,10 @@ fun AddTaskView(
     // Flag to control when dismissal should be allowed (bypasses confirmation)
     val allowDismiss = remember { mutableStateOf(false) }
 
+    // Reminder state management
+    var reminderTime by remember { mutableStateOf<Long?>(null) }
+    var reminderText by remember { mutableStateOf<String?>(null) }
+
     // Configure the bottom sheet state with custom dismiss behavior
     var sheetState: SheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
@@ -111,8 +115,6 @@ fun AddTaskView(
     // Focus management for automatic keyboard display
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
-
-
 
     // Handle hardware/gesture back button presses
     // Ensures consistent behavior with swipe-to-dismiss and tap-outside-to-dismiss
@@ -133,16 +135,22 @@ fun AddTaskView(
     }
 
     // Initialize form fields based on whether we're editing an existing task or creating a new one
-    // Remove all the direct assignments and replace with:
     val task by viewModel.getTaskById(id).collectAsState(
         initial = Task(0L, "", "", "", "", "4", "")
     )
 
     LaunchedEffect(id, task) {
-
         if (id != 0L && task.id != 0L) {
             // Editing existing task
             viewModel.populateFieldsWithTask(task)
+            // Initialize reminder state from existing task
+            reminderTime = task.reminderTime
+            reminderText = if (task.reminderTime != null && task.reminderTime!! > 0) {
+                // Format the existing reminder time for display
+                task.reminderTime?.toReminderDateTime()?.let { reminderDateTime ->
+                    "Set for ${reminderDateTime.date} at ${reminderDateTime.time}"
+                }
+            } else null
         } else if (id == 0L) {
             // Creating new task - only reset if fields haven't been set from calendar
             if (viewModel.taskDeadline.isEmpty()) {
@@ -153,6 +161,9 @@ fun AddTaskView(
                 viewModel.resetFormFields()
                 viewModel.onTaskDeadlineChanged(currentDeadline)
             }
+            // Reset reminder state for new task
+            reminderTime = null
+            reminderText = null
         }
     }
 
@@ -231,14 +242,53 @@ fun AddTaskView(
                 readOnly = isHistoryMode // Make read-only in history mode
             )
 
-            // Additional task options (priority, deadline, etc.) - only show if not in history mode
-            //if (!isHistoryMode) {
-                ScrollableRow(viewModel, isHistoryMode)
-            //}
+            // Additional task options (priority, deadline, etc.)
+            ScrollableRow(viewModel, isHistoryMode)
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            ReminderSection(viewModel = viewModel, id = id)
+            // Reminder Section - now handles its own UI and returns data via callback
+            if (!isHistoryMode) {
+                ReminderSection(
+                    initialReminder = reminderTime,
+                    onReminderChanged = { newReminderTime, newReminderText ->
+                        reminderTime = newReminderTime
+                        reminderText = newReminderText
+                        // Mark that the task has been changed when reminder is modified
+                        viewModel.taskHasBeenChanged = true
+                    }
+                )
+            } else {
+                // Show reminder info in read-only mode for history
+                if (reminderTime != null && reminderTime!! > 0) {
+                    reminderText?.let { text ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color.Gray.copy(alpha = 0.1f)
+                            ),
+                            shape = RoundedCornerShape(14.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(18.dp)) {
+                                Text(
+                                    text = "Reminder was set",
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.Gray
+                                )
+                                Text(
+                                    text = text,
+                                    fontSize = 13.sp,
+                                    color = Color.Gray,
+                                    modifier = Modifier.padding(top = 2.dp)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
 
             var addToCalendar by remember { mutableStateOf(false) } // Checkbox state
 
@@ -333,45 +383,50 @@ fun AddTaskView(
                 }
 
                 Button(
-                        onClick = {
-                            if (!isValid) return@Button // ignore click if not valid
+                    onClick = {
+                        if (!isValid) return@Button // ignore click if not valid
 
+                        // Create task object based on whether we're editing or creating
+                        val taskToSubmit = if (id == 0L) {
+                            // Creating new task
+                            Task(
+                                title = viewModel.taskTitleState,
+                                description = viewModel.taskDescriptionState,
+                                address = viewModel.taskAddressState,
+                                priority = viewModel.taskPriority,
+                                deadline = viewModel.taskDeadline,
+                                label = viewModel.taskLabel,
+                                reminderTime = reminderTime, // Include reminder time
+                                remindeText = reminderText
+                            )
+                        } else {
+                            // Editing existing task
+                            Task(
+                                id = id,
+                                title = viewModel.taskTitleState,
+                                description = viewModel.taskDescriptionState,
+                                date = viewModel.taskDateState,
+                                address = viewModel.taskAddressState,
+                                priority = viewModel.taskPriority,
+                                deadline = viewModel.taskDeadline,
+                                label = viewModel.taskLabel,
+                                reminderTime = reminderTime, // Include reminder time
+                                remindeText = reminderText,
+                                isDeleted = task.isDeleted,
+                                deletionDate = task.deletionDate,
+                                isCompleted = task.isCompleted,
+                                completionDate = task.completionDate
+                            )
+                        }
 
-                                // Create task object based on whether we're editing or creating
-                                val task = if (id == 0L) {
-                                    Task(
-                                        title = viewModel.taskTitleState,
-                                        description = viewModel.taskDescriptionState,
-                                        address = viewModel.taskAddressState,
-                                        priority = viewModel.taskPriority,
-                                        deadline = viewModel.taskDeadline,
-                                        label = viewModel.taskLabel
-                                    )
-                                } else {
-                                    Task(
-                                        id = id,
-                                        title = viewModel.taskTitleState,
-                                        description = viewModel.taskDescriptionState,
-                                        date = viewModel.taskDateState,
-                                        address = viewModel.taskAddressState,
-                                        priority = viewModel.taskPriority,
-                                        deadline = viewModel.taskDeadline,
-                                        label = viewModel.taskLabel
-                                    )
-                                }
+                        // Submit the task - the ViewModel will handle reminder scheduling
+                        onSubmit(taskToSubmit)
 
-                                // Submit the task
-                                onSubmit(task)
-
-
-                                // Add to calendar if checked and not in history mode
-                                if (addToCalendar && !isHistoryMode) {
-                                    addTaskToCalendar(context = context, task.title, task.deadline)
-                                }
-
-
-                        },
-
+                        // Add to calendar if checked and not in history mode
+                        if (addToCalendar && !isHistoryMode) {
+                            addTaskToCalendar(context = context, taskToSubmit.title, taskToSubmit.deadline)
+                        }
+                    },
                     enabled = true, // always enabled so appearance never changes
                     modifier = Modifier.size(48.dp),
                     colors = ButtonDefaults.buttonColors(
@@ -386,7 +441,6 @@ fun AddTaskView(
                     )
                 }
             }
-
         }
 
         // Confirmation dialog for unsaved changes (only in normal mode)
@@ -539,6 +593,5 @@ fun AddTaskView(
                 }
             }
         }
-
     }
 }

@@ -24,7 +24,8 @@ class TaskViewModel(
     var taskPriority by mutableStateOf("")
     var taskDeadline by mutableStateOf("")
     var taskLabel by mutableStateOf("")
-    var taskReminder: Long? by mutableStateOf(0L)
+    var taskReminderTime: Long? by mutableStateOf(0L)
+    var taskReminderText: String? by mutableStateOf("")
 
     @RequiresApi(Build.VERSION_CODES.O)
     private val _currentScreen = MutableStateFlow<Screen>(Screen.BottomScreen.Today)
@@ -84,10 +85,17 @@ class TaskViewModel(
         taskHasBeenChanged = true
     }
 
-    fun onTaskReminderChanged(newReminder: Long) {
-        taskReminder = newReminder
+    fun onTaskReminderTimeChanged(newReminder: Long) {
+        taskReminderTime = newReminder
         taskHasBeenChanged = true
     }
+
+    fun onTaskReminderTextChanged(newReminderText: String) {
+        taskReminderText = newReminderText
+        taskHasBeenChanged = true
+    }
+
+
 
     fun resetFormFields() {
         taskTitleState = ""
@@ -97,7 +105,8 @@ class TaskViewModel(
         taskPriority = ""
         taskDeadline = ""
         taskLabel = ""
-        taskReminder = 0L
+        taskReminderTime = null
+        taskReminderText = null
         taskHasBeenChanged = false
     }
 
@@ -112,7 +121,8 @@ class TaskViewModel(
         taskDeadline = task.deadline
         taskPriority = task.priority
         taskLabel = task.label
-        taskReminder = task.reminder
+        taskReminderTime = task.reminderTime
+        taskReminderText = task.remindeText
         taskHasBeenChanged = false
     }
 
