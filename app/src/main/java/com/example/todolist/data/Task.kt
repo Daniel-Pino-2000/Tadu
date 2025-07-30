@@ -32,6 +32,9 @@ data class Task(
     var completionDate: Long? = null,
 
     @ColumnInfo(name = "task-label")
-    val label: String = ""// Default label
+    val label: String = "",// Default label
+
+    @ColumnInfo(name = "task-reminder-time")
+    var reminder: Long? = null
 
 )
