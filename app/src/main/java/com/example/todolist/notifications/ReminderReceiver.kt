@@ -11,5 +11,6 @@ class ReminderReceiver: BroadcastReceiver() {
         val title = intent?.getStringExtra("Task Title") ?: return
 
         showNotification(context, title)
+
     }
 }

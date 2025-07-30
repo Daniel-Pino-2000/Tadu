@@ -46,6 +46,8 @@ dependencies {
     // Icons
     implementation("androidx.compose.material:material-icons-extended:<version>")
 
+    implementation("androidx.core:core-ktx:1.12.0") // or latest stable version
+
 
     // Room
     implementation("androidx.room:room-runtime:2.7.1")
