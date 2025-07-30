@@ -1,6 +1,7 @@
 package com.example.todolist.notifications
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
@@ -10,32 +11,28 @@ import com.example.todolist.data.Task
 
 class AndroidReminderScheduler(
     private val context: Context
-
-): ReminderScheduler {
+) : ReminderScheduler {
 
     private val alarmManager = context.getSystemService(AlarmManager::class.java)
 
-
+    @SuppressLint("ScheduleExactAlarm")
     @RequiresPermission(Manifest.permission.SCHEDULE_EXACT_ALARM)
     override fun schedule(task: Task) {
 
         val intent = Intent(context, ReminderReceiver::class.java).apply {
             putExtra("Task Title", task.title)
         }
-        val reminderTime = task.reminder
 
-        if (reminderTime != null) {
-            alarmManager.setExactAndAllowWhileIdle(
-                AlarmManager.RTC_WAKEUP,
-                reminderTime,
-                PendingIntent.getBroadcast(
-                    context,
-                    task.hashCode(),
-                    intent,
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-                )
+        alarmManager.setExactAndAllowWhileIdle(
+            AlarmManager.RTC_WAKEUP,
+            System.currentTimeMillis() + 10_000L,  // 10 seconds from now
+            PendingIntent.getBroadcast(
+                context,
+                task.hashCode(),  // unique request code per task
+                intent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
-        }
+        )
     }
 
     override fun cancel(task: Task) {

@@ -238,6 +238,8 @@ fun AddTaskView(
 
             Spacer(modifier = Modifier.height(6.dp))
 
+            ReminderSection(viewModel = viewModel, id = id)
+
             var addToCalendar by remember { mutableStateOf(false) } // Checkbox state
 
             // Submit button section

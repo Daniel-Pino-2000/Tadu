@@ -42,20 +42,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             MyToDoAppTheme {
                 SetSystemBarsColor(color = MaterialTheme.colorScheme.background)
-                val context = LocalContext.current
 
-                val hasNotificationPermission by remember {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        mutableStateOf(
-                            ContextCompat.checkSelfPermission(
-                                context,
-                                Manifest.permission.POST_NOTIFICATIONS
-                            ) == PackageManager.PERMISSION_GRANTED
-                        )
-                    } else {
-                        TODO("VERSION.SDK_INT < TIRAMISU")
-                    }
-                }
 
                 val navController = rememberNavController()
 
