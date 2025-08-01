@@ -12,26 +12,33 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.*
-import androidx.navigation.compose.rememberNavController
+import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.todolist.data.Task
+import com.example.todolist.notifications.AndroidReminderScheduler
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun Navigation(
-    viewModel: TaskViewModel = viewModel(),
-    navController: NavHostController  // ✅ now passed from above
+    navController: NavHostController  // now passed from above
 ) {
+    val context = LocalContext.current
+
+    // Manually create ViewModel with injected ReminderScheduler and Repository
+    val viewModel = remember {
+        TaskViewModel(
+            taskRepository = Graph.taskRepository, // or your actual repository instance
+            reminderScheduler = AndroidReminderScheduler(context)
+        )
+    }
 
     val uiState by viewModel.uiState.collectAsState()
 
     // Animation configuration
     val animationDuration = 350
-    val slideDistance = 300
 
     NavHost(
         navController = navController,
@@ -109,7 +116,6 @@ fun Navigation(
                 )
             }
         ) {
-            val uiState by viewModel.uiState.collectAsState()
             var selectedTaskId by remember { mutableStateOf<Long?>(null) }
 
             TaskCalendarView(
@@ -138,7 +144,6 @@ fun Navigation(
                         selectedTaskId = null
                     }
                 ) {
-                    // Animate the content inside the bottom sheet
                     AnimatedVisibility(
                         visible = uiState.showBottomSheet,
                         enter = slideInVertically(

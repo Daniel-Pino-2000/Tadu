@@ -1,6 +1,7 @@
 package com.example.todolist
 
 import android.os.Build
+import android.widget.Toast
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
 import androidx.lifecycle.ViewModel
@@ -8,12 +9,15 @@ import androidx.lifecycle.viewModelScope
 import com.example.todolist.data.Task
 import com.example.todolist.data.TaskRepository
 import com.example.todolist.data.UiState
+import com.example.todolist.notifications.AndroidReminderScheduler
+import com.example.todolist.notifications.ReminderScheduler
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 
 class TaskViewModel(
-    private val taskRepository: TaskRepository = Graph.taskRepository
+    private val taskRepository: TaskRepository = Graph.taskRepository,
+    private val reminderScheduler: ReminderScheduler
 ) : ViewModel() {
 
     var taskHasBeenChanged by mutableStateOf(false)
@@ -136,10 +140,18 @@ class TaskViewModel(
     fun addTask(task: Task) {
         viewModelScope.launch(Dispatchers.IO) {
             taskRepository.addTask(task)
+            // Schedule reminder if time is set and in future
+            if (task.reminderTime != null && task.reminderTime!! > System.currentTimeMillis()) {
+                println("It is scheduling the reminder!")
+                reminderScheduler.schedule(task)
+            }
         }
         resetFormFields()
         resetUiState()
+
+
     }
+
 
     fun getTaskById(id: Long): Flow<Task> {
         return taskRepository.getTaskById(id)
@@ -147,23 +159,40 @@ class TaskViewModel(
 
     fun updateTask(task: Task) {
         viewModelScope.launch(Dispatchers.IO) {
+            // Always cancel old reminder first (safe)
+            reminderScheduler.cancel(task)
+
             taskRepository.updateATask(task)
+
+            // Schedule new reminder only if valid reminder time is set
+            if (task.reminderTime != null) {
+                reminderScheduler.schedule(task)
+            }
         }
         resetFormFields()
         resetUiState()
     }
 
+
     fun permanentlyDeleteTask(task: Task) {
         viewModelScope.launch(Dispatchers.IO) {
+            if (task.reminderTime != null) {
+                reminderScheduler.cancel(task)
+            }
             taskRepository.deleteATask(task)
         }
     }
 
     fun deleteTask(taskId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
+            val task = taskRepository.getTaskById(taskId).firstOrNull()
+            if (task?.reminderTime != null) {
+                reminderScheduler.cancel(task)
+            }
             taskRepository.softDeleteTask(taskId)
         }
     }
+
 
     fun completeTask(taskId: Long) {
         viewModelScope.launch(Dispatchers.IO) {

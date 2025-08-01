@@ -8,7 +8,7 @@ import androidx.core.app.NotificationCompat
 import com.example.todolist.R
 
 fun showNotification(context: Context, title: String) {
-    val channelId = "reminder_channel"
+    val channelId = CHANNEL_ID
     val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
