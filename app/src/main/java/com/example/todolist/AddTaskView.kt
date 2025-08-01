@@ -55,8 +55,10 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.foundation.layout.navigationBarsPadding
 
 /**
  * A composable that displays a modal bottom sheet for adding or editing tasks.
@@ -67,6 +69,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
  * - Auto-focuses title field and shows keyboard when opened
  * - Validates input and disables submit for invalid tasks
  * - Properly handles reminder data collection and scheduling
+ * - Keyboard-aware layout that prevents UI stretching
  *
  * @param id The task ID (0L for new task, existing ID for editing)
  * @param viewModel The TaskViewModel that manages task state
@@ -99,7 +102,7 @@ fun AddTaskView(
     var reminderText by remember { mutableStateOf<String?>(null) }
 
     // Configure the bottom sheet state with custom dismiss behavior
-    var sheetState: SheetState = rememberModalBottomSheetState(
+    val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
         confirmValueChange = { newValue ->
             // When trying to hide the sheet, check if there are unsaved changes
@@ -200,245 +203,269 @@ fun AddTaskView(
             color = Color.Black
         )
 
-        Column(modifier = Modifier.padding(6.dp)) {
-
-            // Task title input field
-            TextField(
-                singleLine = true,
-                value = viewModel.taskTitleState,
-                onValueChange = { newValue ->
-                    viewModel.onTaskTitleChanged(newValue)
-                },
-                textStyle = textStyle,
-                placeholder = { Text("Task Title", style = TextStyle(fontSize = 20.sp, color = Color.Gray)) },
-                colors = TextFieldDefaults.textFieldColors(
-                    cursorColor = colorResource(id = R.color.nice_blue),
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    backgroundColor = Color.Transparent
-                ),
-                modifier = Modifier.focusRequester(focusRequester),
-                keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = {
-                    //keyboardController?.hide()
-                }),
-                readOnly = isHistoryMode // Make read-only in history mode
-            )
-
-            // Task description input field
-            TextField(
-                value = viewModel.taskDescriptionState,
-                onValueChange = { newValue ->
-                    viewModel.onTaskDescriptionChanged(newValue)
-                },
-                textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
-                placeholder = { Text("Description", style = TextStyle(fontSize = 16.sp, color = Color.Gray)) },
-                colors = TextFieldDefaults.textFieldColors(
-                    cursorColor = colorResource(id = R.color.nice_blue),
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                    backgroundColor = Color.Transparent
-                ),
-                readOnly = isHistoryMode // Make read-only in history mode
-            )
-
-            // Additional task options (priority, deadline, etc.)
-            ScrollableRow(viewModel, isHistoryMode)
-
-            Spacer(modifier = Modifier.height(6.dp))
-
-            // Reminder Section - now handles its own UI and returns data via callback
-            if (!isHistoryMode) {
-                ReminderSection(
-                    initialReminder = reminderTime,
-                    onReminderChanged = { newReminderTime, newReminderText ->
-                        reminderTime = newReminderTime
-                        reminderText = newReminderText
-                        // Mark that the task has been changed when reminder is modified
-                        viewModel.taskHasBeenChanged = true
-                    }
+        // Make the content scrollable and handle keyboard properly
+        Column(
+            modifier = Modifier
+                .fillMaxHeight(0.9f) // Limit height to prevent stretching
+                .imePadding() // Add padding when keyboard appears
+        ) {
+            // Scrollable content area
+            Column(
+                modifier = Modifier
+                    .weight(1f) // Take available space
+                    .verticalScroll(rememberScrollState()) // Make scrollable
+                    .padding(6.dp)
+            ) {
+                // Task title input field
+                TextField(
+                    singleLine = true,
+                    value = viewModel.taskTitleState,
+                    onValueChange = { newValue ->
+                        viewModel.onTaskTitleChanged(newValue)
+                    },
+                    textStyle = textStyle,
+                    placeholder = { Text("Task Title", style = TextStyle(fontSize = 20.sp, color = Color.Gray)) },
+                    colors = TextFieldDefaults.textFieldColors(
+                        cursorColor = colorResource(id = R.color.nice_blue),
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        backgroundColor = Color.Transparent
+                    ),
+                    modifier = Modifier.focusRequester(focusRequester),
+                    keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
+                    keyboardActions = KeyboardActions(onDone = {
+                        //keyboardController?.hide()
+                    }),
+                    readOnly = isHistoryMode // Make read-only in history mode
                 )
-            } else {
-                // Show reminder info in read-only mode for history
-                if (reminderTime != null && reminderTime!! > 0) {
-                    reminderText?.let { text ->
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = Color.Gray.copy(alpha = 0.1f)
-                            ),
-                            shape = RoundedCornerShape(14.dp)
-                        ) {
-                            Column(modifier = Modifier.padding(18.dp)) {
-                                Text(
-                                    text = "Reminder was set",
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color.Gray
-                                )
-                                Text(
-                                    text = text,
-                                    fontSize = 13.sp,
-                                    color = Color.Gray,
-                                    modifier = Modifier.padding(top = 2.dp)
-                                )
+
+                // Task description input field
+                TextField(
+                    value = viewModel.taskDescriptionState,
+                    onValueChange = { newValue ->
+                        viewModel.onTaskDescriptionChanged(newValue)
+                    },
+                    textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
+                    placeholder = { Text("Description", style = TextStyle(fontSize = 16.sp, color = Color.Gray)) },
+                    colors = TextFieldDefaults.textFieldColors(
+                        cursorColor = colorResource(id = R.color.nice_blue),
+                        focusedIndicatorColor = Color.Transparent,
+                        unfocusedIndicatorColor = Color.Transparent,
+                        backgroundColor = Color.Transparent
+                    ),
+                    readOnly = isHistoryMode // Make read-only in history mode
+                )
+
+                // Additional task options (priority, deadline, etc.)
+                ScrollableRow(viewModel, isHistoryMode)
+
+                Spacer(modifier = Modifier.height(6.dp))
+
+                // Reminder Section - now handles its own UI and returns data via callback
+                if (!isHistoryMode) {
+                    ReminderSection(
+                        initialReminder = reminderTime,
+                        onReminderChanged = { newReminderTime, newReminderText ->
+                            reminderTime = newReminderTime
+                            reminderText = newReminderText
+                            // Mark that the task has been changed when reminder is modified
+                            viewModel.taskHasBeenChanged = true
+                        }
+                    )
+                } else {
+                    // Show reminder info in read-only mode for history
+                    if (reminderTime != null && reminderTime!! > 0) {
+                        reminderText?.let { text ->
+                            Card(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp),
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color.Gray.copy(alpha = 0.1f)
+                                ),
+                                shape = RoundedCornerShape(14.dp)
+                            ) {
+                                Column(modifier = Modifier.padding(18.dp)) {
+                                    Text(
+                                        text = "Reminder was set",
+                                        fontSize = 16.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color.Gray
+                                    )
+                                    Text(
+                                        text = text,
+                                        fontSize = 13.sp,
+                                        color = Color.Gray,
+                                        modifier = Modifier.padding(top = 2.dp)
+                                    )
+                                }
                             }
                         }
                     }
                 }
+
+                // Add some bottom padding to ensure content doesn't get cut off
+                Spacer(modifier = Modifier.height(100.dp))
             }
 
-            var addToCalendar by remember { mutableStateOf(false) } // Checkbox state
-
-            // Submit button section
-            Row(
+            // Fixed submit button section at the bottom
+            Surface(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = if (isHistoryMode) Arrangement.SpaceBetween else Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .navigationBarsPadding(), // Handle navigation bar
+                color = Color.White,
+                shadowElevation = 8.dp
             ) {
+                var addToCalendar by remember { mutableStateOf(false) } // Checkbox state
 
-                if (isHistoryMode) {
-                    // Delete button for history mode
-                    Button(
-                        onClick = {
-                            openDeleteDialog.value = true
-                        },
-                        modifier = Modifier.height(48.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            backgroundColor = Color.Transparent,
-                            contentColor = MaterialTheme.colorScheme.error,
-                            disabledBackgroundColor = Color.Transparent,
-                            disabledContentColor = Color.Gray
-                        ),
-                        elevation = ButtonDefaults.elevation(
-                            defaultElevation = 0.dp,
-                            pressedElevation = 0.dp,
-                            disabledElevation = 0.dp
-                        ),
-                        shape = RoundedCornerShape(12.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Delete,
-                            contentDescription = "Delete Permanently",
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Delete",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
-                        )
+                // Submit button section
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 16.dp),
+                    horizontalArrangement = if (isHistoryMode) Arrangement.SpaceBetween else Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+
+                    if (isHistoryMode) {
+                        // Delete button for history mode
+                        Button(
+                            onClick = {
+                                openDeleteDialog.value = true
+                            },
+                            modifier = Modifier.height(48.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = Color.Transparent,
+                                contentColor = MaterialTheme.colorScheme.error,
+                                disabledBackgroundColor = Color.Transparent,
+                                disabledContentColor = Color.Gray
+                            ),
+                            elevation = ButtonDefaults.elevation(
+                                defaultElevation = 0.dp,
+                                pressedElevation = 0.dp,
+                                disabledElevation = 0.dp
+                            ),
+                            shape = RoundedCornerShape(12.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f))
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = "Delete Permanently",
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Delete",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    } else {
+                        // Calendar button for normal mode
+                        val hasDeadline = viewModel.taskDeadline.isNotBlank()
+                        val taskTitle = viewModel.taskTitleState
+                        val taskDeadline = viewModel.taskDeadline
+
+                        Button(
+                            onClick = {
+                                addTaskToCalendar(context, taskTitle, taskDeadline)
+                            },
+                            enabled = hasDeadline && taskTitle.isNotEmpty(),
+                            modifier = Modifier.height(48.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                backgroundColor = Color.Transparent,
+                                contentColor = if (hasDeadline && taskTitle.isNotEmpty())
+                                    colorResource(id = R.color.nice_blue) else Color.Gray,
+                                disabledBackgroundColor = Color.Transparent,
+                                disabledContentColor = Color.Gray
+                            ),
+                            elevation = ButtonDefaults.elevation(
+                                defaultElevation = 0.dp,
+                                pressedElevation = 0.dp,
+                                disabledElevation = 0.dp
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Event,
+                                contentDescription = "Add to Calendar",
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text(
+                                text = "Add to Calendar",
+                                fontSize = 14.sp,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
                     }
-                } else {
-                    // Calendar button for normal mode
-                    val hasDeadline = viewModel.taskDeadline.isNotBlank()
-                    val taskTitle = viewModel.taskTitleState
-                    val taskDeadline = viewModel.taskDeadline
+
+                    // Submit/Restore button
+                    val isValid = viewModel.taskTitleState.isNotBlank()
+                    val buttonColor = if (isValid) {
+                        colorResource(id = R.color.nice_blue)
+                    } else {
+                        Color.Gray
+                    }
 
                     Button(
                         onClick = {
-                            addTaskToCalendar(context, taskTitle, taskDeadline)
+                            if (!isValid) return@Button // ignore click if not valid
+
+                            // Create task object based on whether we're editing or creating
+                            val taskToSubmit = if (id == 0L) {
+                                // Creating new task
+                                Task(
+                                    title = viewModel.taskTitleState,
+                                    description = viewModel.taskDescriptionState,
+                                    address = viewModel.taskAddressState,
+                                    priority = viewModel.taskPriority,
+                                    deadline = viewModel.taskDeadline,
+                                    label = viewModel.taskLabel,
+                                    reminderTime = reminderTime, // Include reminder time
+                                    remindeText = reminderText
+                                )
+                            } else {
+                                // Editing existing task
+                                Task(
+                                    id = id,
+                                    title = viewModel.taskTitleState,
+                                    description = viewModel.taskDescriptionState,
+                                    date = viewModel.taskDateState,
+                                    address = viewModel.taskAddressState,
+                                    priority = viewModel.taskPriority,
+                                    deadline = viewModel.taskDeadline,
+                                    label = viewModel.taskLabel,
+                                    reminderTime = reminderTime, // Include reminder time
+                                    remindeText = reminderText,
+                                    isDeleted = task.isDeleted,
+                                    deletionDate = task.deletionDate,
+                                    isCompleted = task.isCompleted,
+                                    completionDate = task.completionDate
+                                )
+                            }
+
+                            // Submit the task - the ViewModel will handle reminder scheduling
+                            onSubmit(taskToSubmit)
+
+                            // Add to calendar if checked and not in history mode
+                            if (addToCalendar && !isHistoryMode) {
+                                addTaskToCalendar(context = context, taskToSubmit.title, taskToSubmit.deadline)
+                            }
                         },
-                        enabled = hasDeadline && taskTitle.isNotEmpty(),
-                        modifier = Modifier.height(48.dp),
+                        enabled = true, // always enabled so appearance never changes
+                        modifier = Modifier.size(48.dp),
                         colors = ButtonDefaults.buttonColors(
-                            backgroundColor = Color.Transparent,
-                            contentColor = if (hasDeadline && taskTitle.isNotEmpty())
-                                colorResource(id = R.color.nice_blue) else Color.Gray,
-                            disabledBackgroundColor = Color.Transparent,
-                            disabledContentColor = Color.Gray
-                        ),
-                        elevation = ButtonDefaults.elevation(
-                            defaultElevation = 0.dp,
-                            pressedElevation = 0.dp,
-                            disabledElevation = 0.dp
+                            backgroundColor = buttonColor
                         ),
                         shape = RoundedCornerShape(12.dp)
                     ) {
                         Icon(
-                            imageVector = Icons.Default.Event,
-                            contentDescription = "Add to Calendar",
-                            modifier = Modifier.size(20.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = "Add to Calendar",
-                            fontSize = 14.sp,
-                            fontWeight = FontWeight.Medium
+                            imageVector = if (isHistoryMode) Icons.Default.Restore else Icons.Default.Check,
+                            contentDescription = if (isHistoryMode) "Restore Task" else "Submit Task",
+                            tint = Color.White
                         )
                     }
-                }
-
-                // Submit/Restore button
-                val isValid = viewModel.taskTitleState.isNotBlank()
-                val buttonColor = if (isValid) {
-                    colorResource(id = R.color.nice_blue)
-                } else {
-                    Color.Gray
-                }
-
-                Button(
-                    onClick = {
-                        if (!isValid) return@Button // ignore click if not valid
-
-                        // Create task object based on whether we're editing or creating
-                        val taskToSubmit = if (id == 0L) {
-                            // Creating new task
-                            Task(
-                                title = viewModel.taskTitleState,
-                                description = viewModel.taskDescriptionState,
-                                address = viewModel.taskAddressState,
-                                priority = viewModel.taskPriority,
-                                deadline = viewModel.taskDeadline,
-                                label = viewModel.taskLabel,
-                                reminderTime = reminderTime, // Include reminder time
-                                remindeText = reminderText
-                            )
-                        } else {
-                            // Editing existing task
-                            Task(
-                                id = id,
-                                title = viewModel.taskTitleState,
-                                description = viewModel.taskDescriptionState,
-                                date = viewModel.taskDateState,
-                                address = viewModel.taskAddressState,
-                                priority = viewModel.taskPriority,
-                                deadline = viewModel.taskDeadline,
-                                label = viewModel.taskLabel,
-                                reminderTime = reminderTime, // Include reminder time
-                                remindeText = reminderText,
-                                isDeleted = task.isDeleted,
-                                deletionDate = task.deletionDate,
-                                isCompleted = task.isCompleted,
-                                completionDate = task.completionDate
-                            )
-                        }
-
-                        // Submit the task - the ViewModel will handle reminder scheduling
-                        onSubmit(taskToSubmit)
-
-                        // Add to calendar if checked and not in history mode
-                        if (addToCalendar && !isHistoryMode) {
-                            addTaskToCalendar(context = context, taskToSubmit.title, taskToSubmit.deadline)
-                        }
-                    },
-                    enabled = true, // always enabled so appearance never changes
-                    modifier = Modifier.size(48.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        backgroundColor = buttonColor
-                    ),
-                    shape = RoundedCornerShape(12.dp)
-                ) {
-                    Icon(
-                        imageVector = if (isHistoryMode) Icons.Default.Restore else Icons.Default.Check,
-                        contentDescription = if (isHistoryMode) "Restore Task" else "Submit Task",
-                        tint = Color.White
-                    )
                 }
             }
         }
