@@ -21,6 +21,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.foundation.background
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarToday
+import androidx.compose.material.icons.filled.Edit
 
 data class ReminderConfig(
     val enabled: Boolean = false,
@@ -57,7 +58,7 @@ fun ReminderSection(
     // State for controlling the reminder picker dialog
     var showReminderDialog by remember { mutableStateOf(false) }
 
-    // Main Reminder Toggle Card - this is the only thing that shows in the bottom sheet
+    // Compact Main Reminder Card - reduced padding and size
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -69,7 +70,7 @@ fun ReminderSection(
                 Color.Gray.copy(alpha = 0.03f)
             }
         ),
-        shape = RoundedCornerShape(14.dp),
+        shape = RoundedCornerShape(12.dp), // Slightly smaller corner radius
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         border = if (reminderConfig.enabled) {
             BorderStroke(
@@ -78,7 +79,7 @@ fun ReminderSection(
             )
         } else null
     ) {
-        Column(modifier = Modifier.padding(18.dp)) {
+        Column(modifier = Modifier.padding(14.dp)) { // Reduced from 18dp to 14dp
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -89,15 +90,15 @@ fun ReminderSection(
                     tint = if (reminderConfig.enabled)
                         colorResource(id = R.color.nice_blue)
                     else Color.Gray,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(18.dp) // Reduced from 20dp
                 )
 
-                Spacer(modifier = Modifier.width(12.dp))
+                Spacer(modifier = Modifier.width(10.dp)) // Reduced from 12dp
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Reminder",
-                        fontSize = 16.sp,
+                        fontSize = 15.sp, // Reduced from 16sp
                         fontWeight = FontWeight.Medium,
                         color = if (reminderConfig.enabled)
                             colorResource(id = R.color.nice_blue)
@@ -106,15 +107,15 @@ fun ReminderSection(
                     Text(
                         text = when {
                             reminderConfig.enabled && reminderConfig.dateTime.isSet ->
-                                "Set for ${reminderConfig.dateTime.date} at ${reminderConfig.dateTime.time}"
+                                "${reminderConfig.dateTime.date} at ${reminderConfig.dateTime.time}"
                             reminderConfig.enabled ->
                                 "Tap to set date and time"
                             else ->
                                 "Get notified before deadline"
                         },
-                        fontSize = 13.sp,
+                        fontSize = 12.sp, // Reduced from 13sp
                         color = Color.Gray,
-                        modifier = Modifier.padding(top = 2.dp)
+                        modifier = Modifier.padding(top = 1.dp) // Reduced from 2dp
                     )
                 }
 
@@ -141,70 +142,62 @@ fun ReminderSection(
                         uncheckedThumbColor = Color.White,
                         uncheckedTrackColor = Color.Gray.copy(alpha = 0.3f)
                     ),
-                    modifier = Modifier.scale(0.9f)
+                    modifier = Modifier.scale(0.85f) // Slightly smaller switch
                 )
             }
 
-            // Show active reminder chip when enabled and set - now clickable to edit
+            // Compact reminder status - only show when enabled and set
             if (reminderConfig.enabled && reminderConfig.dateTime.isSet) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp)) // Reduced from 16dp
 
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(10.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(1) {
-                        AssistChip(
-                            onClick = {
-                                // Open dialog to edit the reminder
-                                showReminderDialog = true
-                            },
-                            label = {
-                                Row(verticalAlignment = Alignment.CenterVertically) {
-                                    Icon(
-                                        imageVector = Icons.Default.AccessTime,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp),
-                                        tint = colorResource(id = R.color.nice_blue)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        "Reminder active • Tap to edit",
-                                        color = colorResource(id = R.color.nice_blue)
-                                    )
-                                }
-                            },
-                            colors = AssistChipDefaults.assistChipColors(
-                                containerColor = colorResource(id = R.color.nice_blue).copy(alpha = 0.1f)
-                            )
-                        )
-                    }
-                }
-            } else if (reminderConfig.enabled && !reminderConfig.dateTime.isSet) {
-                // Show a button to set the reminder when enabled but not set
-                Spacer(modifier = Modifier.height(16.dp))
-
-                OutlinedButton(
+                // Single compact chip showing reminder is active
+                AssistChip(
                     onClick = { showReminderDialog = true },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = ButtonDefaults.outlinedButtonColors(
+                    label = {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.AccessTime,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp), // Smaller icon
+                                tint = colorResource(id = R.color.nice_blue)
+                            )
+                            Text(
+                                "Active • Tap to edit",
+                                fontSize = 12.sp, // Smaller text
+                                color = colorResource(id = R.color.nice_blue)
+                            )
+                        }
+                    },
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = colorResource(id = R.color.nice_blue).copy(alpha = 0.1f)
+                    ),
+                    modifier = Modifier.height(28.dp) // Compact height
+                )
+            } else if (reminderConfig.enabled && !reminderConfig.dateTime.isSet) {
+                // Compact button to set the reminder when enabled but not set
+                Spacer(modifier = Modifier.height(8.dp)) // Reduced spacing
+
+                TextButton(
+                    onClick = { showReminderDialog = true },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(36.dp), // Reduced height
+                    colors = ButtonDefaults.textButtonColors(
                         contentColor = colorResource(id = R.color.nice_blue)
-                    ),
-                    border = BorderStroke(
-                        1.dp,
-                        colorResource(id = R.color.nice_blue).copy(alpha = 0.3f)
-                    ),
-                    shape = RoundedCornerShape(12.dp)
+                    )
                 ) {
                     Icon(
                         imageVector = Icons.Default.CalendarToday,
                         contentDescription = null,
-                        modifier = Modifier.size(18.dp)
+                        modifier = Modifier.size(16.dp)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
+                    Spacer(modifier = Modifier.width(6.dp))
                     Text(
                         "Set Reminder Time",
-                        fontSize = 14.sp,
+                        fontSize = 13.sp, // Smaller text
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -212,26 +205,27 @@ fun ReminderSection(
         }
     }
 
-    // Reminder Picker Dialog - this is where the date/time picker now lives
+    // Compact Reminder Picker Dialog
     if (showReminderDialog) {
         Dialog(onDismissRequest = { showReminderDialog = false }) {
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .background(Color(0x80000000)), // Semi-transparent backdrop
+                    .fillMaxWidth()
+                    .wrapContentHeight()
+                    .padding(horizontal = 20.dp), // Add horizontal padding for smaller dialog
                 contentAlignment = Alignment.Center
             ) {
                 Card(
                     modifier = Modifier
-                        .fillMaxWidth(0.95f)
+                        .fillMaxWidth()
                         .wrapContentHeight(),
-                    shape = RoundedCornerShape(20.dp),
+                    shape = RoundedCornerShape(16.dp), // Reduced corner radius
                     colors = CardDefaults.cardColors(containerColor = Color.White)
                 ) {
                     Column(
-                        modifier = Modifier.padding(24.dp)
+                        modifier = Modifier.padding(20.dp) // Reduced padding
                     ) {
-                        // Dialog Header
+                        // Compact Dialog Header
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
@@ -240,20 +234,20 @@ fun ReminderSection(
                                 imageVector = Icons.Default.Notifications,
                                 contentDescription = "Set Reminder",
                                 tint = colorResource(id = R.color.nice_blue),
-                                modifier = Modifier.size(24.dp)
+                                modifier = Modifier.size(20.dp) // Smaller icon
                             )
-                            Spacer(modifier = Modifier.width(12.dp))
+                            Spacer(modifier = Modifier.width(10.dp))
                             Text(
                                 text = "Set Reminder",
-                                fontSize = 20.sp,
+                                fontSize = 18.sp, // Reduced from 20sp
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color.Black
                             )
                         }
 
-                        Spacer(modifier = Modifier.height(20.dp))
+                        Spacer(modifier = Modifier.height(16.dp)) // Reduced spacing
 
-                        // Date/Time Picker - now has all the space it needs
+                        // Compact Date/Time Picker
                         ReminderDateTimePicker(
                             initialDateTime = reminderConfig.dateTime,
                             onReminderSet = { dateTime ->
@@ -279,12 +273,12 @@ fun ReminderSection(
                             }
                         )
 
-                        Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(12.dp)) // Reduced spacing
 
-                        // Dialog Action Buttons
+                        // Compact Dialog Action Buttons
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
+                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End) // Reduced spacing
                         ) {
                             TextButton(
                                 onClick = { showReminderDialog = false }
@@ -292,7 +286,7 @@ fun ReminderSection(
                                 Text(
                                     text = "Cancel",
                                     color = Color.Gray,
-                                    fontSize = 14.sp,
+                                    fontSize = 13.sp, // Smaller text
                                     fontWeight = FontWeight.Medium
                                 )
                             }
@@ -311,7 +305,7 @@ fun ReminderSection(
                                     Text(
                                         text = "Remove",
                                         color = MaterialTheme.colorScheme.error,
-                                        fontSize = 14.sp,
+                                        fontSize = 13.sp, // Smaller text
                                         fontWeight = FontWeight.Medium
                                     )
                                 }
