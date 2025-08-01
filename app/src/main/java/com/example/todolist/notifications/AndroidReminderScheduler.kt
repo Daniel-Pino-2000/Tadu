@@ -37,7 +37,7 @@ class AndroidReminderScheduler(
                 putExtra("TASK_ID", task.id)
                 putExtra("TASK_TITLE", task.title)
                 putExtra("TASK_DESCRIPTION", task.description)
-                putExtra("REMINDER_TEXT", task.remindeText)
+                putExtra("REMINDER_TEXT", task.reminderText)
             }
 
             val pendingIntent = PendingIntent.getBroadcast(

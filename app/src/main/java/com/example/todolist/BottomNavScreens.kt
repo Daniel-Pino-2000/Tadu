@@ -727,6 +727,7 @@ private fun SwipeableTaskItem(
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress) // Vibration
                     viewModel.setTaskToUpdate(task)
                     viewModel.setShowDatePicker(true)
+                    viewModel.setId(task.id)
                     // Set flag to reset outside lambda
                     shouldResetDismissState = true
                     false // prevent dismissal

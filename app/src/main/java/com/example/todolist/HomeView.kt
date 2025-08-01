@@ -29,6 +29,8 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.todolist.data.Task
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @RequiresApi(Build.VERSION_CODES.O)
@@ -115,20 +117,18 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
     if (uiState.showDatePicker) {
         DatePicker { selectedDate ->
             viewModel.onTaskDeadlineChanged(selectedDate)
-            val newTask = Task(
-                id = uiState.taskToUpdate.id,
-                title = uiState.taskToUpdate.title,
-                description = uiState.taskToUpdate.description,
-                date = uiState.taskToUpdate.date,
-                address = uiState.taskToUpdate.address,
-                priority = uiState.taskToUpdate.priority,
-                deadline = selectedDate,
-                label = uiState.taskToUpdate.label
-            )
-            viewModel.updateTask(newTask)
+
+            coroutineScope.launch {
+                val task = viewModel.getTaskById(uiState.currentId).first()
+                val newTask = task.copy(deadline = selectedDate)
+                viewModel.updateTask(newTask)
+            }
+
+            // Hide date picker after date is picked
+            viewModel.setShowDatePicker(false)
         }
-        viewModel.setShowDatePicker(false)
     }
+
 
     if (uiState.showBottomSheet) {
         AddTaskView(

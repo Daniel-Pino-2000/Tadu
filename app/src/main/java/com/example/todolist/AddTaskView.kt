@@ -55,8 +55,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
 
 /**
  * A composable that displays a modal bottom sheet for adding or editing tasks.
@@ -256,6 +254,8 @@ fun AddTaskView(
                         reminderText = newReminderText
                         // Mark that the task has been changed when reminder is modified
                         viewModel.taskHasBeenChanged = true
+                        viewModel.onTaskReminderTimeChanged(reminderTime)
+                        viewModel.onTaskReminderTextChanged(reminderText)
                     }
                 )
             } else {
@@ -397,7 +397,7 @@ fun AddTaskView(
                                 deadline = viewModel.taskDeadline,
                                 label = viewModel.taskLabel,
                                 reminderTime = reminderTime, // Include reminder time
-                                remindeText = reminderText
+                                reminderText = reminderText
                             )
                         } else {
                             // Editing existing task
@@ -411,7 +411,7 @@ fun AddTaskView(
                                 deadline = viewModel.taskDeadline,
                                 label = viewModel.taskLabel,
                                 reminderTime = reminderTime, // Include reminder time
-                                remindeText = reminderText,
+                                reminderText = reminderText,
                                 isDeleted = task.isDeleted,
                                 deletionDate = task.deletionDate,
                                 isCompleted = task.isCompleted,

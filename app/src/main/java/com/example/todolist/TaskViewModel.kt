@@ -85,12 +85,12 @@ class TaskViewModel(
         taskHasBeenChanged = true
     }
 
-    fun onTaskReminderTimeChanged(newReminder: Long) {
+    fun onTaskReminderTimeChanged(newReminder: Long?) {
         taskReminderTime = newReminder
         taskHasBeenChanged = true
     }
 
-    fun onTaskReminderTextChanged(newReminderText: String) {
+    fun onTaskReminderTextChanged(newReminderText: String?) {
         taskReminderText = newReminderText
         taskHasBeenChanged = true
     }
@@ -122,7 +122,7 @@ class TaskViewModel(
         taskPriority = task.priority
         taskLabel = task.label
         taskReminderTime = task.reminderTime
-        taskReminderText = task.remindeText
+        taskReminderText = task.reminderText
         taskHasBeenChanged = false
     }
 

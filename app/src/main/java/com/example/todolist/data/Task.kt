@@ -38,7 +38,7 @@ data class Task(
     var reminderTime: Long? = null,
 
     @ColumnInfo(name = "task-reminder-text")
-    var remindeText: String? = null
+    var reminderText: String? = null
 
 
 )
