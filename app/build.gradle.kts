@@ -54,6 +54,9 @@ dependencies {
     implementation("androidx.room:room-ktx:2.7.1")
     kapt("androidx.room:room-compiler:2.7.1")
 
+    implementation("androidx.compose.foundation:foundation:1.4.0")
+
+
 
     implementation("androidx.compose.animation:animation")
     implementation("androidx.compose.animation:animation-core")

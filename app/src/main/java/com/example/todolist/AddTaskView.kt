@@ -59,6 +59,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.ui.platform.LocalDensity
 
 /**
  * A composable that displays a modal bottom sheet for adding or editing tasks.
@@ -100,6 +101,9 @@ fun AddTaskView(
     // Reminder state management
     var reminderTime by remember { mutableStateOf<Long?>(null) }
     var reminderText by remember { mutableStateOf<String?>(null) }
+
+    val keyboardDisplayed = isKeyboardVisible()
+
 
     // Configure the bottom sheet state with custom dismiss behavior
     val sheetState = rememberModalBottomSheetState(
@@ -206,7 +210,7 @@ fun AddTaskView(
         // Make the content scrollable and handle keyboard properly
         Column(
             modifier = Modifier
-                .fillMaxHeight(0.9f) // Limit height to prevent stretching
+                .fillMaxHeight(if (keyboardDisplayed).9f else .7f) // Limit height to prevent stretching
                 .imePadding() // Add padding when keyboard appears
         ) {
             // Scrollable content area
@@ -621,4 +625,10 @@ fun AddTaskView(
             }
         }
     }
+}
+
+@Composable
+fun isKeyboardVisible(): Boolean {
+    val imeBottom = WindowInsets.ime.getBottom(LocalDensity.current)
+    return imeBottom > 0
 }
