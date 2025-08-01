@@ -128,7 +128,7 @@ fun AddTaskView(
 
     // Auto-focus the title field and show keyboard when sheet becomes visible (only if not in history mode)
     LaunchedEffect(sheetState.isVisible) {
-        if (sheetState.isVisible && !isHistoryMode) {
+        if (sheetState.isVisible && !isHistoryMode && id == 0L) {
             focusRequester.requestFocus()
             keyboardController?.show()
         }
