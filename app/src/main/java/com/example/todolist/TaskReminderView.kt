@@ -46,6 +46,14 @@ fun ReminderSection(
         )
     }
 
+    // Update reminderConfig when initialReminder changes (when task data loads)
+    LaunchedEffect(initialReminder) {
+        reminderConfig = ReminderConfig(
+            enabled = initialReminder != null,
+            dateTime = initialReminder?.toReminderDateTime() ?: ReminderDateTime()
+        )
+    }
+
     // State for controlling the reminder picker dialog
     var showReminderDialog by remember { mutableStateOf(false) }
 
@@ -116,8 +124,8 @@ fun ReminderSection(
                         if (enabled) {
                             // Request permissions when user enables reminders
                             activity?.requestRequiredPermissions()
-                            // Show the dialog to set the reminder
-                            showReminderDialog = true
+                            // Just enable the reminder, don't automatically open dialog
+                            reminderConfig = reminderConfig.copy(enabled = true)
                         } else {
                             // Clear reminder when disabled
                             reminderConfig = reminderConfig.copy(
