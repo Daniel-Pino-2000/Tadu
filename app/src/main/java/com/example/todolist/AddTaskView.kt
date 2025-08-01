@@ -358,7 +358,13 @@ fun AddTaskView(
                             pressedElevation = 0.dp,
                             disabledElevation = 0.dp
                         ),
-                        shape = RoundedCornerShape(12.dp)
+                        shape = RoundedCornerShape(12.dp),
+                        border = BorderStroke(
+                            1.dp,
+                            if (hasDeadline && taskTitle.isNotEmpty())
+                                colorResource(id = R.color.nice_blue).copy(alpha = 0.3f)
+                            else Color.Gray.copy(alpha = 0.3f)
+                        )
                     ) {
                         Icon(
                             imageVector = Icons.Default.Event,
