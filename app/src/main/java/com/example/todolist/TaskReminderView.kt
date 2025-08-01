@@ -1,5 +1,15 @@
 package com.example.todolist
 
+import android.Manifest
+import android.app.AlarmManager
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -22,6 +32,7 @@ import androidx.compose.foundation.background
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Edit
+import androidx.core.content.ContextCompat
 
 data class ReminderConfig(
     val enabled: Boolean = false,
@@ -36,7 +47,44 @@ fun ReminderSection(
     onReminderChanged: (reminderTime: Long?, reminderText: String?) -> Unit
 ) {
     val context = LocalContext.current
-    val activity = context as? MainActivity
+
+    // Permission launcher for notifications (Android 13+)
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            // Permission granted, now check exact alarm permission
+            checkExactAlarmPermission(context)
+        } else {
+            // Handle permission denied - you could show a message
+            // that reminders might not work properly
+        }
+    }
+
+    /**
+     * Request permissions needed for reminders
+     */
+    fun requestReminderPermissions() {
+        // For Android 13+ (API 33+), request notification permission
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            when {
+                ContextCompat.checkSelfPermission(
+                    context,
+                    Manifest.permission.POST_NOTIFICATIONS
+                ) == PackageManager.PERMISSION_GRANTED -> {
+                    // Permission already granted, check exact alarms
+                    checkExactAlarmPermission(context)
+                }
+                else -> {
+                    // Request notification permission
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }
+            }
+        } else {
+            // For older Android versions, just check exact alarms
+            checkExactAlarmPermission(context)
+        }
+    }
 
     var reminderConfig by remember {
         mutableStateOf(
@@ -124,8 +172,8 @@ fun ReminderSection(
                     onCheckedChange = { enabled ->
                         if (enabled) {
                             // Request permissions when user enables reminders
-                            activity?.requestRequiredPermissions()
-                            // Just enable the reminder, don't automatically open dialog
+                            requestReminderPermissions()
+                            // Enable the reminder
                             reminderConfig = reminderConfig.copy(enabled = true)
                         } else {
                             // Clear reminder when disabled
@@ -314,6 +362,20 @@ fun ReminderSection(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Check and request exact alarm permission for Android 12+
+ */
+private fun checkExactAlarmPermission(context: Context) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+        if (!alarmManager.canScheduleExactAlarms()) {
+            // Direct user to settings to enable exact alarms
+            val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+            context.startActivity(intent)
         }
     }
 }

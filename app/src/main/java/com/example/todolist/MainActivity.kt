@@ -37,7 +37,10 @@ class MainActivity : ComponentActivity() {
     private val notificationPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
-        if (!isGranted) {
+        if (isGranted) {
+            // Permission granted, now check exact alarm permission
+            checkExactAlarmPermission()
+        } else {
             // Handle permission denied - you could show a message
             // that reminders might not work properly
         }
@@ -74,25 +77,40 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Function to request permissions - call this when user interacts with reminders
-    fun requestRequiredPermissions() {
-        // Request notification permission for Android 13+
+    /**
+     * Request permissions needed for reminders
+     * This is called when user enables reminders
+     */
+    fun requestReminderPermissions() {
+        // For Android 13+ (API 33+), request notification permission
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             when {
                 ContextCompat.checkSelfPermission(
                     this,
                     Manifest.permission.POST_NOTIFICATIONS
                 ) == PackageManager.PERMISSION_GRANTED -> {
-                    // Permission already granted
+                    // Permission already granted, check exact alarms
+                    checkExactAlarmPermission()
+                }
+                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
+                    // Show rationale if needed (you could show a dialog here)
+                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
                 else -> {
-                    // Request permission
+                    // Request permission directly
                     notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                 }
             }
+        } else {
+            // For older Android versions, just check exact alarms
+            checkExactAlarmPermission()
         }
+    }
 
-        // Request exact alarm permission for Android 12+
+    /**
+     * Check and request exact alarm permission for Android 12+
+     */
+    private fun checkExactAlarmPermission() {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val alarmManager = getSystemService(AlarmManager::class.java)
             if (!alarmManager.canScheduleExactAlarms()) {
@@ -101,6 +119,29 @@ class MainActivity : ComponentActivity() {
                 startActivity(intent)
             }
         }
+    }
+
+    /**
+     * Check if all required permissions are granted
+     */
+    fun hasReminderPermissions(): Boolean {
+        val hasNotificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            ContextCompat.checkSelfPermission(
+                this,
+                Manifest.permission.POST_NOTIFICATIONS
+            ) == PackageManager.PERMISSION_GRANTED
+        } else {
+            true // Not required for older versions
+        }
+
+        val hasExactAlarmPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            val alarmManager = getSystemService(AlarmManager::class.java)
+            alarmManager.canScheduleExactAlarms()
+        } else {
+            true // Not required for older versions
+        }
+
+        return hasNotificationPermission && hasExactAlarmPermission
     }
 
     override fun onResume() {
