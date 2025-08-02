@@ -157,21 +157,26 @@ class TaskViewModel(
         return taskRepository.getTaskById(id)
     }
 
-    fun updateTask(task: Task) {
+    fun updateTask(updatedTask: Task) {
         viewModelScope.launch(Dispatchers.IO) {
-            // Always cancel old reminder first (safe)
-            reminderScheduler.cancel(task)
+            // Get the existing task (with old reminder info)
+            val oldTask = taskRepository.getTaskById(updatedTask.id).firstOrNull()
 
-            taskRepository.updateATask(task)
+            if (oldTask != null) {
+                reminderScheduler.cancel(oldTask) // Cancel using original PendingIntent
+            }
 
-            // Schedule new reminder only if valid reminder time is set
-            if (task.reminderTime != null) {
-                reminderScheduler.schedule(task)
+            taskRepository.updateATask(updatedTask)
+
+            // Schedule new reminder
+            if (updatedTask.reminderTime != null && updatedTask.reminderTime!! > System.currentTimeMillis()) {
+                reminderScheduler.schedule(updatedTask)
             }
         }
         resetFormFields()
         resetUiState()
     }
+
 
 
     fun permanentlyDeleteTask(task: Task) {
