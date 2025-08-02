@@ -99,6 +99,20 @@ class TaskViewModel(
         taskHasBeenChanged = true
     }
 
+    fun scheduleAllReminders() {
+        viewModelScope.launch {
+            getTasksWithReminders.collect { tasks ->
+                tasks
+                    .filter { it.reminderTime != null && it.reminderTime!! > System.currentTimeMillis() }
+                    .forEach { task ->
+                        reminderScheduler.schedule(task)
+                    }
+            }
+        }
+    }
+
+
+
 
 
     fun resetFormFields() {
@@ -222,6 +236,8 @@ class TaskViewModel(
     fun getTasksByLabel(label: String): Flow<List<Task>> {
         return taskRepository.getTasksByLabel(label)
     }
+
+
 
     fun setShowBottomSheet(show: Boolean) {
         _uiState.value = _uiState.value.copy(showBottomSheet = show)

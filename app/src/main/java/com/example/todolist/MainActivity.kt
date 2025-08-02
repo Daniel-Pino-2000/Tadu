@@ -2,6 +2,7 @@ package com.example.todolist
 
 import android.Manifest
 import android.app.AlarmManager
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
@@ -10,47 +11,37 @@ import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.SideEffect
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.NotificationsActive
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
 import androidx.navigation.compose.rememberNavController
 import com.example.mytodoapp.ui.theme.MyToDoAppTheme
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
 
-    // Permission launcher for notifications (Android 13+)
-    private val notificationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            // Permission granted, now check exact alarm permission
-            checkExactAlarmPermission()
-        } else {
-            // Handle permission denied - you could show a message
-            // that reminders might not work properly
-        }
-    }
+    // State for showing battery optimization dialog
+    private var showBatteryOptimizationDialog by mutableStateOf(false)
 
     @RequiresApi(Build.VERSION_CODES.O)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        // Enable edge-to-edge display (modern approach)
         enableEdgeToEdge()
 
         setContent {
@@ -58,6 +49,14 @@ class MainActivity : ComponentActivity() {
                 SetSystemBarsColor(color = MaterialTheme.colorScheme.background)
 
                 val navController = rememberNavController()
+
+                // Check battery optimization on startup
+                LaunchedEffect(Unit) {
+                    delay(2000) // Give user time to see the app first
+                    if (!isBatteryOptimizationDisabled()) {
+                        showBatteryOptimizationDialog = true
+                    }
+                }
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -68,9 +67,18 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .windowInsetsPadding(WindowInsets.systemBars)
                     ) {
-                        Navigation(
-                            navController = navController  // Pass it down
-                        )
+                        Navigation(navController = navController)
+
+                        // Show battery optimization dialog when needed
+                        if (showBatteryOptimizationDialog) {
+                            PermissionExplanationDialog (
+                                onConfirm = {
+                                    showBatteryOptimizationDialog = false
+                                    openBatteryOptimizationSettings()
+                                },
+                                onDismiss = { showBatteryOptimizationDialog = false }
+                            )
+                        }
                     }
                 }
             }
@@ -78,80 +86,140 @@ class MainActivity : ComponentActivity() {
     }
 
     /**
-     * Request permissions needed for reminders
-     * This is called when user enables reminders
+     * Request battery optimization exemption - shows explanation dialog
      */
-    fun requestReminderPermissions() {
-        // For Android 13+ (API 33+), request notification permission
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            when {
-                ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) == PackageManager.PERMISSION_GRANTED -> {
-                    // Permission already granted, check exact alarms
-                    checkExactAlarmPermission()
-                }
-                shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS) -> {
-                    // Show rationale if needed (you could show a dialog here)
-                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
-                else -> {
-                    // Request permission directly
-                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }
-            }
-        } else {
-            // For older Android versions, just check exact alarms
-            checkExactAlarmPermission()
-        }
+    fun requestBatteryOptimizationExemption() {
+        showBatteryOptimizationDialog = true
     }
 
     /**
-     * Check and request exact alarm permission for Android 12+
+     * Open battery optimization settings
      */
-    private fun checkExactAlarmPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val alarmManager = getSystemService(AlarmManager::class.java)
-            if (!alarmManager.canScheduleExactAlarms()) {
-                // Direct user to settings to enable exact alarms
-                val intent = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM)
+    private fun openBatteryOptimizationSettings() {
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                    data = android.net.Uri.parse("package:$packageName")
+                }
+                startActivity(intent)
+            }
+        } catch (e: Exception) {
+            // Fallback to battery optimization settings
+            try {
+                val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+                startActivity(intent)
+            } catch (e: Exception) {
+                // Final fallback to general settings
+                val intent = Intent(Settings.ACTION_SETTINGS)
                 startActivity(intent)
             }
         }
     }
 
     /**
-     * Check if all required permissions are granted
+     * Check if battery optimization is disabled for this app
      */
-    fun hasReminderPermissions(): Boolean {
-        val hasNotificationPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            ContextCompat.checkSelfPermission(
-                this,
-                Manifest.permission.POST_NOTIFICATIONS
-            ) == PackageManager.PERMISSION_GRANTED
+    fun isBatteryOptimizationDisabled(): Boolean {
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+            val powerManager = getSystemService(Context.POWER_SERVICE) as android.os.PowerManager
+            powerManager.isIgnoringBatteryOptimizations(packageName)
         } else {
-            true // Not required for older versions
+            true // Not applicable for older versions
         }
-
-        val hasExactAlarmPermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            val alarmManager = getSystemService(AlarmManager::class.java)
-            alarmManager.canScheduleExactAlarms()
-        } else {
-            true // Not required for older versions
-        }
-
-        return hasNotificationPermission && hasExactAlarmPermission
     }
 
     override fun onResume() {
         super.onResume()
 
-        // Optional: Check if exact alarm permission was granted when returning to app
+        // Check permissions when returning to app (user might have changed settings)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
             val alarmManager = getSystemService(AlarmManager::class.java)
             if (!alarmManager.canScheduleExactAlarms()) {
-                // You could show a subtle message that exact reminders might not work
+                // Permissions might have been revoked
+            }
+        }
+    }
+}
+
+@Composable
+fun PermissionExplanationDialog(
+    onConfirm: () -> Unit,
+    onDismiss: () -> Unit
+) {
+    Dialog(onDismissRequest = onDismiss) {
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Icon
+                Icon(
+                    imageVector = Icons.Default.NotificationsActive,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(64.dp)
+                        .padding(bottom = 16.dp),
+                    tint = MaterialTheme.colorScheme.primary
+                )
+
+                // Title
+                Text(
+                    text = "Enable Reminders",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 12.dp)
+                )
+
+                // Description
+                Text(
+                    text = "To receive task reminders, please allow notifications in your device settings.\n\n" +
+                            "This helps you:\n" +
+                            "• Never miss important tasks\n" +
+                            "• Stay organized and productive\n" +
+                            "• Get reminded at the perfect time",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Start,
+                    modifier = Modifier.padding(bottom = 24.dp)
+                )
+
+                // Buttons
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    ) {
+                        Text("Not Now")
+                    }
+
+                    Button(
+                        onClick = onConfirm,
+                        modifier = Modifier.weight(1f),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        )
+                    ) {
+                        Text("Continue")
+                    }
+                }
             }
         }
     }
@@ -161,18 +229,13 @@ class MainActivity : ComponentActivity() {
 fun SetSystemBarsColor(color: Color) {
     val view = LocalView.current
     val window = (view.context as ComponentActivity).window
-
-    // Calculate if we should use dark icons based on color luminance
     val useDarkIcons = color.luminance() > 0.5f
 
     SideEffect {
         val colorArgb = color.toArgb()
-
-        // Set both status bar and navigation bar colors
         window.statusBarColor = colorArgb
         window.navigationBarColor = colorArgb
 
-        // Set the icon colors for both bars
         WindowCompat.getInsetsController(window, view).apply {
             isAppearanceLightStatusBars = useDarkIcons
             isAppearanceLightNavigationBars = useDarkIcons
