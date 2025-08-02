@@ -15,6 +15,8 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.NotificationsOff
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -38,6 +40,13 @@ data class ReminderConfig(
     val enabled: Boolean = false,
     val dateTime: ReminderDateTime = ReminderDateTime()
 )
+
+enum class ReminderState {
+    DISABLED,
+    PENDING,
+    ACTIVE,
+    EXPIRED
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -106,26 +115,56 @@ fun ReminderSection(
     // State for controlling the reminder picker dialog
     var showReminderDialog by remember { mutableStateOf(false) }
 
+    // Determine current reminder state
+    val reminderState by remember(reminderConfig) {
+        derivedStateOf {
+            when {
+                !reminderConfig.enabled -> ReminderState.DISABLED
+                !reminderConfig.dateTime.isSet -> ReminderState.PENDING
+                System.currentTimeMillis() > reminderConfig.dateTime.timestamp -> ReminderState.EXPIRED
+                else -> ReminderState.ACTIVE
+            }
+        }
+    }
+
+    // Get colors based on reminder state
+    val containerColor = when (reminderState) {
+        ReminderState.DISABLED -> Color.Gray.copy(alpha = 0.03f)
+        ReminderState.PENDING -> colorResource(id = R.color.nice_blue).copy(alpha = 0.06f)
+        ReminderState.ACTIVE -> colorResource(id = R.color.nice_blue).copy(alpha = 0.06f)
+        ReminderState.EXPIRED -> Color(0xFFFF8A50).copy(alpha = 0.08f) // Softer orange with slightly higher alpha
+    }
+
+    val borderColor = when (reminderState) {
+        ReminderState.DISABLED -> null
+        ReminderState.PENDING -> colorResource(id = R.color.nice_blue).copy(alpha = 0.2f)
+        ReminderState.ACTIVE -> colorResource(id = R.color.nice_blue).copy(alpha = 0.2f)
+        ReminderState.EXPIRED -> Color(0xFFFF8A50).copy(alpha = 0.25f) // Slightly more visible border
+    }
+
+    val contentColor = when (reminderState) {
+        ReminderState.DISABLED -> Color.Gray
+        ReminderState.PENDING -> colorResource(id = R.color.nice_blue)
+        ReminderState.ACTIVE -> colorResource(id = R.color.nice_blue)
+        ReminderState.EXPIRED -> Color(0xFFE65100) // Deeper, more sophisticated orange
+    }
+
+    val iconTint = when (reminderState) {
+        ReminderState.DISABLED -> Color.Gray
+        ReminderState.PENDING -> colorResource(id = R.color.nice_blue)
+        ReminderState.ACTIVE -> colorResource(id = R.color.nice_blue)
+        ReminderState.EXPIRED -> Color(0xFFFF7043) // Balanced orange between background and text
+    }
+
     // Compact Main Reminder Card - reduced padding and size
     Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = if (reminderConfig.enabled) {
-                colorResource(id = R.color.nice_blue).copy(alpha = 0.06f)
-            } else {
-                Color.Gray.copy(alpha = 0.03f)
-            }
-        ),
+        colors = CardDefaults.cardColors(containerColor = containerColor),
         shape = RoundedCornerShape(12.dp), // Slightly smaller corner radius
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        border = if (reminderConfig.enabled) {
-            BorderStroke(
-                1.dp,
-                colorResource(id = R.color.nice_blue).copy(alpha = 0.2f)
-            )
-        } else null
+        border = borderColor?.let { BorderStroke(1.dp, it) }
     ) {
         Column(modifier = Modifier.padding(14.dp)) { // Reduced from 18dp to 14dp
             Row(
@@ -133,11 +172,12 @@ fun ReminderSection(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Default.Notifications,
+                    imageVector = when (reminderState) {
+                        ReminderState.EXPIRED -> Icons.Default.History
+                        else -> Icons.Default.Notifications
+                    },
                     contentDescription = "Reminder",
-                    tint = if (reminderConfig.enabled)
-                        colorResource(id = R.color.nice_blue)
-                    else Color.Gray,
+                    tint = iconTint,
                     modifier = Modifier.size(18.dp) // Reduced from 20dp
                 )
 
@@ -145,24 +185,26 @@ fun ReminderSection(
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Reminder",
+                        text = when (reminderState) {
+                            ReminderState.EXPIRED -> "Reminder (Expired)"
+                            else -> "Reminder"
+                        },
                         fontSize = 15.sp, // Reduced from 16sp
                         fontWeight = FontWeight.Medium,
-                        color = if (reminderConfig.enabled)
-                            colorResource(id = R.color.nice_blue)
-                        else Color.Black
+                        color = contentColor
                     )
                     Text(
-                        text = when {
-                            reminderConfig.enabled && reminderConfig.dateTime.isSet ->
-                                "${reminderConfig.dateTime.date} at ${reminderConfig.dateTime.time}"
-                            reminderConfig.enabled ->
-                                "Tap to set date and time"
-                            else ->
-                                "Get notified before deadline"
+                        text = when (reminderState) {
+                            ReminderState.DISABLED -> "Get notified before deadline"
+                            ReminderState.PENDING -> "Tap to set date and time"
+                            ReminderState.ACTIVE -> "${reminderConfig.dateTime.date} at ${reminderConfig.dateTime.time}"
+                            ReminderState.EXPIRED -> "${reminderConfig.dateTime.date} at ${reminderConfig.dateTime.time}"
                         },
                         fontSize = 12.sp, // Reduced from 13sp
-                        color = Color.Gray,
+                        color = when (reminderState) {
+                            ReminderState.EXPIRED -> contentColor.copy(alpha = 0.7f)
+                            else -> Color.Gray
+                        },
                         modifier = Modifier.padding(top = 1.dp) // Reduced from 2dp
                     )
                 }
@@ -185,8 +227,14 @@ fun ReminderSection(
                         }
                     },
                     colors = SwitchDefaults.colors(
-                        checkedThumbColor = colorResource(id = R.color.nice_blue),
-                        checkedTrackColor = colorResource(id = R.color.nice_blue).copy(alpha = 0.3f),
+                        checkedThumbColor = when (reminderState) {
+                            ReminderState.EXPIRED -> Color(0xFFFF7043)
+                            else -> colorResource(id = R.color.nice_blue)
+                        },
+                        checkedTrackColor = when (reminderState) {
+                            ReminderState.EXPIRED -> Color(0xFFFF7043).copy(alpha = 0.3f)
+                            else -> colorResource(id = R.color.nice_blue).copy(alpha = 0.3f)
+                        },
                         uncheckedThumbColor = Color.White,
                         uncheckedTrackColor = Color.Gray.copy(alpha = 0.3f)
                     ),
@@ -194,60 +242,94 @@ fun ReminderSection(
                 )
             }
 
-            // Compact reminder status - only show when enabled and set
-            if (reminderConfig.enabled && reminderConfig.dateTime.isSet) {
-                Spacer(modifier = Modifier.height(8.dp)) // Reduced from 16dp
+            // Compact reminder status - show different states
+            when (reminderState) {
+                ReminderState.ACTIVE -> {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    AssistChip(
+                        onClick = { showReminderDialog = true },
+                        label = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AccessTime,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = colorResource(id = R.color.nice_blue)
+                                )
+                                Text(
+                                    "Active • Tap to edit",
+                                    fontSize = 12.sp,
+                                    color = colorResource(id = R.color.nice_blue)
+                                )
+                            }
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = colorResource(id = R.color.nice_blue).copy(alpha = 0.1f)
+                        ),
+                        modifier = Modifier.height(28.dp)
+                    )
+                }
 
-                // Single compact chip showing reminder is active
-                AssistChip(
-                    onClick = { showReminderDialog = true },
-                    label = {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.AccessTime,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp), // Smaller icon
-                                tint = colorResource(id = R.color.nice_blue)
-                            )
-                            Text(
-                                "Active • Tap to edit",
-                                fontSize = 12.sp, // Smaller text
-                                color = colorResource(id = R.color.nice_blue)
-                            )
-                        }
-                    },
-                    colors = AssistChipDefaults.assistChipColors(
-                        containerColor = colorResource(id = R.color.nice_blue).copy(alpha = 0.1f)
-                    ),
-                    modifier = Modifier.height(28.dp) // Compact height
-                )
-            } else if (reminderConfig.enabled && !reminderConfig.dateTime.isSet) {
-                // Compact button to set the reminder when enabled but not set
-                Spacer(modifier = Modifier.height(8.dp)) // Reduced spacing
+                ReminderState.EXPIRED -> {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    AssistChip(
+                        onClick = { showReminderDialog = true },
+                        label = {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AccessTime, // Keep same icon for consistency
+                                    contentDescription = null,
+                                    modifier = Modifier.size(14.dp),
+                                    tint = Color(0xFFFF7043)
+                                )
+                                Text(
+                                    "Expired • Tap to update",
+                                    fontSize = 12.sp,
+                                    color = Color(0xFFE65100),
+                                    fontWeight = FontWeight.Medium // Add slight weight for better readability
+                                )
+                            }
+                        },
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = Color(0xFFFF8A50).copy(alpha = 0.12f) // Slightly more prominent background
+                        ),
+                        modifier = Modifier.height(28.dp)
+                    )
+                }
 
-                TextButton(
-                    onClick = { showReminderDialog = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(36.dp), // Reduced height
-                    colors = ButtonDefaults.textButtonColors(
-                        contentColor = colorResource(id = R.color.nice_blue)
-                    )
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.CalendarToday,
-                        contentDescription = null,
-                        modifier = Modifier.size(16.dp)
-                    )
-                    Spacer(modifier = Modifier.width(6.dp))
-                    Text(
-                        "Set Reminder Time",
-                        fontSize = 13.sp, // Smaller text
-                        fontWeight = FontWeight.Medium
-                    )
+                ReminderState.PENDING -> {
+                    Spacer(modifier = Modifier.height(8.dp))
+                    TextButton(
+                        onClick = { showReminderDialog = true },
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(36.dp),
+                        colors = ButtonDefaults.textButtonColors(
+                            contentColor = colorResource(id = R.color.nice_blue)
+                        )
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.CalendarToday,
+                            contentDescription = null,
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(
+                            "Set Reminder Time",
+                            fontSize = 13.sp,
+                            fontWeight = FontWeight.Medium
+                        )
+                    }
+                }
+
+                ReminderState.DISABLED -> {
+                    // No additional UI when disabled
                 }
             }
         }
@@ -279,18 +361,57 @@ fun ReminderSection(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
-                                imageVector = Icons.Default.Notifications,
+                                imageVector = when (reminderState) {
+                                    ReminderState.EXPIRED -> Icons.Default.AccessTime // Keep consistent icon
+                                    else -> Icons.Default.Notifications
+                                },
                                 contentDescription = "Set Reminder",
-                                tint = colorResource(id = R.color.nice_blue),
+                                tint = when (reminderState) {
+                                    ReminderState.EXPIRED -> Color(0xFFFF7043)
+                                    else -> colorResource(id = R.color.nice_blue)
+                                },
                                 modifier = Modifier.size(20.dp) // Smaller icon
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
-                                text = "Set Reminder",
+                                text = when (reminderState) {
+                                    ReminderState.EXPIRED -> "Update Reminder"
+                                    else -> "Set Reminder"
+                                },
                                 fontSize = 18.sp, // Reduced from 20sp
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color.Black
                             )
+                        }
+
+                        // Show expired notice if applicable
+                        if (reminderState == ReminderState.EXPIRED) {
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Card(
+                                colors = CardDefaults.cardColors(
+                                    containerColor = Color(0xFFFF8A50).copy(alpha = 0.08f)
+                                ),
+                                shape = RoundedCornerShape(8.dp)
+                            ) {
+                                Row(
+                                    modifier = Modifier.padding(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.AccessTime,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(14.dp),
+                                        tint = Color(0xFFFF7043)
+                                    )
+                                    Spacer(modifier = Modifier.width(6.dp))
+                                    Text(
+                                        text = "This reminder time has already passed",
+                                        fontSize = 12.sp,
+                                        color = Color(0xFFE65100),
+                                        fontWeight = FontWeight.Medium
+                                    )
+                                }
+                            }
                         }
 
                         Spacer(modifier = Modifier.height(16.dp)) // Reduced spacing
@@ -365,6 +486,8 @@ fun ReminderSection(
         }
     }
 }
+
+
 
 /**
  * Check and request exact alarm permission for Android 12+

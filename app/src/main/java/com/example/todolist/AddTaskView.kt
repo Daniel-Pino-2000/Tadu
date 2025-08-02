@@ -292,6 +292,8 @@ fun AddTaskView(
 
             var addToCalendar by remember { mutableStateOf(false) } // Checkbox state
 
+            Spacer(modifier = Modifier.height(4.dp))
+
             // Submit button section
             Row(
                 modifier = Modifier
