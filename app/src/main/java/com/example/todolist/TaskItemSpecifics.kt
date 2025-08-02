@@ -59,7 +59,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Locale
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -74,7 +73,6 @@ import androidx.compose.ui.unit.dp
 import kotlin.math.sin
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.geometry.Offset
 
 @OptIn(ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -92,27 +90,23 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, undoToa
         onClick = { onClick() },
         backgroundColor = colorResource(id = R.color.light_gray),
         shape = RoundedCornerShape(15.dp),
-        elevation = elevationValue,
-        border = if (task.reminderTime != null) {
-            BorderStroke(2.dp, colorResource(id = R.color.nice_blue).copy(alpha = 0.3f))
-        } else null
+        elevation = elevationValue
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(top = 12.dp, bottom = 12.dp, start = 8.dp, end = 8.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            Spacer(modifier = Modifier.width(6.dp))
+        Box(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(top = 12.dp, bottom = 12.dp, start = 8.dp, end = 8.dp),
+                verticalAlignment = Alignment.Top
+            ) {
+                Spacer(modifier = Modifier.width(6.dp))
 
-            val priority: Int = if (task.priority.isNotEmpty()) {
-                task.priority.toInt()
-            } else {
-                4
-            }
+                val priority: Int = if (task.priority.isNotEmpty()) {
+                    task.priority.toInt()
+                } else {
+                    4
+                }
 
-            // Enhanced checkbox with reminder indicator
-            Box {
                 CircularCheckbox(
                     checked = isChecked,
                     priority = task.priority,
@@ -146,97 +140,103 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, undoToa
                     }
                 )
 
-                // Subtle reminder dot indicator on checkbox
-                if (task.reminderTime != null) {
-                    Box(
+                Spacer(modifier = Modifier.width(8.dp))
+
+                Box(
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column(
                         modifier = Modifier
-                            .size(8.dp)
-                            .offset(x = 18.dp, y = (-2).dp)
-                            .background(
-                                colorResource(id = R.color.nice_blue),
-                                CircleShape
+                            .fillMaxWidth()
+                            .padding(
+                                end = when {
+                                    task.address.isNotEmpty() && task.reminderTime != null -> 48.dp // Both icons
+                                    task.address.isNotEmpty() || task.reminderTime != null -> 24.dp // One icon
+                                    else -> 0.dp // No icons
+                                }
                             )
-                    )
-                }
-            }
+                    ) {
+                        // Title and Label Row
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = task.title,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Light),
+                                modifier = Modifier.weight(1f, fill = false)
+                            )
 
-            Spacer(modifier = Modifier.width(8.dp))
-
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(end = if (task.address.isNotEmpty()) 24.dp else 0.dp)
-            ) {
-                // Title and Label Row
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Text(
-                        text = task.title,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.h6.copy(
-                            fontWeight = FontWeight.Light,
-                            color = if (task.reminderTime != null) {
-                                colorResource(id = R.color.nice_blue).copy(alpha = 0.9f)
-                            } else {
-                                Color.Unspecified
+                            if (task.label.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(8.dp))
+                                ModernLabel(
+                                    text = task.label,
+                                    modifier = Modifier.widthIn(max = 120.dp) // Limits label width
+                                )
                             }
-                        ),
-                        modifier = Modifier.weight(1f, fill = false)
-                    )
+                        }
 
-                    if (task.label.isNotEmpty()) {
-                        Spacer(modifier = Modifier.width(8.dp))
-                        ModernLabel(
-                            text = task.label,
-                            modifier = Modifier.widthIn(max = 120.dp)
-                        )
-                    }
-                }
+                        Spacer(modifier = Modifier.height(4.dp))
 
-                Spacer(modifier = Modifier.height(4.dp))
-
-                if (task.description.isNotEmpty()) {
-                    Text(
-                        text = task.description,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.body2
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-                }
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    if (task.deadline.isNotEmpty()) {
-                        DeadlineItem(task, currentRoute)
-                    }
-
-                    Spacer(modifier = Modifier.weight(1f))
-                }
-            }
-
-            // Location icon in its own column on the right
-            if (task.address.isNotEmpty()) {
-                val context = LocalContext.current
-                Icon(
-                    imageVector = Icons.Default.LocationOn,
-                    contentDescription = "Has address",
-                    modifier = Modifier
-                        .size(16.dp)
-                        .clickable {
-                            openAddressInMaps(
-                                context = context,
-                                viewModel.taskAddressState
+                        if (task.description.isNotEmpty()) {
+                            Text(
+                                text = task.description,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.body2
                             )
-                        },
-                    tint = Color.Black,
-                )
+
+                            Spacer(modifier = Modifier.height(4.dp))
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            if (task.deadline.isNotEmpty()) {
+                                DeadlineItem(task, currentRoute)
+                            }
+
+                            Spacer(modifier = Modifier.weight(1f))
+                        }
+                    }
+
+                    // Icons in the bottom-right corner
+                    Row(
+                        modifier = Modifier
+                            .align(Alignment.BottomEnd),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        // Reminder indicator - show first (leftmost)
+                        if (task.reminderTime != null) {
+                            Icon(
+                                imageVector = Icons.Default.Notifications,
+                                contentDescription = "Has reminder",
+                                modifier = Modifier.size(16.dp),
+                                tint = colorResource(id = R.color.nice_blue).copy(alpha = 0.7f)
+                            )
+
+                            // Add spacing if there's also a location icon
+                            if (task.address.isNotEmpty()) {
+                                Spacer(modifier = Modifier.width(6.dp))
+                            }
+                        }
+
+                        // Location indicator - show second (rightmost)
+                        if (task.address.isNotEmpty()) {
+                            val context = LocalContext.current
+                            Icon(
+                                imageVector = Icons.Default.LocationOn,
+                                contentDescription = "Has address",
+                                modifier = Modifier
+                                    .size(16.dp),
+                                tint = Color.Black,
+                            )
+                        }
+                    }
+                }
             }
         }
     }
