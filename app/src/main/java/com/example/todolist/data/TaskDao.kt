@@ -39,6 +39,9 @@ abstract class TaskDao {
     @Query("Select * from `task-table` where `task-deleted` = 0 AND `task-completed` = 0")
     abstract fun  getPendingTasks():Flow<List<Task>>
 
+    @Query("Select * from `task-table` where `task-reminder-time` IS NOT NULL AND `task-deleted` = 0 AND `task-completed` = 0  ")
+    abstract fun getTasksWithReminders():Flow<List<Task>>
+
     @Query("Select * from `task-table` where `task-deleted` = 1 AND `task-completed` = 0")
     abstract fun  getDeletedTasks():Flow<List<Task>>
 

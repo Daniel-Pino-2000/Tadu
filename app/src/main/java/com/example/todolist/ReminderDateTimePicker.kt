@@ -22,12 +22,6 @@ import androidx.compose.ui.unit.sp
 import java.text.SimpleDateFormat
 import java.util.*
 
-data class ReminderDateTime(
-    val date: String = "",
-    val time: String = "",
-    val timestamp: Long = 0L,
-    val isSet: Boolean = false
-)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

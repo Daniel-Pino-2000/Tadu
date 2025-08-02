@@ -132,6 +132,7 @@ class TaskViewModel(
 
     val getAllTasks: Flow<List<Task>> = taskRepository.getTasks()
     val getPendingTasks: Flow<List<Task>> = taskRepository.getPendingTasks()
+    val getTasksWithReminders: Flow<List<Task>> = taskRepository.getTasksWithReminders()
     val getCompletedTasks: Flow<List<Task>> = taskRepository.getCompletedTasks()
     val getDeletedTasks: Flow<List<Task>> = taskRepository.getDeletedTasks()
     val getFinishedTasks: Flow<List<Task>> = taskRepository.getFinishedTasks()

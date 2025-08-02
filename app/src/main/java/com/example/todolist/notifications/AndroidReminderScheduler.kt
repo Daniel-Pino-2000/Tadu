@@ -85,7 +85,11 @@ class AndroidReminderScheduler(
 
     override fun cancel(task: Task) {
         try {
-            val intent = Intent(context, ReminderReceiver::class.java)
+            val intent = Intent(context, ReminderReceiver::class.java).apply {
+                putExtra("TASK_TITLE", task.title)
+                putExtra("TASK_ID", task.id)
+            }
+
             val pendingIntent = PendingIntent.getBroadcast(
                 context,
                 task.id.toInt(),
@@ -94,13 +98,14 @@ class AndroidReminderScheduler(
             )
 
             alarmManager.cancel(pendingIntent)
-            pendingIntent.cancel() // Also cancel the PendingIntent
+            pendingIntent.cancel()
             Log.d("ReminderScheduler", "Cancelled alarm for task ${task.id}")
 
         } catch (e: Exception) {
             Log.e("ReminderScheduler", "Error cancelling alarm for task ${task.id}", e)
         }
     }
+
 
     private fun hasRequiredPermissions(): Boolean {
         return when {

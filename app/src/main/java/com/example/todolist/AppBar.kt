@@ -98,6 +98,7 @@ fun DropDownActionMenu(expanded: Boolean = true, navController: NavHostControlle
 
         DropdownMenuItem(onClick = {
             onDismissRequest()
+            navController.navigate(Screen.Reminders.route)
         }) {
             Icon(Icons.Outlined.NotificationsActive, contentDescription = null, tint = colorResource(id = R.color.dropMenuIcon_gray))
             Spacer(Modifier.padding(end = 5.dp))

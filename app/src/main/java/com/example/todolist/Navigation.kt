@@ -16,7 +16,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.todolist.data.Task
 import com.example.todolist.notifications.AndroidReminderScheduler
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -83,6 +82,14 @@ fun Navigation(
         ) {
             TaskHistoryView(viewModel, navController)
         }
+
+        // Reminders screen
+        composable(
+            Screen.Reminders.route
+        ) {
+            TaskRemindersScreen(viewModel, navController)
+        }
+
 
         // Calendar screen with scale and fade animation
         composable(

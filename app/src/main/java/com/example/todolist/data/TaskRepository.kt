@@ -19,6 +19,8 @@ class TaskRepository(
 
     fun getFinishedTasks() : Flow<List<Task>> = taskDao.getFinishedTasks()
 
+    fun getTasksWithReminders() : Flow<List<Task>> = taskDao.getTasksWithReminders()
+
     // Get all labels for dropdown/filter
     fun getAllLabels(): Flow<List<String>> = taskDao.getAllLabels()
 
