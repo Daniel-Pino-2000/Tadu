@@ -48,6 +48,9 @@ dependencies {
 
     implementation("androidx.core:core-ktx:1.12.0") // or latest stable version
 
+    // Animation
+    implementation("com.airbnb.android:lottie-compose:6.1.0")
+
 
     // Room
     implementation("androidx.room:room-runtime:2.7.1")

@@ -9,6 +9,9 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -85,6 +88,12 @@ import androidx.compose.ui.draw.scale
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import kotlin.math.sin
+// Import for Lottie animations
+import com.airbnb.lottie.compose.LottieAnimation
+import com.airbnb.lottie.compose.LottieCompositionSpec
+import com.airbnb.lottie.compose.LottieConstants
+import com.airbnb.lottie.compose.animateLottieCompositionAsState
+import com.airbnb.lottie.compose.rememberLottieComposition
 
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalLayoutApi::class)
@@ -597,6 +606,78 @@ private fun LabelChip(
     }
 }
 
+// UPDATED: Lottie Animation Empty State Component
+@Composable
+private fun LottieEmptyState(
+    currentRoute: String,
+    modifier: Modifier = Modifier
+) {
+    // Different animations and messages for different screens
+    val (animationResource, mainMessage, subMessage) = when (currentRoute) {
+        "today" -> Triple(
+            R.raw.reading_animation, // Replace with your actual animation resource name
+            "You're done for the day!",
+            "All tasks done! Time to relax with a good book 📖"
+        )
+        "inbox" -> Triple(
+            R.raw.travel_is_fun_animation, // Replace with your actual animation resource name
+            "Inbox Zero achieved!",
+            "You've conquered all your tasks! Well done! 🏆"
+        )
+        else -> Triple(
+            R.raw.default_completed, // Default animation
+            "All clear!",
+            "No tasks here. Enjoy the peace! ✨"
+        )
+    }
+
+    // Load the Lottie composition
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(animationResource))
+
+    // Animate the composition
+    val progress by animateLottieCompositionAsState(
+        composition = composition,
+        iterations = LottieConstants.IterateForever
+    )
+
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(32.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        // Lottie Animation
+        LottieAnimation(
+            composition = composition,
+            progress = { progress },
+            modifier = Modifier.size(200.dp)
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // Main message
+        Text(
+            text = mainMessage,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            color = Color(0xFF2E7D32),
+            textAlign = TextAlign.Center
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Sub message
+        Text(
+            text = subMessage,
+            fontSize = 16.sp,
+            color = Color(0xFF757575),
+            textAlign = TextAlign.Center,
+            lineHeight = 22.sp
+        )
+    }
+}
+
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun TaskList(
@@ -650,6 +731,12 @@ private fun TaskList(
                             fontSize = 16.sp
                         )
                     }
+                }
+            }
+            // UPDATED: Show Lottie animation for empty today and inbox screens
+            (currentRoute == "today" || currentRoute == "inbox") && groupedTasks.isEmpty() -> {
+                item {
+                    LottieEmptyState(currentRoute = currentRoute)
                 }
             }
             else -> {
@@ -739,7 +826,7 @@ private fun SwipeableTaskItem(
                             onDelete = {
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress) // Vibration
                                 viewModel.deleteTask(task.id)
-                                       },
+                            },
                             onRestore = {
                                 viewModel.restoreTask(task.id)
                             }
@@ -907,13 +994,13 @@ private fun SwipeableTaskItem(
             },
             dismissContent = {
 
-                    TaskItem(task, viewModel, currentRoute, undoToastManager) {
-                        keyboardController?.hide()
-                        focusManager.clearFocus()
-                        viewModel.setId(task.id)
-                        viewModel.setTaskBeingEdited(true)
-                        viewModel.setShowBottomSheet(true)
-                    }
+                TaskItem(task, viewModel, currentRoute, undoToastManager) {
+                    keyboardController?.hide()
+                    focusManager.clearFocus()
+                    viewModel.setId(task.id)
+                    viewModel.setTaskBeingEdited(true)
+                    viewModel.setShowBottomSheet(true)
+                }
 
             }
         )

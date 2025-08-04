@@ -123,10 +123,9 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 val newTask = task.copy(deadline = selectedDate)
                 viewModel.updateTask(newTask)
             }
-
-            // Hide date picker after date is picked
-            viewModel.setShowDatePicker(false)
         }
+        // Hide date picker after date is picked
+        viewModel.setShowDatePicker(false)
     }
 
 
