@@ -606,7 +606,7 @@ private fun LabelChip(
     }
 }
 
-// UPDATED: Lottie Animation Empty State Component
+// ENHANCED: Lottie Animation Empty State Component with improved sizing and positioning
 @Composable
 private fun LottieEmptyState(
     currentRoute: String,
@@ -616,65 +616,126 @@ private fun LottieEmptyState(
     val (animationResource, mainMessage, subMessage) = when (currentRoute) {
         "today" -> Triple(
             R.raw.reading_animation, // Replace with your actual animation resource name
-            "You're done for the day!",
-            "All tasks done! Time to relax with a good book 📖"
+            "You're all caught up!",
+            "All tasks done for today! Time to relax and enjoy 📖"
         )
         "inbox" -> Triple(
             R.raw.travel_is_fun_animation, // Replace with your actual animation resource name
             "Inbox Zero achieved!",
-            "You've conquered all your tasks! Well done! 🏆"
+            "You've conquered all your tasks! Ready for new adventures! 🏆"
+        )
+        "search" -> Triple(
+            R.raw.no_search_animation, // Add your search animation here
+            "Ready to search!",
+            "Type something above or select a label to find your tasks 🔍"
         )
         else -> Triple(
             R.raw.default_completed, // Default animation
             "All clear!",
-            "No tasks here. Enjoy the peace! ✨"
+            "Nothing to see here. Enjoy the peace! ✨"
         )
     }
 
-    // Load the Lottie composition
-    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(animationResource))
+    // Load the Lottie composition with better error handling
+    val composition by rememberLottieComposition(
+        LottieCompositionSpec.RawRes(animationResource)
+    )
 
-    // Animate the composition
+    // Animate the composition with improved performance
     val progress by animateLottieCompositionAsState(
         composition = composition,
-        iterations = LottieConstants.IterateForever
+        iterations = LottieConstants.IterateForever,
+        speed = 1.0f, // Normal speed - you can adjust this
+        restartOnPlay = false
+    )
+
+    // Add subtle entrance animation for the entire component
+    val componentAlpha by animateFloatAsState(
+        targetValue = if (composition != null) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = 600,
+            easing = FastOutSlowInEasing
+        ),
+        label = "component_alpha"
+    )
+
+    val componentScale by animateFloatAsState(
+        targetValue = if (composition != null) 1f else 0.8f,
+        animationSpec = spring(
+            dampingRatio = Spring.DampingRatioMediumBouncy,
+            stiffness = Spring.StiffnessLow
+        ),
+        label = "component_scale"
     )
 
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .padding(32.dp),
+            .padding(horizontal = 24.dp, vertical = 40.dp)
+            .alpha(componentAlpha)
+            .scale(componentScale),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Lottie Animation
-        LottieAnimation(
-            composition = composition,
-            progress = { progress },
-            modifier = Modifier.size(200.dp)
-        )
+        // Enhanced Lottie Animation with larger size and better positioning
+        Box(
+            modifier = Modifier
+                .size(280.dp) // Increased from 200.dp to 280.dp
+                .offset(y = (-20).dp), // Moved up slightly for better visual balance
+            contentAlignment = Alignment.Center
+        ) {
+            if (composition != null) {
+                LottieAnimation(
+                    composition = composition,
+                    progress = { progress },
+                    modifier = Modifier.fillMaxSize()
+                )
+            } else {
+                // Show a placeholder while loading
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .background(
+                            Color(0xFFF5F5F5),
+                            RoundedCornerShape(20.dp)
+                        ),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "🎬",
+                        fontSize = 48.sp,
+                        color = Color(0xFFBDBDBD)
+                    )
+                }
+            }
+        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+        Spacer(modifier = Modifier.height(32.dp)) // Increased spacing
 
-        // Main message
+        // Main message with enhanced styling
         Text(
             text = mainMessage,
-            fontSize = 24.sp,
+            fontSize = 28.sp, // Increased from 24.sp
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2E7D32),
-            textAlign = TextAlign.Center
+            textAlign = TextAlign.Center,
+            lineHeight = 32.sp
         )
 
-        Spacer(modifier = Modifier.height(8.dp))
+        Spacer(modifier = Modifier.height(12.dp)) // Increased spacing
 
-        // Sub message
+        // Sub message with enhanced styling
         Text(
             text = subMessage,
-            fontSize = 16.sp,
+            fontSize = 18.sp, // Increased from 16.sp
             color = Color(0xFF757575),
             textAlign = TextAlign.Center,
-            lineHeight = 22.sp
+            lineHeight = 26.sp, // Increased line height for better readability
+            modifier = Modifier.padding(horizontal = 16.dp)
         )
+
+        // Add some bottom spacing for better visual balance
+        Spacer(modifier = Modifier.height(20.dp))
     }
 }
 
@@ -696,19 +757,44 @@ private fun TaskList(
 
     LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
         when {
+            // ENHANCED: Show default animation for search screen when nothing is selected
             currentRoute == "search" && searchQuery.isBlank() && selectedLabel == null -> {
                 item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = if (labelData.isEmpty()) "No labels found" else "Select a label above or start typing to search",
-                            color = Color(0xFF9E9E9E),
-                            fontSize = 16.sp
-                        )
+                    if (labelData.isEmpty()) {
+                        // Show different message when no labels exist
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(32.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = "🏷️",
+                                    fontSize = 48.sp,
+                                    modifier = Modifier.padding(bottom = 16.dp)
+                                )
+                                Text(
+                                    text = "No labels found",
+                                    fontSize = 20.sp,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color(0xFF616161),
+                                    textAlign = TextAlign.Center
+                                )
+                                Spacer(modifier = Modifier.height(8.dp))
+                                Text(
+                                    text = "Create tasks with labels to organize them better",
+                                    fontSize = 16.sp,
+                                    color = Color(0xFF9E9E9E),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    } else {
+                        // Show the default search animation
+                        LottieEmptyState(currentRoute = currentRoute)
                     }
                 }
             }
@@ -720,20 +806,38 @@ private fun TaskList(
                             .padding(32.dp),
                         contentAlignment = Alignment.Center
                     ) {
-                        val message = when {
-                            searchQuery.isNotEmpty() -> "No tasks found for \"$searchQuery\""
-                            selectedLabel != null -> "No tasks found with label \"$selectedLabel\""
-                            else -> "No tasks found"
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                text = "🔍",
+                                fontSize = 48.sp,
+                                modifier = Modifier.padding(bottom = 16.dp)
+                            )
+                            val message = when {
+                                searchQuery.isNotEmpty() -> "No tasks found for \"$searchQuery\""
+                                selectedLabel != null -> "No tasks found with label \"$selectedLabel\""
+                                else -> "No tasks found"
+                            }
+                            Text(
+                                text = message,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Medium,
+                                color = Color(0xFF616161),
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(modifier = Modifier.height(8.dp))
+                            Text(
+                                text = "Try a different search term or label",
+                                fontSize = 16.sp,
+                                color = Color(0xFF9E9E9E),
+                                textAlign = TextAlign.Center
+                            )
                         }
-                        Text(
-                            text = message,
-                            color = Color.Gray,
-                            fontSize = 16.sp
-                        )
                     }
                 }
             }
-            // UPDATED: Show Lottie animation for empty today and inbox screens
+            // ENHANCED: Show Lottie animation for empty today and inbox screens
             (currentRoute == "today" || currentRoute == "inbox") && groupedTasks.isEmpty() -> {
                 item {
                     LottieEmptyState(currentRoute = currentRoute)
