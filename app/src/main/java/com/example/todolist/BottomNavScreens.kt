@@ -626,8 +626,8 @@ private fun LottieEmptyState(
         )
         "search" -> Triple(
             R.raw.no_search_animation, // Add your search animation here
-            "Ready to search!",
-            "Type something above or select a label to find your tasks 🔍"
+            "No tasks found",
+            ""
         )
         else -> Triple(
             R.raw.default_completed, // Default animation
@@ -755,94 +755,177 @@ private fun TaskList(
 ) {
     val coroutineScope = rememberCoroutineScope()
 
+    // Get the total number of tasks to determine if any exist
+    val taskList = viewModel.getPendingTasks.collectAsState(initial = listOf())
+    val totalTasks = taskList.value
+
     LazyColumn(modifier = Modifier.fillMaxSize(), state = listState) {
         when {
-            // ENHANCED: Show default animation for search screen when nothing is selected
-            currentRoute == "search" && searchQuery.isBlank() && selectedLabel == null -> {
-                item {
-                    if (labelData.isEmpty()) {
-                        // Show different message when no labels exist
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(32.dp),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Column(
-                                horizontalAlignment = Alignment.CenterHorizontally
+            currentRoute == "search" -> {
+                when {
+                    // Case 1: User has searched/selected label but no results found
+                    (searchQuery.isNotBlank() || selectedLabel != null) && groupedTasks.isEmpty() -> {
+                        item {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(32.dp),
+                                contentAlignment = Alignment.Center
                             ) {
-                                Text(
-                                    text = "🏷️",
-                                    fontSize = 48.sp,
-                                    modifier = Modifier.padding(bottom = 16.dp)
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally
+                                ) {
+                                    Text(
+                                        text = "🔍",
+                                        fontSize = 48.sp,
+                                        modifier = Modifier.padding(bottom = 16.dp)
+                                    )
+                                    val message = when {
+                                        searchQuery.isNotEmpty() -> "No tasks found for \"$searchQuery\""
+                                        selectedLabel != null -> "No tasks found with label \"$selectedLabel\""
+                                        else -> "No tasks found"
+                                    }
+                                    Text(
+                                        text = message,
+                                        fontSize = 18.sp,
+                                        fontWeight = FontWeight.Medium,
+                                        color = Color(0xFF616161),
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = "Try a different search term or label",
+                                        fontSize = 16.sp,
+                                        color = Color(0xFF9E9E9E),
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    // Case 2: No search query and no selected label (default search screen state)
+                    searchQuery.isBlank() && selectedLabel == null -> {
+                        item {
+                            when {
+                                // Sub-case 2a: No tasks exist at all - show search animation
+                                totalTasks.isEmpty() -> {
+                                    LottieEmptyState(currentRoute = currentRoute)
+                                }
+
+                                // Sub-case 2b: Tasks exist but no labels - show no labels message
+                                totalTasks.isNotEmpty() && labelData.isEmpty() -> {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(32.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                text = "🏷️",
+                                                fontSize = 48.sp,
+                                                modifier = Modifier.padding(bottom = 16.dp)
+                                            )
+                                            Text(
+                                                text = "No labels found",
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = Color(0xFF616161),
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = "Create tasks with labels to organize them better, or search above",
+                                                fontSize = 16.sp,
+                                                color = Color(0xFF9E9E9E),
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier.padding(horizontal = 16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Sub-case 2c: Both tasks and labels exist - show ready to search message
+                                totalTasks.isNotEmpty() && labelData.isNotEmpty() -> {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(32.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Column(
+                                            horizontalAlignment = Alignment.CenterHorizontally
+                                        ) {
+                                            Text(
+                                                text = "🔍",
+                                                fontSize = 48.sp,
+                                                modifier = Modifier.padding(bottom = 16.dp)
+                                            )
+                                            Text(
+                                                text = "Ready to search!",
+                                                fontSize = 20.sp,
+                                                fontWeight = FontWeight.Medium,
+                                                color = Color(0xFF616161),
+                                                textAlign = TextAlign.Center
+                                            )
+                                            Spacer(modifier = Modifier.height(8.dp))
+                                            Text(
+                                                text = "Type above to search tasks or select a label below to filter",
+                                                fontSize = 16.sp,
+                                                color = Color(0xFF9E9E9E),
+                                                textAlign = TextAlign.Center,
+                                                modifier = Modifier.padding(horizontal = 16.dp)
+                                            )
+                                        }
+                                    }
+                                }
+
+                                // Fallback case
+                                else -> {
+                                    LottieEmptyState(currentRoute = currentRoute)
+                                }
+                            }
+                        }
+                    }
+
+                    // Case 3: Has search results - show the tasks
+                    groupedTasks.isNotEmpty() -> {
+                        groupedTasks.forEach { group ->
+                            item {
+                                TaskGroupHeader(group = group)
+                            }
+
+                            items(group.tasks, key = { task -> "${group.title}_${task.id}" }) { task ->
+                                SwipeableTaskItem(
+                                    task = task,
+                                    viewModel = viewModel,
+                                    currentRoute = currentRoute,
+                                    undoToastManager = undoToastManager,
+                                    coroutineScope = coroutineScope,
+                                    keyboardController = keyboardController,
+                                    focusManager = focusManager
                                 )
-                                Text(
-                                    text = "No labels found",
-                                    fontSize = 20.sp,
-                                    fontWeight = FontWeight.Medium,
-                                    color = Color(0xFF616161),
-                                    textAlign = TextAlign.Center
-                                )
+                            }
+
+                            item {
                                 Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = "Create tasks with labels to organize them better",
-                                    fontSize = 16.sp,
-                                    color = Color(0xFF9E9E9E),
-                                    textAlign = TextAlign.Center
-                                )
                             }
-                        }
-                    } else {
-                        // Show the default search animation
-                        LottieEmptyState(currentRoute = currentRoute)
-                    }
-                }
-            }
-            currentRoute == "search" && groupedTasks.isEmpty() -> {
-                item {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(32.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(
-                                text = "🔍",
-                                fontSize = 48.sp,
-                                modifier = Modifier.padding(bottom = 16.dp)
-                            )
-                            val message = when {
-                                searchQuery.isNotEmpty() -> "No tasks found for \"$searchQuery\""
-                                selectedLabel != null -> "No tasks found with label \"$selectedLabel\""
-                                else -> "No tasks found"
-                            }
-                            Text(
-                                text = message,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Medium,
-                                color = Color(0xFF616161),
-                                textAlign = TextAlign.Center
-                            )
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "Try a different search term or label",
-                                fontSize = 16.sp,
-                                color = Color(0xFF9E9E9E),
-                                textAlign = TextAlign.Center
-                            )
                         }
                     }
                 }
             }
-            // ENHANCED: Show Lottie animation for empty today and inbox screens
+
+            // Handle other routes (today, inbox)
             (currentRoute == "today" || currentRoute == "inbox") && groupedTasks.isEmpty() -> {
                 item {
                     LottieEmptyState(currentRoute = currentRoute)
                 }
             }
+
+            // Default case: show tasks for non-search routes
             else -> {
                 groupedTasks.forEach { group ->
                     item {
