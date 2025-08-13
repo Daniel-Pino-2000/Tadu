@@ -251,16 +251,14 @@ private fun filterTasks(
 ): List<Task> {
     return when (currentRoute) {
         "today" -> tasks.filter { task ->
-            if (task.deadline.isBlank()) {
-                true
-            } else {
+
                 try {
                     val taskDate = LocalDate.parse("${task.deadline} ${dateInfo.currentYear}", dateInfo.formatter)
                     !taskDate.isAfter(dateInfo.today)
                 } catch (e: Exception) {
                     false
                 }
-            }
+
         }
         "search" -> {
             when {
@@ -341,9 +339,7 @@ private fun categorizeTasksByDate(tasks: List<Task>, dateInfo: DateInfo): Triple
     val futureTasks = mutableListOf<Task>()
 
     tasks.forEach { task ->
-        if (task.deadline.isBlank()) {
-            todayTasks.add(task)
-        } else {
+
             try {
                 val taskDate = LocalDate.parse("${task.deadline} ${dateInfo.currentYear}", dateInfo.formatter)
                 when {
@@ -354,7 +350,7 @@ private fun categorizeTasksByDate(tasks: List<Task>, dateInfo: DateInfo): Triple
             } catch (e: Exception) {
                 todayTasks.add(task)
             }
-        }
+
     }
 
     return Triple(overdueTasks, todayTasks, futureTasks)

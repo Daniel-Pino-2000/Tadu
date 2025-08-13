@@ -31,6 +31,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import com.example.todolist.data.Task
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.format.DateTimeFormatter
+import java.util.Date
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @RequiresApi(Build.VERSION_CODES.O)
@@ -56,8 +59,6 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
             }
         }
     }
-
-
 
     Scaffold(
         bottomBar = {
@@ -128,7 +129,6 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
         viewModel.setShowDatePicker(false)
     }
 
-
     if (uiState.showBottomSheet) {
         AddTaskView(
             uiState.currentId,
@@ -141,7 +141,17 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
             },
             onSubmit = { task ->
                 if (!uiState.taskBeingEdited) {
-                    viewModel.addTask(task)
+                    // Set today's date as deadline if we're on Today screen and deadline is empty
+                    if (currentRoute == Screen.BottomScreen.Today.bRoute && task.deadline.isEmpty()) {
+                        val today = LocalDate.now()
+                        val formatter = DateTimeFormatter.ofPattern("MMM dd")
+                        val todayFormatted = today.format(formatter)
+
+                        val updatedTask = task.copy(deadline = todayFormatted)
+                        viewModel.addTask(updatedTask)
+                    } else {
+                        viewModel.addTask(task)
+                    }
                 } else {
                     viewModel.updateTask(task)
                 }

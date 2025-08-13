@@ -4,6 +4,9 @@ package com.example.todolist
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
@@ -11,12 +14,15 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
-import androidx.compose.material.icons.outlined.*
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.NotificationsNone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -28,7 +34,6 @@ import com.example.todolist.data.Task
 import java.text.SimpleDateFormat
 import java.util.*
 
-
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
@@ -37,27 +42,27 @@ fun TaskRemindersScreen(
     navController: NavHostController
 ) {
     val allTasks by viewModel.getTasksWithReminders.collectAsStateWithLifecycle(emptyList())
-    val tasksWithReminders = remember(allTasks) {
-        allTasks.filter {
-            it.reminderTime != null &&
-                    it.reminderTime!! > 0 &&
-                    !it.isDeleted &&
-                    !it.isCompleted
-        }
+
+    // Always recompute based on latest data
+    val tasksWithReminders = allTasks.filter {
+        it.reminderTime != null &&
+                it.reminderTime!! > 0 &&
+                !it.isDeleted &&
+                !it.isCompleted
     }
 
-    val activeReminders = remember(tasksWithReminders) {
-        tasksWithReminders.filter { it.reminderTime!! > System.currentTimeMillis() }
-    }
-
-    val expiredReminders = remember(tasksWithReminders) {
-        tasksWithReminders.filter { it.reminderTime!! <= System.currentTimeMillis() }
-    }
+    // Always recompute groups (no remember)
+    val now = System.currentTimeMillis()
+    val activeReminders = tasksWithReminders.filter { it.reminderTime!! > now }
+    val expiredReminders = tasksWithReminders.filter { it.reminderTime!! <= now }
 
     var showDeleteDialog by remember { mutableStateOf<Task?>(null) }
     var showReminderDialog by remember { mutableStateOf(false) }
     var reminderConfig by remember { mutableStateOf(ReminderConfig()) }
     var backPressed by remember { mutableStateOf(false) }
+
+    // Track the editing task by a stable key (string) so it works if id = Int/Long/UUID
+    var editingTaskKey by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -83,48 +88,45 @@ fun TaskRemindersScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
-            when {
-                tasksWithReminders.isEmpty() -> {
-                    EmptyStateContent(
-                        modifier = Modifier.align(Alignment.Center)
-                    )
-                }
-
-                else -> {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        if (activeReminders.isNotEmpty() || expiredReminders.isNotEmpty()) {
-                            item {
-                                StatusSummary(
-                                    activeCount = activeReminders.size,
-                                    expiredCount = expiredReminders.size
-                                )
-                                Spacer(modifier = Modifier.height(8.dp))
-                            }
-                        }
-
-                        items(
-                            items = tasksWithReminders.sortedBy { it.reminderTime },
-                            key = { it.id }
-                        ) { task ->
-                            MinimalTaskCard(
-                                task = task,
-                                onEdit = {
-                                    reminderConfig = reminderConfig.copy(
-                                        enabled = true,
-                                        dateTime = ReminderDateTime().apply {
-                                            timestamp = task.reminderTime ?: System.currentTimeMillis()
-                                        }
-                                    )
-                                    showReminderDialog = true
-                                },
-                                onDelete = { showDeleteDialog = task },
-                                modifier = Modifier.animateItemPlacement()
+            if (tasksWithReminders.isEmpty()) {
+                EmptyStateContent(
+                    modifier = Modifier.align(Alignment.Center)
+                )
+            } else {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    if (activeReminders.isNotEmpty() || expiredReminders.isNotEmpty()) {
+                        item {
+                            StatusSummary(
+                                activeCount = activeReminders.size,
+                                expiredCount = expiredReminders.size
                             )
+                            Spacer(modifier = Modifier.height(8.dp))
                         }
+                    }
+
+                    items(
+                        items = tasksWithReminders.sortedBy { it.reminderTime },
+                        key = { it.id } // keep stable keys
+                    ) { task ->
+                        MinimalTaskCard(
+                            task = task,
+                            onEdit = {
+                                editingTaskKey = task.id.toString()
+                                reminderConfig = reminderConfig.copy(
+                                    enabled = true,
+                                    dateTime = ReminderDateTime().apply {
+                                        timestamp = task.reminderTime ?: System.currentTimeMillis()
+                                    }
+                                )
+                                showReminderDialog = true
+                            },
+                            onDelete = { showDeleteDialog = task },
+                            modifier = Modifier.animateItemPlacement()
+                        )
                     }
                 }
             }
@@ -161,10 +163,13 @@ fun TaskRemindersScreen(
 
     // Edit reminder dialog
     if (showReminderDialog) {
-        val taskToEdit = tasksWithReminders.firstOrNull { it.reminderTime == reminderConfig.dateTime.timestamp }
+        val taskToEdit = tasksWithReminders.firstOrNull { it.id.toString() == editingTaskKey }
 
         AlertDialog(
-            onDismissRequest = { showReminderDialog = false },
+            onDismissRequest = {
+                showReminderDialog = false
+                editingTaskKey = null
+            },
             title = { Text("Edit Reminder") },
             text = {
                 Column {
@@ -174,7 +179,6 @@ fun TaskRemindersScreen(
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium
                         )
-
                         Spacer(modifier = Modifier.height(16.dp))
                     }
 
@@ -187,13 +191,13 @@ fun TaskRemindersScreen(
                                 dateTime = dateTime
                             )
 
-                            // Update the task
                             taskToEdit?.let { task ->
                                 val updatedTask = task.copy(reminderTime = dateTime.timestamp)
                                 viewModel.updateTask(updatedTask)
                             }
 
                             showReminderDialog = false
+                            editingTaskKey = null
                         },
                         onReminderCleared = {
                             reminderConfig = reminderConfig.copy(
@@ -210,6 +214,7 @@ fun TaskRemindersScreen(
                             }
 
                             showReminderDialog = false
+                            editingTaskKey = null
                         }
                     )
 
@@ -221,24 +226,24 @@ fun TaskRemindersScreen(
                         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
                     ) {
                         TextButton(
-                            onClick = { showReminderDialog = false }
+                            onClick = {
+                                showReminderDialog = false
+                                editingTaskKey = null
+                            }
                         ) {
                             Text(
                                 text = "Cancel",
-                                color = androidx.compose.ui.graphics.Color.Gray,
+                                color = Color.Gray,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Medium
                             )
                         }
 
-                        if (reminderConfig.enabled && reminderConfig.dateTime.isSet) {
+                        // Show "Remove" if the task currently has a reminder,
+                        // not based on reminderConfig.isSet
+                        if (taskToEdit?.reminderTime != null) {
                             TextButton(
                                 onClick = {
-                                    reminderConfig = reminderConfig.copy(
-                                        enabled = false,
-                                        dateTime = ReminderDateTime()
-                                    )
-
                                     taskToEdit?.let { task ->
                                         val updatedTask = task.copy(
                                             reminderTime = null,
@@ -246,8 +251,8 @@ fun TaskRemindersScreen(
                                         )
                                         viewModel.updateTask(updatedTask)
                                     }
-
                                     showReminderDialog = false
+                                    editingTaskKey = null
                                 }
                             ) {
                                 Text(
@@ -276,8 +281,7 @@ fun StatusSummary(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Start,
         verticalAlignment = Alignment.CenterVertically,
-
-        ) {
+    ) {
         if (activeCount > 0) {
             Text(
                 text = "$activeCount active",
@@ -318,13 +322,7 @@ fun MinimalTaskCard(
 
     val priority = task.priority.toIntOrNull() ?: 4
 
-    val priorityColor = if (priority == 4) Color(0xFF212121) else PriorityUtils.getColor(priority) // Dark Gray
-    val priorityBorderColor = if (priority == 4) Color(0xFF000000) else PriorityUtils.getBorderColor(priority) // Black
-
-
-
-
-    // Calculate time difference
+    // Relative time text
     val timeText = remember(task.reminderTime) {
         val diff = task.reminderTime!! - System.currentTimeMillis()
         when {
@@ -336,23 +334,34 @@ fun MinimalTaskCard(
         }
     }
 
+    // Colors (animate to avoid harsh jumps). Keep geometry constant to prevent layout jitter.
+    val expiredRed = Color(0xFFDC2626)
+    val expiredBackground = Color(0xFFFEF2F2)
+    val expiredBorder = Color(0xFFEF4444)
+    val expiredText = Color(0xFF991B1B)
+
+    val priorityColor = if (priority == 4) Color(0xFF212121) else PriorityUtils.getColor(priority)
+    val priorityBorderColor = if (priority == 4) Color(0xFF000000) else PriorityUtils.getBorderColor(priority)
+    val normalTextColor = MaterialTheme.colorScheme.onSurface
+
+    val targetContainer = if (isExpired) expiredBackground else priorityColor.copy(alpha = 0.04f)
+    val targetBorder = if (isExpired) expiredBorder else priorityBorderColor.copy(alpha = 0.4f)
+    val targetPrimaryText = if (isExpired) expiredText else normalTextColor
+    val targetAccent = if (isExpired) expiredRed else priorityBorderColor
+
+    val containerColor by animateColorAsState(targetValue = targetContainer, animationSpec = tween(200))
+    val borderColor by animateColorAsState(targetValue = targetBorder, animationSpec = tween(200))
+    val primaryTextColor by animateColorAsState(targetValue = targetPrimaryText, animationSpec = tween(200))
+    val accentColor by animateColorAsState(targetValue = targetAccent, animationSpec = tween(200))
+
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .border(
-                width = 1.dp,
-                color = if (isExpired)
-                    MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
-                else
-                    priorityBorderColor.copy(alpha = 0.4f),
-                shape = RoundedCornerShape(12.dp)
-            ),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isExpired)
-                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.05f)
-            else
-                priorityColor.copy(alpha = 0.04f)
-        ),
+            .clip(RoundedCornerShape(12.dp))
+            // Keep width constant (no thickness change) to avoid layout jumps
+            .border(width = 1.dp, color = borderColor, shape = RoundedCornerShape(12.dp))
+            .animateContentSize(), // smooth content size changes
+        colors = CardDefaults.cardColors(containerColor = containerColor),
         elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
@@ -379,23 +388,23 @@ fun MinimalTaskCard(
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        color = if (isExpired)
-                            MaterialTheme.colorScheme.onErrorContainer
-                        else
-                            MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.weight(1f, false)
+                        color = primaryTextColor,
+                        modifier = Modifier.weight(1f, fill = false)
                     )
 
                     // Label if available
                     if (task.label.isNotEmpty()) {
                         Surface(
-                            color = priorityColor.copy(alpha = 0.15f),
+                            color = if (isExpired)
+                                Color(0xFFEF4444).copy(alpha = 0.15f)
+                            else
+                                priorityColor.copy(alpha = 0.15f),
                             shape = RoundedCornerShape(6.dp)
                         ) {
                             Text(
                                 text = task.label,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = priorityBorderColor,
+                                color = accentColor,
                                 fontWeight = FontWeight.Medium,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
@@ -408,16 +417,25 @@ fun MinimalTaskCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Time until/since reminder
-                    Text(
-                        text = timeText,
-                        style = MaterialTheme.typography.labelMedium,
+                    // Time until/since reminder with distinct expired styling
+                    Surface(
                         color = if (isExpired)
-                            MaterialTheme.colorScheme.error
+                            Color(0xFFDC2626).copy(alpha = 0.1f)
                         else
-                            priorityBorderColor,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                            Color.Transparent,
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = timeText,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (isExpired) Color(0xFFDC2626) else accentColor,
+                            fontWeight = if (isExpired) FontWeight.Bold else FontWeight.SemiBold,
+                            modifier = if (isExpired)
+                                Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            else
+                                Modifier
+                        )
+                    }
 
                     Text(
                         text = "•",
@@ -429,7 +447,10 @@ fun MinimalTaskCard(
                     Text(
                         text = timeFormatter.format(Date(task.reminderTime!!)),
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (isExpired)
+                            Color(0xFF991B1B)
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -438,12 +459,14 @@ fun MinimalTaskCard(
                     Text(
                         text = task.description,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                        color = if (isExpired)
+                            Color(0xFF991B1B).copy(alpha = 0.8f)
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-
             }
 
             // Right side - Actions
@@ -458,10 +481,7 @@ fun MinimalTaskCard(
                         Icons.Outlined.Edit,
                         contentDescription = "Edit",
                         modifier = Modifier.size(18.dp),
-                        tint = if (isExpired)
-                            MaterialTheme.colorScheme.error
-                        else
-                            priorityBorderColor
+                        tint = accentColor
                     )
                 }
 
@@ -473,13 +493,19 @@ fun MinimalTaskCard(
                         Icons.Outlined.Delete,
                         contentDescription = "Delete",
                         modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+                        tint = if (isExpired)
+                            Color(0xFFDC2626)
+                        else
+                            MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
                     )
                 }
             }
         }
     }
 }
+
+// Helper data class for multiple return values (kept, though no longer used)
+private data class Tuple4<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
 @Composable
 fun EmptyStateContent(
@@ -524,5 +550,5 @@ data class ReminderDateTime(
     var timestamp: Long = 0L,
     val date: String = "",
     val time: String = "",
-    val isSet: Boolean = false
+    val isSet: Boolean = false // not used for logic anymore
 )
