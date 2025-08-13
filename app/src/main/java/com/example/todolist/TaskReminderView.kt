@@ -318,12 +318,6 @@ fun MinimalTaskCard(
 
     val priority = task.priority.toIntOrNull() ?: 4
 
-    val priorityColor = if (priority == 4) Color(0xFF212121) else PriorityUtils.getColor(priority) // Dark Gray
-    val priorityBorderColor = if (priority == 4) Color(0xFF000000) else PriorityUtils.getBorderColor(priority) // Black
-
-
-
-
     // Calculate time difference
     val timeText = remember(task.reminderTime) {
         val diff = task.reminderTime!! - System.currentTimeMillis()
@@ -336,24 +330,41 @@ fun MinimalTaskCard(
         }
     }
 
+    // Define colors based on expired state vs priority
+    val (containerColor, borderColor, primaryTextColor, accentColor) = if (isExpired) {
+        // Expired card styling - use distinct red/pink colors
+        val expiredRed = Color(0xFFDC2626) // Strong red
+        val expiredBackground = Color(0xFFFEF2F2) // Very light red background
+        val expiredBorder = Color(0xFFEF4444) // Medium red border
+        val expiredText = Color(0xFF991B1B) // Dark red text
+
+        Tuple4(expiredBackground, expiredBorder, expiredText, expiredRed)
+    } else {
+        // Normal priority-based styling
+        val priorityColor = if (priority == 4) Color(0xFF212121) else PriorityUtils.getColor(priority)
+        val priorityBorderColor = if (priority == 4) Color(0xFF000000) else PriorityUtils.getBorderColor(priority)
+        val normalTextColor = MaterialTheme.colorScheme.onSurface
+
+        Tuple4(
+            priorityColor.copy(alpha = 0.04f),
+            priorityBorderColor.copy(alpha = 0.4f),
+            normalTextColor,
+            priorityBorderColor
+        )
+    }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
             .border(
-                width = 1.dp,
-                color = if (isExpired)
-                    MaterialTheme.colorScheme.error.copy(alpha = 0.3f)
-                else
-                    priorityBorderColor.copy(alpha = 0.4f),
+                width = if (isExpired) 1.5.dp else 1.dp, // Thicker border for expired
+                color = borderColor,
                 shape = RoundedCornerShape(12.dp)
             ),
-        colors = CardDefaults.cardColors(
-            containerColor = if (isExpired)
-                MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.05f)
-            else
-                priorityColor.copy(alpha = 0.04f)
+        colors = CardDefaults.cardColors(containerColor = containerColor),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isExpired) 2.dp else 0.dp // Slight elevation for expired
         ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
@@ -379,23 +390,23 @@ fun MinimalTaskCard(
                         fontWeight = FontWeight.Medium,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        color = if (isExpired)
-                            MaterialTheme.colorScheme.onErrorContainer
-                        else
-                            MaterialTheme.colorScheme.onSurface,
+                        color = primaryTextColor,
                         modifier = Modifier.weight(1f, false)
                     )
 
                     // Label if available
                     if (task.label.isNotEmpty()) {
                         Surface(
-                            color = priorityColor.copy(alpha = 0.15f),
+                            color = if (isExpired)
+                                Color(0xFFEF4444).copy(alpha = 0.15f) // Red-tinted for expired
+                            else
+                                (if (priority == 4) Color(0xFF212121) else PriorityUtils.getColor(priority)).copy(alpha = 0.15f),
                             shape = RoundedCornerShape(6.dp)
                         ) {
                             Text(
                                 text = task.label,
                                 style = MaterialTheme.typography.labelSmall,
-                                color = priorityBorderColor,
+                                color = accentColor,
                                 fontWeight = FontWeight.Medium,
                                 modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
                             )
@@ -408,16 +419,25 @@ fun MinimalTaskCard(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    // Time until/since reminder
-                    Text(
-                        text = timeText,
-                        style = MaterialTheme.typography.labelMedium,
+                    // Time until/since reminder with distinct expired styling
+                    Surface(
                         color = if (isExpired)
-                            MaterialTheme.colorScheme.error
+                            Color(0xFFDC2626).copy(alpha = 0.1f) // Red background for expired badge
                         else
-                            priorityBorderColor,
-                        fontWeight = FontWeight.SemiBold
-                    )
+                            Color.Transparent,
+                        shape = RoundedCornerShape(4.dp)
+                    ) {
+                        Text(
+                            text = timeText,
+                            style = MaterialTheme.typography.labelMedium,
+                            color = if (isExpired) Color(0xFFDC2626) else accentColor, // Strong red for expired
+                            fontWeight = if (isExpired) FontWeight.Bold else FontWeight.SemiBold,
+                            modifier = if (isExpired)
+                                Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            else
+                                Modifier
+                        )
+                    }
 
                     Text(
                         text = "•",
@@ -429,7 +449,10 @@ fun MinimalTaskCard(
                     Text(
                         text = timeFormatter.format(Date(task.reminderTime!!)),
                         style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        color = if (isExpired)
+                            Color(0xFF991B1B) // Dark red for expired
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
@@ -438,12 +461,14 @@ fun MinimalTaskCard(
                     Text(
                         text = task.description,
                         style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
+                        color = if (isExpired)
+                            Color(0xFF991B1B).copy(alpha = 0.8f) // Dark red for expired
+                        else
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.8f),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
                 }
-
             }
 
             // Right side - Actions
@@ -458,10 +483,7 @@ fun MinimalTaskCard(
                         Icons.Outlined.Edit,
                         contentDescription = "Edit",
                         modifier = Modifier.size(18.dp),
-                        tint = if (isExpired)
-                            MaterialTheme.colorScheme.error
-                        else
-                            priorityBorderColor
+                        tint = accentColor
                     )
                 }
 
@@ -473,13 +495,19 @@ fun MinimalTaskCard(
                         Icons.Outlined.Delete,
                         contentDescription = "Delete",
                         modifier = Modifier.size(18.dp),
-                        tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
+                        tint = if (isExpired)
+                            Color(0xFFDC2626) // Strong red for expired
+                        else
+                            MaterialTheme.colorScheme.error.copy(alpha = 0.7f)
                     )
                 }
             }
         }
     }
 }
+
+// Helper data class for multiple return values
+private data class Tuple4<A, B, C, D>(val first: A, val second: B, val third: C, val fourth: D)
 
 @Composable
 fun EmptyStateContent(
