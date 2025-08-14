@@ -12,6 +12,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -735,6 +736,7 @@ private fun LottieEmptyState(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 private fun TaskList(
@@ -890,11 +892,14 @@ private fun TaskList(
                     // Case 3: Has search results - show the tasks
                     groupedTasks.isNotEmpty() -> {
                         groupedTasks.forEach { group ->
-                            item {
+                            item(key = "header_${group.title}") {
                                 TaskGroupHeader(group = group)
                             }
 
-                            items(group.tasks, key = { task -> "${group.title}_${task.id}" }) { task ->
+                            items(
+                                items = group.tasks,
+                                key = { task -> "${group.title}_${task.id}" }
+                            ) { task ->
                                 SwipeableTaskItem(
                                     task = task,
                                     viewModel = viewModel,
@@ -902,11 +907,12 @@ private fun TaskList(
                                     undoToastManager = undoToastManager,
                                     coroutineScope = coroutineScope,
                                     keyboardController = keyboardController,
-                                    focusManager = focusManager
+                                    focusManager = focusManager,
+                                    modifier = Modifier.animateItemPlacement() // Simple animation!
                                 )
                             }
 
-                            item {
+                            item(key = "spacer_${group.title}") {
                                 Spacer(modifier = Modifier.height(8.dp))
                             }
                         }
@@ -924,11 +930,14 @@ private fun TaskList(
             // Default case: show tasks for non-search routes
             else -> {
                 groupedTasks.forEach { group ->
-                    item {
+                    item(key = "header_${group.title}") {
                         TaskGroupHeader(group = group)
                     }
 
-                    items(group.tasks, key = { task -> "${group.title}_${task.id}" }) { task ->
+                    items(
+                        items = group.tasks,
+                        key = { task -> "${group.title}_${task.id}" }
+                    ) { task ->
                         SwipeableTaskItem(
                             task = task,
                             viewModel = viewModel,
@@ -936,11 +945,12 @@ private fun TaskList(
                             undoToastManager = undoToastManager,
                             coroutineScope = coroutineScope,
                             keyboardController = keyboardController,
-                            focusManager = focusManager
+                            focusManager = focusManager,
+                            modifier = Modifier.animateItemPlacement() // Simple animation!
                         )
                     }
 
-                    item {
+                    item(key = "spacer_${group.title}") {
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 }
@@ -949,30 +959,7 @@ private fun TaskList(
     }
 }
 
-@Composable
-private fun TaskGroupHeader(group: TaskGroup) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp),
-        verticalAlignment = Alignment.CenterVertically
-    ) {
-        Box(
-            modifier = Modifier
-                .size(8.dp)
-                .background(group.color, CircleShape)
-        )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(
-            text = "${group.title} (${group.tasks.size})",
-            fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = group.color
-        )
-        Spacer(modifier = Modifier.weight(1f))
-    }
-}
-
+// Update SwipeableTaskItem to accept modifier
 @RequiresApi(Build.VERSION_CODES.O)
 @OptIn(ExperimentalMaterialApi::class)
 @Composable
@@ -983,7 +970,8 @@ private fun SwipeableTaskItem(
     undoToastManager: UndoToastManager,
     coroutineScope: kotlinx.coroutines.CoroutineScope,
     keyboardController: androidx.compose.ui.platform.SoftwareKeyboardController?,
-    focusManager: androidx.compose.ui.focus.FocusManager
+    focusManager: androidx.compose.ui.focus.FocusManager,
+    modifier: Modifier = Modifier // Add modifier parameter
 ) {
     // State to trigger reset
     var shouldResetDismissState by remember { mutableStateOf(false) }
@@ -1030,13 +1018,14 @@ private fun SwipeableTaskItem(
         }
     }
 
-    Box(modifier = Modifier.padding(vertical = 4.dp)) {
+    Box(modifier = modifier.padding(vertical = 4.dp)) { // Apply the modifier here
         SwipeToDismiss(
             state = dismissState,
             directions = setOf(DismissDirection.StartToEnd, DismissDirection.EndToStart),
             // Increased threshold for less sensitivity - requires 60% swipe to trigger
             dismissThresholds = { FractionalThreshold(0.6f) },
             background = {
+                // ... your existing background code ...
                 val direction = dismissState.dismissDirection
                 val progress = dismissState.progress.fraction
 
@@ -1176,7 +1165,6 @@ private fun SwipeableTaskItem(
                 }
             },
             dismissContent = {
-
                 TaskItem(task, viewModel, currentRoute, undoToastManager) {
                     keyboardController?.hide()
                     focusManager.clearFocus()
@@ -1184,8 +1172,31 @@ private fun SwipeableTaskItem(
                     viewModel.setTaskBeingEdited(true)
                     viewModel.setShowBottomSheet(true)
                 }
-
             }
         )
+    }
+}
+
+@Composable
+private fun TaskGroupHeader(group: TaskGroup) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(8.dp)
+                .background(group.color, CircleShape)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = "${group.title} (${group.tasks.size})",
+            fontSize = 16.sp,
+            fontWeight = FontWeight.SemiBold,
+            color = group.color
+        )
+        Spacer(modifier = Modifier.weight(1f))
     }
 }
