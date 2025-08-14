@@ -19,6 +19,7 @@ import androidx.compose.material.icons.filled.NotificationsActive
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.NotificationsActive
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -103,6 +104,16 @@ fun DropDownActionMenu(expanded: Boolean = true, navController: NavHostControlle
             Icon(Icons.Outlined.NotificationsActive, contentDescription = null, tint = colorResource(id = R.color.dropMenuIcon_gray))
             Spacer(Modifier.padding(end = 5.dp))
             Text("Reminders")
+        }
+
+        DropdownMenuItem(
+            onClick = {
+                onDismissRequest()
+                navController.navigate(Screen.Settings.route)
+            }) {
+            Icon(Icons.Outlined.Settings, contentDescription = null, tint = colorResource(R.color.dropMenuIcon_gray))
+            Spacer(Modifier.padding(end = 5.dp))
+            Text("Settings")
         }
 
     }

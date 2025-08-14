@@ -16,6 +16,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.todoapp.ui.settings.SettingsScreen
 import com.example.todolist.notifications.AndroidReminderScheduler
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -88,6 +89,12 @@ fun Navigation(
             Screen.Reminders.route
         ) {
             TaskRemindersScreen(viewModel, navController)
+        }
+
+        composable(
+            Screen.Settings.route
+        ) {
+            SettingsScreen()
         }
 
 
