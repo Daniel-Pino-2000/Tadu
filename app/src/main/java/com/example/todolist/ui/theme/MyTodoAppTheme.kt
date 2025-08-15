@@ -100,7 +100,18 @@ private val DarkColors = darkColorScheme(
  */
 fun createLightColorScheme(accentColor: Color) = LightColors.copy(
     primary = accentColor,
-    primaryContainer = accentColor.copy(alpha = 0.12f),
+    primaryContainer = Color(
+        red = (accentColor.red + (1f - accentColor.red) * 0.7f).coerceIn(0f, 1f),
+        green = (accentColor.green + (1f - accentColor.green) * 0.7f).coerceIn(0f, 1f),
+        blue = (accentColor.blue + (1f - accentColor.blue) * 0.7f).coerceIn(0f, 1f),
+        alpha = 1f
+    ),
+    onPrimaryContainer = Color(
+        red = (accentColor.red * 0.2f).coerceIn(0f, 1f),
+        green = (accentColor.green * 0.2f).coerceIn(0f, 1f),
+        blue = (accentColor.blue * 0.2f).coerceIn(0f, 1f),
+        alpha = 1f
+    ),
     inversePrimary = accentColor
 )
 
@@ -109,7 +120,18 @@ fun createLightColorScheme(accentColor: Color) = LightColors.copy(
  */
 fun createDarkColorScheme(accentColor: Color) = DarkColors.copy(
     primary = accentColor,
-    primaryContainer = accentColor.copy(alpha = 0.3f),
+    primaryContainer = Color(
+        red = (accentColor.red * 0.3f).coerceIn(0f, 1f),
+        green = (accentColor.green * 0.3f).coerceIn(0f, 1f),
+        blue = (accentColor.blue * 0.3f).coerceIn(0f, 1f),
+        alpha = 1f
+    ),
+    onPrimaryContainer = Color(
+        red = (accentColor.red + (1f - accentColor.red) * 0.7f).coerceIn(0f, 1f),
+        green = (accentColor.green + (1f - accentColor.green) * 0.7f).coerceIn(0f, 1f),
+        blue = (accentColor.blue + (1f - accentColor.blue) * 0.7f).coerceIn(0f, 1f),
+        alpha = 1f
+    ),
     inversePrimary = accentColor
 )
 

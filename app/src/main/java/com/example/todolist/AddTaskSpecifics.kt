@@ -72,6 +72,7 @@ import android.content.Intent
 import android.provider.CalendarContract
 import android.util.Log
 import android.widget.Toast
+import com.example.todolist.ui.theme.DynamicColors
 import com.example.todolist.ui.theme.LocalDynamicColors
 import java.time.ZoneId
 import java.util.Locale
@@ -118,14 +119,14 @@ fun ScrollableRow(viewModel: TaskViewModel, isHistoryMode: Boolean) {
                         imageVector = Icons.Default.Launch,
                         contentDescription = "Open in Maps",
                         tint = if (viewModel.taskAddressState.isNotBlank())
-                            Color.Blue else Color.LightGray
+                            LocalDynamicColors.current.niceColor else Color.LightGray
                     )
                 }
             },
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
                 cursorColor = LocalDynamicColors.current.niceColor,
-                focusedBorderColor = Color.Blue,
+                focusedBorderColor = LocalDynamicColors.current.niceColor,
                 unfocusedBorderColor = Color.Black,
                 disabledBorderColor = Color.Black,
                 disabledTextColor = Color.Black,
@@ -205,10 +206,10 @@ fun DeadlinePickerButton(
         modifier = Modifier.height(62.dp).padding(top = 7.dp).focusable(false),
         colors = ButtonDefaults.outlinedButtonColors(
             backgroundColor = Color.Transparent,
-            contentColor = Color.Blue
+            contentColor = LocalDynamicColors.current.niceColor
         )
     ) {
-        Icon(Icons.Default.Alarm, contentDescription = null, tint = Color.Blue)
+        Icon(Icons.Default.Alarm, contentDescription = null, tint = LocalDynamicColors.current.niceColor)
         Spacer(modifier = Modifier.width(4.dp))
 
         if (viewModel.taskDeadline.isEmpty()) {
@@ -258,7 +259,7 @@ fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
         "2" -> Pair(orange, "Priority 2")
         "3" -> Pair(blue, "Priority 3")
         "4" -> Pair(gray, "Priority 4")
-        else -> Pair(Color.Blue, "Priority")
+        else -> Pair(LocalDynamicColors.current.niceColor, "Priority")
     }
 
     Box {
@@ -273,7 +274,7 @@ fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
                 .padding(top = 7.dp),
             colors = ButtonDefaults.outlinedButtonColors(
                 backgroundColor = Color.Transparent,
-                contentColor = Color.Blue
+                contentColor = LocalDynamicColors.current.niceColor
             )
         ) {
             Icon(Icons.Default.Flag, contentDescription = null, tint = iconTint)
@@ -391,7 +392,7 @@ fun LabelButton(
                 .padding(top = 7.dp),
             colors = ButtonDefaults.outlinedButtonColors(
                 backgroundColor = Color.Transparent,
-                contentColor = Color.Blue
+                contentColor = LocalDynamicColors.current.niceColor
             )
         ) {
             Icon(

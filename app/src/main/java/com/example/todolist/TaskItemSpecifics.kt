@@ -63,7 +63,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
-import com.example.todolist.ui.theme.LocalDynamicColors
 
 @OptIn(ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
@@ -207,7 +206,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, undoToa
                                 contentDescription = "Has reminder",
                                 modifier = Modifier.size(16.dp),
                                 tint = if (task.reminderTime!! <= System.currentTimeMillis()) colorResource(id = R.color.orange)
-                                        else LocalDynamicColors.current.niceColor.copy(alpha = 0.7f)
+                                        else colorResource(id = R.color.nice_color).copy(alpha = 0.7f)
                             )
 
                             // Add spacing if there's also a location icon
