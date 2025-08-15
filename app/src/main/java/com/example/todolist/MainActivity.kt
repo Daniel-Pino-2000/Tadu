@@ -12,6 +12,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -23,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -30,8 +32,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.mytodoapp.ui.theme.MyToDoAppTheme
+import com.example.todoapp.data.SettingsRepository
+import com.example.todoapp.data.createSettingsRepository
+import com.example.todoapp.viewmodel.SettingsViewModel
+import com.example.todoapp.ui.settings.ThemeMode
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -45,16 +54,39 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            MyToDoAppTheme {
+            // Create settings repository and view model
+            val settingsRepository = remember {
+                this@MainActivity.createSettingsRepository()
+            }
+            val settingsViewModel = remember { SettingsViewModel(settingsRepository) }
+
+            // Collect settings state
+            val themeMode by settingsViewModel.themeMode.collectAsState()
+            val accentColor by settingsViewModel.accentColor.collectAsState()
+            val notificationsEnabled by settingsViewModel.notificationsEnabled.collectAsState()
+
+            // Determine if dark theme should be used
+            val isDarkTheme = when (themeMode) {
+                ThemeMode.LIGHT -> false
+                ThemeMode.DARK -> true
+                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+            }
+
+            MyToDoAppTheme(
+                darkTheme = isDarkTheme,
+                accentColor = accentColor
+            ) {
                 SetSystemBarsColor(color = MaterialTheme.colorScheme.background)
 
                 val navController = rememberNavController()
 
-                // Check battery optimization on startup
-                LaunchedEffect(Unit) {
-                    delay(2000) // Give user time to see the app first
-                    if (!isBatteryOptimizationDisabled()) {
-                        showBatteryOptimizationDialog = true
+                // Check battery optimization on startup (only if notifications are enabled)
+                LaunchedEffect(notificationsEnabled) {
+                    if (notificationsEnabled) {
+                        delay(2000) // Give user time to see the app first
+                        if (!isBatteryOptimizationDisabled()) {
+                            showBatteryOptimizationDialog = true
+                        }
                     }
                 }
 
@@ -71,7 +103,7 @@ class MainActivity : ComponentActivity() {
 
                         // Show battery optimization dialog when needed
                         if (showBatteryOptimizationDialog) {
-                            PermissionExplanationDialog (
+                            PermissionExplanationDialog(
                                 onConfirm = {
                                     showBatteryOptimizationDialog = false
                                     openBatteryOptimizationSettings()
@@ -84,6 +116,8 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
+
+    // Removed - no longer needed since we use the extension function
 
     /**
      * Request battery optimization exemption - shows explanation dialog

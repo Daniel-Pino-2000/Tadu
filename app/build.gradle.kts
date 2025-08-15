@@ -51,6 +51,9 @@ dependencies {
     // Animation
     implementation("com.airbnb.android:lottie-compose:6.1.0")
 
+    // DataStore
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
+
 
     // Room
     implementation("androidx.room:room-runtime:2.7.1")

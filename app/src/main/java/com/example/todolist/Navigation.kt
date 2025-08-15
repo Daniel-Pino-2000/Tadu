@@ -16,7 +16,10 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.todoapp.data.SettingsRepository
+import com.example.todoapp.data.createSettingsRepository
 import com.example.todoapp.ui.settings.SettingsScreen
+import com.example.todoapp.viewmodel.SettingsViewModel
 import com.example.todolist.notifications.AndroidReminderScheduler
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
@@ -34,6 +37,13 @@ fun Navigation(
             reminderScheduler = AndroidReminderScheduler(context)
         )
     }
+
+    // SettingsViewModel with proper repository
+    val settingsViewModel = remember {
+        val repo = context.createSettingsRepository() // ✅ uses your DataStore
+        SettingsViewModel(repo)
+    }
+
 
     val uiState by viewModel.uiState.collectAsState()
 
@@ -94,7 +104,7 @@ fun Navigation(
         composable(
             Screen.Settings.route
         ) {
-            SettingsScreen()
+            SettingsScreen(navController, settingsViewModel)
         }
 
 

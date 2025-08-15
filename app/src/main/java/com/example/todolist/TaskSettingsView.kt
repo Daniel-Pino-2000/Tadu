@@ -29,20 +29,23 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.example.todoapp.viewmodel.SettingsViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
 
 @Composable
 fun SettingsScreen(
-    onNavigateBack: () -> Unit = {},
-    isDarkTheme: Boolean = false,
-    onThemeChange: (ThemeMode) -> Unit = {},
-    currentThemeMode: ThemeMode = ThemeMode.SYSTEM,
-    accentColor: Color = Color.Blue,
-    onAccentColorChange: (Color) -> Unit = {},
-    notificationsEnabled: Boolean = true,
-    onNotificationsChange: (Boolean) -> Unit = {},
-    clearHistoryEnabled: Boolean = false,
-    onClearHistoryChange: (Boolean) -> Unit = {}
+    navController: NavHostController,
+    viewModel: SettingsViewModel = viewModel()
 ) {
+    // Collect states from ViewModel
+    val currentThemeMode by viewModel.themeMode.collectAsState()
+    val accentColor by viewModel.accentColor.collectAsState()
+    val notificationsEnabled by viewModel.notificationsEnabled.collectAsState()
+    val clearHistoryEnabled by viewModel.clearHistoryEnabled.collectAsState()
+
+    var backPressed by remember { mutableStateOf(false)}
+
     var showThemeDialog by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
 
@@ -63,7 +66,12 @@ fun SettingsScreen(
             },
             navigationIcon = {
                 IconButton(
-                    onClick = onNavigateBack,
+                    onClick = {
+                        if (!backPressed) {
+                            backPressed = true
+                            navController.popBackStack()
+                        }
+                    },
                     modifier = Modifier
                         .clip(CircleShape)
                         .background(
@@ -146,7 +154,9 @@ fun SettingsScreen(
                         title = "Enable Notifications",
                         subtitle = "Get reminded about your tasks",
                         checked = notificationsEnabled,
-                        onCheckedChange = onNotificationsChange
+                        onCheckedChange = { enabled ->
+                            viewModel.updateNotificationsEnabled(enabled)
+                        }
                     )
                 }
             }
@@ -159,7 +169,9 @@ fun SettingsScreen(
                         title = "Auto-clear task history",
                         subtitle = "Remove task history after 30 days",
                         checked = clearHistoryEnabled,
-                        onCheckedChange = onClearHistoryChange
+                        onCheckedChange = { enabled ->
+                            viewModel.updateClearHistoryEnabled(enabled)
+                        }
                     )
                 }
             }
@@ -173,7 +185,7 @@ fun SettingsScreen(
         ThemeSelectionDialog(
             currentTheme = currentThemeMode,
             onThemeSelected = { theme ->
-                onThemeChange(theme)
+                viewModel.updateThemeMode(theme)
                 showThemeDialog = false
             },
             onDismiss = { showThemeDialog = false }
@@ -185,7 +197,7 @@ fun SettingsScreen(
         ColorPickerDialog(
             currentColor = accentColor,
             onColorSelected = { color ->
-                onAccentColorChange(color)
+                viewModel.updateAccentColor(color)
                 showColorPicker = false
             },
             onDismiss = { showColorPicker = false }
@@ -194,7 +206,7 @@ fun SettingsScreen(
 }
 
 @Composable
-fun SettingsSection(
+private fun SettingsSection(
     title: String,
     content: @Composable () -> Unit
 ) {
@@ -220,7 +232,7 @@ fun SettingsSection(
 }
 
 @Composable
-fun SettingsItem(
+private fun SettingsItem(
     icon: ImageVector,
     title: String,
     subtitle: String? = null,
@@ -276,7 +288,7 @@ fun SettingsItem(
 }
 
 @Composable
-fun SettingsSwitchItem(
+private fun SettingsSwitchItem(
     icon: ImageVector,
     title: String,
     subtitle: String? = null,
@@ -339,7 +351,7 @@ fun SettingsSwitchItem(
 }
 
 @Composable
-fun ThemeSelectionDialog(
+private fun ThemeSelectionDialog(
     currentTheme: ThemeMode,
     onThemeSelected: (ThemeMode) -> Unit,
     onDismiss: () -> Unit
@@ -409,7 +421,7 @@ fun ThemeSelectionDialog(
 }
 
 @Composable
-fun ColorPickerDialog(
+private fun ColorPickerDialog(
     currentColor: Color,
     onColorSelected: (Color) -> Unit,
     onDismiss: () -> Unit
@@ -492,7 +504,7 @@ fun ColorPickerDialog(
 }
 
 @Composable
-fun ColorOption(
+private fun ColorOption(
     color: Color,
     isSelected: Boolean,
     onClick: () -> Unit
@@ -538,12 +550,4 @@ fun ColorOption(
 
 enum class ThemeMode {
     LIGHT, DARK, SYSTEM
-}
-
-@Preview(showBackground = true)
-@Composable
-fun SettingsScreenPreview() {
-    MaterialTheme {
-        SettingsScreen()
-    }
 }
