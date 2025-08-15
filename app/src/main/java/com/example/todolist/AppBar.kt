@@ -45,7 +45,7 @@ fun AppBarView(
         title = {
             Text(
                 text = title,
-                color = colorResource(id = R.color.black),
+                color = androidx.compose.material3.MaterialTheme.colorScheme.onSurface,
                 style = MaterialTheme.typography.h6, // Larger and bolder by default
                 modifier = Modifier.padding(start = 8.dp)
             )
@@ -55,13 +55,14 @@ fun AppBarView(
         backgroundColor = androidx.compose.material3.MaterialTheme.colorScheme.background,
         actions = {
             IconButton(
-                onClick = {
-                    expanded = true
-                },
-
+                onClick = { expanded = true },
                 enabled = true
             ) {
-                Icon(Icons.Default.MoreVert, contentDescription = null)
+                Icon(
+                    imageVector = Icons.Default.MoreVert,
+                    contentDescription = null,
+                    tint = androidx.compose.material3.MaterialTheme.colorScheme.onSurface // adapts to light/dark theme
+                )
             }
             DropDownActionMenu(expanded = expanded, navController, onDismissRequest = { expanded = false })
 
