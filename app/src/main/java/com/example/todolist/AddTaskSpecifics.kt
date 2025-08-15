@@ -76,6 +76,7 @@ import com.example.todolist.ui.theme.DynamicColors
 import com.example.todolist.ui.theme.LocalDynamicColors
 import java.time.ZoneId
 import java.util.Locale
+import androidx.compose.material3.MaterialTheme
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -96,12 +97,19 @@ fun ScrollableRow(viewModel: TaskViewModel, isHistoryMode: Boolean) {
             value = viewModel.taskAddressState,
             onValueChange = { viewModel.onAddressChanged(it) },
             maxLines = 1,
-            label = { Text("Address") },
+            label = {
+                Text(
+                    "Address",
+                    color = if (isHistoryMode)
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                    else MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
             leadingIcon = {
                 Icon(
                     imageVector = Icons.Default.LocationOn,
                     contentDescription = null,
-                    tint = Color.Gray
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
             enabled = !isHistoryMode,
@@ -119,7 +127,8 @@ fun ScrollableRow(viewModel: TaskViewModel, isHistoryMode: Boolean) {
                         imageVector = Icons.Default.Launch,
                         contentDescription = "Open in Maps",
                         tint = if (viewModel.taskAddressState.isNotBlank())
-                            LocalDynamicColors.current.niceColor else Color.LightGray
+                            LocalDynamicColors.current.niceColor
+                        else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
                     )
                 }
             },
@@ -127,12 +136,12 @@ fun ScrollableRow(viewModel: TaskViewModel, isHistoryMode: Boolean) {
             colors = OutlinedTextFieldDefaults.colors(
                 cursorColor = LocalDynamicColors.current.niceColor,
                 focusedBorderColor = LocalDynamicColors.current.niceColor,
-                unfocusedBorderColor = Color.Black,
-                disabledBorderColor = Color.Black,
-                disabledTextColor = Color.Black,
-                disabledLabelColor = Color.Black,
-                disabledLeadingIconColor = Color.Gray,
-                disabledTrailingIconColor = Color.LightGray
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline,
+                disabledBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.38f),
+                disabledTextColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                disabledLabelColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                disabledLeadingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
+                disabledTrailingIconColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             ),
             modifier = Modifier.fillMaxWidth()
         )
@@ -201,12 +210,13 @@ fun DeadlinePickerButton(
     OutlinedButton(
         onClick = { if (!isHistoryMode) showDialog = true },
         shape = RoundedCornerShape(16.dp),
-        border = BorderStroke(1.dp, Color.Black),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
         enabled = !isHistoryMode,
         modifier = Modifier.height(62.dp).padding(top = 7.dp).focusable(false),
         colors = ButtonDefaults.outlinedButtonColors(
             backgroundColor = Color.Transparent,
-            contentColor = LocalDynamicColors.current.niceColor
+            contentColor = LocalDynamicColors.current.niceColor,
+            disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
         )
     ) {
         Icon(Icons.Default.Alarm, contentDescription = null, tint = LocalDynamicColors.current.niceColor)
@@ -224,7 +234,7 @@ fun DeadlinePickerButton(
                     modifier = Modifier
                         .size(20.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color.Gray.copy(alpha = 0.15f))
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f))
                         .clickable {
                             viewModel.onTaskDeadlineChanged("")
                         },
@@ -233,7 +243,7 @@ fun DeadlinePickerButton(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Clear deadline",
-                        tint = Color.Gray,
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.size(12.dp)
                     )
                 }
@@ -249,7 +259,7 @@ fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
     val red = colorResource(id = R.color.red_yesterday)
     val orange = colorResource(id = R.color.orange)
     val blue = colorResource(id = R.color.blue_today)
-    val gray = Color.Gray
+    val gray = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
     val priority = viewModel.taskPriority
 
@@ -266,7 +276,7 @@ fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
         OutlinedButton(
             onClick = { expanded = true },
             shape = RoundedCornerShape(16.dp),
-            border = BorderStroke(1.dp, Color.Black),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             enabled = !isHistoryMode,
             modifier = Modifier
                 .height(62.dp)
@@ -274,7 +284,8 @@ fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
                 .padding(top = 7.dp),
             colors = ButtonDefaults.outlinedButtonColors(
                 backgroundColor = Color.Transparent,
-                contentColor = LocalDynamicColors.current.niceColor
+                contentColor = LocalDynamicColors.current.niceColor,
+                disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
         ) {
             Icon(Icons.Default.Flag, contentDescription = null, tint = iconTint)
@@ -285,7 +296,8 @@ fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
         DropdownMenu(
             expanded = expanded,
             onDismissRequest = { expanded = false },
-            offset = DpOffset(x = 0.dp, y = (-160).dp)
+            offset = DpOffset(x = 0.dp, y = (-160).dp),
+            modifier = Modifier.background(MaterialTheme.colorScheme.surface)
         ) {
             DropdownMenuItem(onClick = {
                 expanded = false
@@ -293,7 +305,10 @@ fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
             }) {
                 Icon(Icons.Default.Flag, contentDescription = null, tint = red)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Priority 1")
+                Text(
+                    "Priority 1",
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
 
             DropdownMenuItem(onClick = {
@@ -302,7 +317,10 @@ fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
             }) {
                 Icon(Icons.Default.Flag, contentDescription = null, tint = orange)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Priority 2")
+                Text(
+                    "Priority 2",
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
 
             DropdownMenuItem(onClick = {
@@ -311,7 +329,10 @@ fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
             }) {
                 Icon(Icons.Default.Flag, contentDescription = null, tint = blue)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Priority 3")
+                Text(
+                    "Priority 3",
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
 
             DropdownMenuItem(onClick = {
@@ -320,7 +341,10 @@ fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
             }) {
                 Icon(Icons.Default.Flag, contentDescription = null, tint = gray)
                 Spacer(modifier = Modifier.width(4.dp))
-                Text("Priority 4")
+                Text(
+                    "Priority 4",
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
     }
@@ -378,13 +402,14 @@ fun LabelButton(
 
     // Color based on whether labels are selected
     val iconTint = if (viewModel.taskLabel.isNotEmpty())
-        LocalDynamicColors.current.niceColor else Color.Gray
+        LocalDynamicColors.current.niceColor
+    else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
 
     Box {
         OutlinedButton(
             onClick = { if (!isHistoryMode) expanded = true },
             shape = RoundedCornerShape(16.dp),
-            border = BorderStroke(1.dp, Color.Black),
+            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outline),
             enabled = !isHistoryMode,
             modifier = modifier
                 .height(62.dp)
@@ -392,7 +417,8 @@ fun LabelButton(
                 .padding(top = 7.dp),
             colors = ButtonDefaults.outlinedButtonColors(
                 backgroundColor = Color.Transparent,
-                contentColor = LocalDynamicColors.current.niceColor
+                contentColor = LocalDynamicColors.current.niceColor,
+                disabledContentColor = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
             )
         ) {
             Icon(
@@ -410,7 +436,7 @@ fun LabelButton(
                     modifier = Modifier
                         .size(20.dp)
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color.Gray.copy(alpha = 0.15f))
+                        .background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f))
                         .clickable {
                             viewModel.onTaskLabelsChanged("")
                         },
@@ -419,7 +445,7 @@ fun LabelButton(
                     Icon(
                         imageVector = Icons.Default.Close,
                         contentDescription = "Clear label",
-                        tint = Color.Gray,
+                        tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                         modifier = Modifier.size(12.dp)
                     )
                 }
@@ -430,7 +456,9 @@ fun LabelButton(
             expanded = expanded,
             onDismissRequest = { expanded = false },
             offset = DpOffset(x = 0.dp, y = (-200).dp),
-            modifier = Modifier.widthIn(min = 200.dp)
+            modifier = Modifier
+                .widthIn(min = 200.dp)
+                .background(MaterialTheme.colorScheme.surface)
         ) {
             // Show available labels
             if (availableLabels.isNotEmpty()) {
@@ -449,11 +477,14 @@ fun LabelButton(
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text(label)
+                            Text(
+                                label,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
                         }
                     }
                 }
-                Divider()
+                Divider(color = MaterialTheme.colorScheme.outline.copy(alpha = 0.12f))
             }
 
             // Add new label option
@@ -470,7 +501,11 @@ fun LabelButton(
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
-                Text("Create new label", fontWeight = FontWeight.Medium)
+                Text(
+                    "Create new label",
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
         }
     }
@@ -504,13 +539,16 @@ fun NewLabelDialog(
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(Color(0x80000000)),
+                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f)),
             contentAlignment = Alignment.Center
         ) {
             Column(
                 modifier = Modifier
                     .widthIn(min = 280.dp, max = 320.dp)
-                    .background(Color.White, shape = RoundedCornerShape(16.dp))
+                    .background(
+                        MaterialTheme.colorScheme.surface,
+                        shape = RoundedCornerShape(16.dp)
+                    )
                     .padding(20.dp),
                 horizontalAlignment = Alignment.Start,
                 verticalArrangement = Arrangement.spacedBy(12.dp)
@@ -519,13 +557,18 @@ fun NewLabelDialog(
                     text = "Create new label",
                     fontSize = 20.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color.Black
+                    color = MaterialTheme.colorScheme.onSurface
                 )
 
                 OutlinedTextField(
                     value = labelText,
                     onValueChange = { labelText = it },
-                    label = { Text("Label name") },
+                    label = {
+                        Text(
+                            "Label name",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
                     singleLine = true,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -533,7 +576,7 @@ fun NewLabelDialog(
                     colors = OutlinedTextFieldDefaults.colors(
                         cursorColor = LocalDynamicColors.current.niceColor,
                         focusedBorderColor = LocalDynamicColors.current.niceColor,
-                        unfocusedBorderColor = Color.Gray
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
                     ),
                     keyboardOptions = KeyboardOptions.Default.copy(
                         imeAction = ImeAction.Done
@@ -577,7 +620,8 @@ fun NewLabelDialog(
                         Text(
                             text = "Add",
                             color = if (labelText.isNotBlank())
-                                LocalDynamicColors.current.niceColor else Color.Gray,
+                                LocalDynamicColors.current.niceColor
+                            else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )

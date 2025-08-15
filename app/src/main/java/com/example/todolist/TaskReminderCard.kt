@@ -30,6 +30,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.core.content.ContextCompat
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material.MaterialTheme as MaterialTheme2
 
 
 enum class ReminderState {
@@ -47,6 +49,7 @@ fun ReminderSection(
     onReminderChanged: (reminderTime: Long?, reminderText: String?) -> Unit
 ) {
     val context = LocalContext.current
+    val isDarkTheme = isSystemInDarkTheme()
 
     // Permission launcher for notifications (Android 13+)
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -118,46 +121,84 @@ fun ReminderSection(
         }
     }
 
-    // Get colors based on reminder state
+    // Theme-aware colors based on reminder state
     val containerColor = when (reminderState) {
-        ReminderState.DISABLED -> Color.Gray.copy(alpha = 0.03f)
-        ReminderState.PENDING -> colorResource(id = R.color.nice_color).copy(alpha = 0.06f)
-        ReminderState.ACTIVE -> colorResource(id = R.color.nice_color).copy(alpha = 0.06f)
-        ReminderState.EXPIRED -> Color(0xFFFF8A50).copy(alpha = 0.08f) // Softer orange with slightly higher alpha
+        ReminderState.DISABLED -> if (isDarkTheme) {
+            MaterialTheme.colorScheme.surface.copy(alpha = 0.3f)
+        } else {
+            Color.Gray.copy(alpha = 0.03f)
+        }
+        ReminderState.PENDING -> colorResource(id = R.color.nice_color).copy(
+            alpha = if (isDarkTheme) 0.12f else 0.06f
+        )
+        ReminderState.ACTIVE -> colorResource(id = R.color.nice_color).copy(
+            alpha = if (isDarkTheme) 0.12f else 0.06f
+        )
+        ReminderState.EXPIRED -> Color(0xFFFF8A50).copy(
+            alpha = if (isDarkTheme) 0.15f else 0.08f
+        )
     }
 
     val borderColor = when (reminderState) {
-        ReminderState.DISABLED -> null
-        ReminderState.PENDING -> colorResource(id = R.color.nice_color).copy(alpha = 0.2f)
-        ReminderState.ACTIVE -> colorResource(id = R.color.nice_color).copy(alpha = 0.2f)
-        ReminderState.EXPIRED -> Color(0xFFFF8A50).copy(alpha = 0.25f) // Slightly more visible border
+        ReminderState.DISABLED -> if (isDarkTheme) {
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+        } else {
+            null
+        }
+        ReminderState.PENDING -> colorResource(id = R.color.nice_color).copy(
+            alpha = if (isDarkTheme) 0.4f else 0.2f
+        )
+        ReminderState.ACTIVE -> colorResource(id = R.color.nice_color).copy(
+            alpha = if (isDarkTheme) 0.4f else 0.2f
+        )
+        ReminderState.EXPIRED -> Color(0xFFFF8A50).copy(
+            alpha = if (isDarkTheme) 0.5f else 0.25f
+        )
     }
 
     val contentColor = when (reminderState) {
-        ReminderState.DISABLED -> Color.Gray
+        ReminderState.DISABLED -> if (isDarkTheme) {
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+        } else {
+            Color.Gray
+        }
         ReminderState.PENDING -> colorResource(id = R.color.nice_color)
         ReminderState.ACTIVE -> colorResource(id = R.color.nice_color)
-        ReminderState.EXPIRED -> Color(0xFFE65100) // Deeper, more sophisticated orange
+        ReminderState.EXPIRED -> if (isDarkTheme) {
+            Color(0xFFFFAB91) // Lighter orange for dark theme
+        } else {
+            Color(0xFFE65100) // Deeper orange for light theme
+        }
     }
 
     val iconTint = when (reminderState) {
-        ReminderState.DISABLED -> Color.Gray
+        ReminderState.DISABLED -> if (isDarkTheme) {
+            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
+        } else {
+            Color.Gray
+        }
         ReminderState.PENDING -> colorResource(id = R.color.nice_color)
         ReminderState.ACTIVE -> colorResource(id = R.color.nice_color)
-        ReminderState.EXPIRED -> Color(0xFFFF7043) // Balanced orange between background and text
+        ReminderState.EXPIRED -> if (isDarkTheme) {
+            Color(0xFFFF8A65) // Balanced orange for dark theme
+        } else {
+            Color(0xFFFF7043) // Balanced orange for light theme
+        }
     }
 
-    // Compact Main Reminder Card - reduced padding and size
+    // Compact Main Reminder Card - with theme-aware colors
     Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
         colors = CardDefaults.cardColors(containerColor = containerColor),
-        shape = RoundedCornerShape(12.dp), // Slightly smaller corner radius
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(
+            defaultElevation = if (isDarkTheme) 2.dp else 0.dp
+        ),
         border = borderColor?.let { BorderStroke(1.dp, it) }
     ) {
-        Column(modifier = Modifier.padding(14.dp)) { // Reduced from 18dp to 14dp
+        Column(modifier = Modifier.padding(14.dp)) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically
@@ -169,10 +210,10 @@ fun ReminderSection(
                     },
                     contentDescription = "Reminder",
                     tint = iconTint,
-                    modifier = Modifier.size(18.dp) // Reduced from 20dp
+                    modifier = Modifier.size(18.dp)
                 )
 
-                Spacer(modifier = Modifier.width(10.dp)) // Reduced from 12dp
+                Spacer(modifier = Modifier.width(10.dp))
 
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
@@ -180,7 +221,7 @@ fun ReminderSection(
                             ReminderState.EXPIRED -> "Reminder (Expired)"
                             else -> "Reminder"
                         },
-                        fontSize = 15.sp, // Reduced from 16sp
+                        fontSize = 15.sp,
                         fontWeight = FontWeight.Medium,
                         color = contentColor
                     )
@@ -191,12 +232,16 @@ fun ReminderSection(
                             ReminderState.ACTIVE -> "${reminderConfig.dateTime.date} at ${reminderConfig.dateTime.time}"
                             ReminderState.EXPIRED -> "${reminderConfig.dateTime.date} at ${reminderConfig.dateTime.time}"
                         },
-                        fontSize = 12.sp, // Reduced from 13sp
+                        fontSize = 12.sp,
                         color = when (reminderState) {
                             ReminderState.EXPIRED -> contentColor.copy(alpha = 0.7f)
-                            else -> Color.Gray
+                            else -> if (isDarkTheme) {
+                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
+                            } else {
+                                Color.Gray
+                            }
                         },
-                        modifier = Modifier.padding(top = 1.dp) // Reduced from 2dp
+                        modifier = Modifier.padding(top = 1.dp)
                     )
                 }
 
@@ -219,21 +264,21 @@ fun ReminderSection(
                     },
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = when (reminderState) {
-                            ReminderState.EXPIRED -> Color(0xFFFF7043)
+                            ReminderState.EXPIRED -> if (isDarkTheme) Color(0xFFFF8A65) else Color(0xFFFF7043)
                             else -> colorResource(id = R.color.nice_color)
                         },
                         checkedTrackColor = when (reminderState) {
-                            ReminderState.EXPIRED -> Color(0xFFFF7043).copy(alpha = 0.3f)
+                            ReminderState.EXPIRED -> if (isDarkTheme) Color(0xFFFF8A65).copy(alpha = 0.4f) else Color(0xFFFF7043).copy(alpha = 0.3f)
                             else -> colorResource(id = R.color.nice_color).copy(alpha = 0.3f)
                         },
-                        uncheckedThumbColor = Color.White,
-                        uncheckedTrackColor = Color.Gray.copy(alpha = 0.3f)
+                        uncheckedThumbColor = if (isDarkTheme) MaterialTheme.colorScheme.onSurface else Color.White,
+                        uncheckedTrackColor = if (isDarkTheme) MaterialTheme.colorScheme.outline.copy(alpha = 0.4f) else Color.Gray.copy(alpha = 0.3f)
                     ),
-                    modifier = Modifier.scale(0.85f) // Slightly smaller switch
+                    modifier = Modifier.scale(0.85f)
                 )
             }
 
-            // Compact reminder status - show different states
+            // Compact reminder status with theme-aware colors
             when (reminderState) {
                 ReminderState.ACTIVE -> {
                     Spacer(modifier = Modifier.height(8.dp))
@@ -258,7 +303,9 @@ fun ReminderSection(
                             }
                         },
                         colors = AssistChipDefaults.assistChipColors(
-                            containerColor = colorResource(id = R.color.nice_color).copy(alpha = 0.1f)
+                            containerColor = colorResource(id = R.color.nice_color).copy(
+                                alpha = if (isDarkTheme) 0.2f else 0.1f
+                            )
                         ),
                         modifier = Modifier.height(28.dp)
                     )
@@ -274,21 +321,23 @@ fun ReminderSection(
                                 horizontalArrangement = Arrangement.spacedBy(4.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.AccessTime, // Keep same icon for consistency
+                                    imageVector = Icons.Default.AccessTime,
                                     contentDescription = null,
                                     modifier = Modifier.size(14.dp),
-                                    tint = Color(0xFFFF7043)
+                                    tint = if (isDarkTheme) Color(0xFFFF8A65) else Color(0xFFFF7043)
                                 )
                                 Text(
                                     "Expired • Tap to update",
                                     fontSize = 12.sp,
-                                    color = Color(0xFFE65100),
-                                    fontWeight = FontWeight.Medium // Add slight weight for better readability
+                                    color = if (isDarkTheme) Color(0xFFFFAB91) else Color(0xFFE65100),
+                                    fontWeight = FontWeight.Medium
                                 )
                             }
                         },
                         colors = AssistChipDefaults.assistChipColors(
-                            containerColor = Color(0xFFFF8A50).copy(alpha = 0.12f) // Slightly more prominent background
+                            containerColor = Color(0xFFFF8A50).copy(
+                                alpha = if (isDarkTheme) 0.2f else 0.12f
+                            )
                         ),
                         modifier = Modifier.height(28.dp)
                     )
@@ -326,42 +375,45 @@ fun ReminderSection(
         }
     }
 
-    // Compact Reminder Picker Dialog
+    // Theme-aware Reminder Picker Dialog
     if (showReminderDialog) {
         Dialog(onDismissRequest = { showReminderDialog = false }) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .wrapContentHeight()
-                    .padding(horizontal = 20.dp), // Add horizontal padding for smaller dialog
+                    .padding(horizontal = 20.dp),
                 contentAlignment = Alignment.Center
             ) {
                 Card(
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentHeight(),
-                    shape = RoundedCornerShape(16.dp), // Reduced corner radius
-                    colors = CardDefaults.cardColors(containerColor = Color.White)
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface // Theme-aware background
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
                 ) {
                     Column(
-                        modifier = Modifier.padding(20.dp) // Reduced padding
+                        modifier = Modifier.padding(20.dp)
                     ) {
-                        // Compact Dialog Header
+                        // Theme-aware Dialog Header
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             Icon(
                                 imageVector = when (reminderState) {
-                                    ReminderState.EXPIRED -> Icons.Default.AccessTime // Keep consistent icon
+                                    ReminderState.EXPIRED -> Icons.Default.AccessTime
                                     else -> Icons.Default.Notifications
                                 },
                                 contentDescription = "Set Reminder",
                                 tint = when (reminderState) {
-                                    ReminderState.EXPIRED -> Color(0xFFFF7043)
+                                    ReminderState.EXPIRED -> if (isDarkTheme) Color(0xFFFF8A65) else Color(0xFFFF7043)
                                     else -> colorResource(id = R.color.nice_color)
                                 },
-                                modifier = Modifier.size(20.dp) // Smaller icon
+                                modifier = Modifier.size(20.dp)
                             )
                             Spacer(modifier = Modifier.width(10.dp))
                             Text(
@@ -369,18 +421,20 @@ fun ReminderSection(
                                     ReminderState.EXPIRED -> "Update Reminder"
                                     else -> "Set Reminder"
                                 },
-                                fontSize = 18.sp, // Reduced from 20sp
+                                fontSize = 18.sp,
                                 fontWeight = FontWeight.SemiBold,
-                                color = Color.Black
+                                color = MaterialTheme.colorScheme.onSurface // Theme-aware text color
                             )
                         }
 
-                        // Show expired notice if applicable
+                        // Show expired notice if applicable with theme-aware colors
                         if (reminderState == ReminderState.EXPIRED) {
                             Spacer(modifier = Modifier.height(8.dp))
                             Card(
                                 colors = CardDefaults.cardColors(
-                                    containerColor = Color(0xFFFF8A50).copy(alpha = 0.08f)
+                                    containerColor = Color(0xFFFF8A50).copy(
+                                        alpha = if (isDarkTheme) 0.15f else 0.08f
+                                    )
                                 ),
                                 shape = RoundedCornerShape(8.dp)
                             ) {
@@ -392,20 +446,20 @@ fun ReminderSection(
                                         imageVector = Icons.Default.AccessTime,
                                         contentDescription = null,
                                         modifier = Modifier.size(14.dp),
-                                        tint = Color(0xFFFF7043)
+                                        tint = if (isDarkTheme) Color(0xFFFF8A65) else Color(0xFFFF7043)
                                     )
                                     Spacer(modifier = Modifier.width(6.dp))
                                     Text(
                                         text = "This reminder time has already passed",
                                         fontSize = 12.sp,
-                                        color = Color(0xFFE65100),
+                                        color = if (isDarkTheme) Color(0xFFFFAB91) else Color(0xFFE65100),
                                         fontWeight = FontWeight.Medium
                                     )
                                 }
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(16.dp)) // Reduced spacing
+                        Spacer(modifier = Modifier.height(16.dp))
 
                         // Compact Date/Time Picker
                         ReminderDateTimePicker(
@@ -433,20 +487,20 @@ fun ReminderSection(
                             }
                         )
 
-                        Spacer(modifier = Modifier.height(12.dp)) // Reduced spacing
+                        Spacer(modifier = Modifier.height(12.dp))
 
-                        // Compact Dialog Action Buttons
+                        // Theme-aware Dialog Action Buttons
                         Row(
                             modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End) // Reduced spacing
+                            horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End)
                         ) {
                             TextButton(
                                 onClick = { showReminderDialog = false }
                             ) {
                                 Text(
                                     text = "Cancel",
-                                    color = Color.Gray,
-                                    fontSize = 13.sp, // Smaller text
+                                    color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f), // Theme-aware cancel color
+                                    fontSize = 13.sp,
                                     fontWeight = FontWeight.Medium
                                 )
                             }
@@ -464,8 +518,8 @@ fun ReminderSection(
                                 ) {
                                     Text(
                                         text = "Remove",
-                                        color = MaterialTheme.colorScheme.error,
-                                        fontSize = 13.sp, // Smaller text
+                                        color = MaterialTheme.colorScheme.error, // Theme-aware error color
+                                        fontSize = 13.sp,
                                         fontWeight = FontWeight.Medium
                                     )
                                 }
@@ -477,8 +531,6 @@ fun ReminderSection(
         }
     }
 }
-
-
 
 /**
  * Check and request exact alarm permission for Android 12+
