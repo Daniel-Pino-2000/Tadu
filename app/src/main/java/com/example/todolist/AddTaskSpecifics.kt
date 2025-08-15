@@ -72,6 +72,7 @@ import android.content.Intent
 import android.provider.CalendarContract
 import android.util.Log
 import android.widget.Toast
+import com.example.todolist.ui.theme.LocalDynamicColors
 import java.time.ZoneId
 import java.util.Locale
 
@@ -123,7 +124,7 @@ fun ScrollableRow(viewModel: TaskViewModel, isHistoryMode: Boolean) {
             },
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                cursorColor = colorResource(id = R.color.nice_color),
+                cursorColor = LocalDynamicColors.current.niceColor,
                 focusedBorderColor = Color.Blue,
                 unfocusedBorderColor = Color.Black,
                 disabledBorderColor = Color.Black,
@@ -376,7 +377,7 @@ fun LabelButton(
 
     // Color based on whether labels are selected
     val iconTint = if (viewModel.taskLabel.isNotEmpty())
-        colorResource(id = R.color.nice_color) else Color.Gray
+        LocalDynamicColors.current.niceColor else Color.Gray
 
     Box {
         OutlinedButton(
@@ -443,7 +444,7 @@ fun LabelButton(
                             Icon(
                                 imageVector = Icons.Default.Label,
                                 contentDescription = null,
-                                tint = colorResource(id = R.color.nice_color),
+                                tint = LocalDynamicColors.current.niceColor,
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -464,7 +465,7 @@ fun LabelButton(
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = null,
-                    tint = colorResource(id = R.color.nice_color),
+                    tint = LocalDynamicColors.current.niceColor,
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -529,8 +530,8 @@ fun NewLabelDialog(
                         .fillMaxWidth()
                         .focusRequester(focusRequester),
                     colors = OutlinedTextFieldDefaults.colors(
-                        cursorColor = colorResource(id = R.color.nice_color),
-                        focusedBorderColor = colorResource(id = R.color.nice_color),
+                        cursorColor = LocalDynamicColors.current.niceColor,
+                        focusedBorderColor = LocalDynamicColors.current.niceColor,
                         unfocusedBorderColor = Color.Gray
                     ),
                     keyboardOptions = KeyboardOptions.Default.copy(
@@ -557,7 +558,7 @@ fun NewLabelDialog(
                     ) {
                         Text(
                             text = "Cancel",
-                            color = colorResource(id = R.color.nice_color),
+                            color = LocalDynamicColors.current.niceColor,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -575,7 +576,7 @@ fun NewLabelDialog(
                         Text(
                             text = "Add",
                             color = if (labelText.isNotBlank())
-                                colorResource(id = R.color.nice_color) else Color.Gray,
+                                LocalDynamicColors.current.niceColor else Color.Gray,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )

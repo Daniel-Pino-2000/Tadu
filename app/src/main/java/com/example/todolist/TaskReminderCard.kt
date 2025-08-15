@@ -30,6 +30,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.core.content.ContextCompat
+import com.example.todolist.ui.theme.LocalDynamicColors
 
 
 enum class ReminderState {
@@ -121,29 +122,29 @@ fun ReminderSection(
     // Get colors based on reminder state
     val containerColor = when (reminderState) {
         ReminderState.DISABLED -> Color.Gray.copy(alpha = 0.03f)
-        ReminderState.PENDING -> colorResource(id = R.color.nice_color).copy(alpha = 0.06f)
-        ReminderState.ACTIVE -> colorResource(id = R.color.nice_color).copy(alpha = 0.06f)
+        ReminderState.PENDING -> LocalDynamicColors.current.niceColor.copy(alpha = 0.06f)
+        ReminderState.ACTIVE -> LocalDynamicColors.current.niceColor.copy(alpha = 0.06f)
         ReminderState.EXPIRED -> Color(0xFFFF8A50).copy(alpha = 0.08f) // Softer orange with slightly higher alpha
     }
 
     val borderColor = when (reminderState) {
         ReminderState.DISABLED -> null
-        ReminderState.PENDING -> colorResource(id = R.color.nice_color).copy(alpha = 0.2f)
-        ReminderState.ACTIVE -> colorResource(id = R.color.nice_color).copy(alpha = 0.2f)
+        ReminderState.PENDING -> LocalDynamicColors.current.niceColor.copy(alpha = 0.2f)
+        ReminderState.ACTIVE -> LocalDynamicColors.current.niceColor.copy(alpha = 0.2f)
         ReminderState.EXPIRED -> Color(0xFFFF8A50).copy(alpha = 0.25f) // Slightly more visible border
     }
 
     val contentColor = when (reminderState) {
         ReminderState.DISABLED -> Color.Gray
-        ReminderState.PENDING -> colorResource(id = R.color.nice_color)
-        ReminderState.ACTIVE -> colorResource(id = R.color.nice_color)
+        ReminderState.PENDING -> LocalDynamicColors.current.niceColor
+        ReminderState.ACTIVE -> LocalDynamicColors.current.niceColor
         ReminderState.EXPIRED -> Color(0xFFE65100) // Deeper, more sophisticated orange
     }
 
     val iconTint = when (reminderState) {
         ReminderState.DISABLED -> Color.Gray
-        ReminderState.PENDING -> colorResource(id = R.color.nice_color)
-        ReminderState.ACTIVE -> colorResource(id = R.color.nice_color)
+        ReminderState.PENDING -> LocalDynamicColors.current.niceColor
+        ReminderState.ACTIVE -> LocalDynamicColors.current.niceColor
         ReminderState.EXPIRED -> Color(0xFFFF7043) // Balanced orange between background and text
     }
 
@@ -220,11 +221,11 @@ fun ReminderSection(
                     colors = SwitchDefaults.colors(
                         checkedThumbColor = when (reminderState) {
                             ReminderState.EXPIRED -> Color(0xFFFF7043)
-                            else -> colorResource(id = R.color.nice_color)
+                            else -> LocalDynamicColors.current.niceColor
                         },
                         checkedTrackColor = when (reminderState) {
                             ReminderState.EXPIRED -> Color(0xFFFF7043).copy(alpha = 0.3f)
-                            else -> colorResource(id = R.color.nice_color).copy(alpha = 0.3f)
+                            else -> LocalDynamicColors.current.niceColor.copy(alpha = 0.3f)
                         },
                         uncheckedThumbColor = Color.White,
                         uncheckedTrackColor = Color.Gray.copy(alpha = 0.3f)
@@ -248,17 +249,17 @@ fun ReminderSection(
                                     imageVector = Icons.Default.AccessTime,
                                     contentDescription = null,
                                     modifier = Modifier.size(14.dp),
-                                    tint = colorResource(id = R.color.nice_color)
+                                    tint = LocalDynamicColors.current.niceColor
                                 )
                                 Text(
                                     "Active • Tap to edit",
                                     fontSize = 12.sp,
-                                    color = colorResource(id = R.color.nice_color)
+                                    color = LocalDynamicColors.current.niceColor
                                 )
                             }
                         },
                         colors = AssistChipDefaults.assistChipColors(
-                            containerColor = colorResource(id = R.color.nice_color).copy(alpha = 0.1f)
+                            containerColor = LocalDynamicColors.current.niceColor.copy(alpha = 0.1f)
                         ),
                         modifier = Modifier.height(28.dp)
                     )
@@ -302,7 +303,7 @@ fun ReminderSection(
                             .fillMaxWidth()
                             .height(36.dp),
                         colors = ButtonDefaults.textButtonColors(
-                            contentColor = colorResource(id = R.color.nice_color)
+                            contentColor = LocalDynamicColors.current.niceColor
                         )
                     ) {
                         Icon(
@@ -359,7 +360,7 @@ fun ReminderSection(
                                 contentDescription = "Set Reminder",
                                 tint = when (reminderState) {
                                     ReminderState.EXPIRED -> Color(0xFFFF7043)
-                                    else -> colorResource(id = R.color.nice_color)
+                                    else -> LocalDynamicColors.current.niceColor
                                 },
                                 modifier = Modifier.size(20.dp) // Smaller icon
                             )

@@ -3,6 +3,9 @@ package com.example.todolist.ui.theme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.compositionLocalOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 
 // Create composition locals for dynamic colors
@@ -10,7 +13,7 @@ val LocalAccentColor = compositionLocalOf { Color(0xFF1976D2) }
 val LocalDynamicColors = compositionLocalOf { DynamicColors() }
 
 data class DynamicColors(
-    val niceColor: Color = Color(0xFF1976D2),
+    var niceColor: Color = Color(0xFF1976D2), // Make it var
     val lightGray: Color = Color(0xFFF2F3FA),
     val blueToday: Color = Color(0xFF1976D2),
     val redYesterday: Color = Color(0xFFCF0C0C),
@@ -21,7 +24,9 @@ data class DynamicColors(
     val priorityOrange: Color = Color(0xFFDFBCA8),
     val searchBarGray: Color = Color(0xFF8494AD),
     val dropMenuIconGray: Color = Color(0xFF696766)
-)
+) {
+    var niceColorState by mutableStateOf(niceColor)
+}
 
 /**
  * Create dynamic colors based on accent color

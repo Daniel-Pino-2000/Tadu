@@ -55,6 +55,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.MaterialTheme
+import com.example.todolist.ui.theme.LocalDynamicColors
 
 /**
  * A composable that displays a modal bottom sheet for adding or editing tasks.
@@ -210,7 +211,7 @@ fun AddTaskView(
                 textStyle = textStyle,
                 placeholder = { Text("Task Title", style = TextStyle(fontSize = 20.sp, color = Color.Gray)) },
                 colors = TextFieldDefaults.textFieldColors(
-                    cursorColor = colorResource(id = R.color.nice_color),
+                    cursorColor = LocalDynamicColors.current.niceColor,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     backgroundColor = Color.Transparent
@@ -232,7 +233,7 @@ fun AddTaskView(
                 textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
                 placeholder = { Text("Description", style = TextStyle(fontSize = 16.sp, color = Color.Gray)) },
                 colors = TextFieldDefaults.textFieldColors(
-                    cursorColor = colorResource(id = R.color.nice_color),
+                    cursorColor = LocalDynamicColors.current.niceColor,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
                     backgroundColor = Color.Transparent
@@ -351,7 +352,7 @@ fun AddTaskView(
                         colors = ButtonDefaults.buttonColors(
                             backgroundColor = Color.Transparent,
                             contentColor = if (hasDeadline && taskTitle.isNotEmpty())
-                                colorResource(id = R.color.nice_color) else Color.Gray,
+                                LocalDynamicColors.current.niceColor else Color.Gray,
                             disabledBackgroundColor = Color.Transparent,
                             disabledContentColor = Color.Gray
                         ),
@@ -364,7 +365,7 @@ fun AddTaskView(
                         border = BorderStroke(
                             1.dp,
                             if (hasDeadline && taskTitle.isNotEmpty())
-                                colorResource(id = R.color.nice_color).copy(alpha = 0.3f)
+                                LocalDynamicColors.current.niceColor.copy(alpha = 0.3f)
                             else Color.Gray.copy(alpha = 0.3f)
                         )
                     ) {
@@ -385,7 +386,7 @@ fun AddTaskView(
                 // Submit/Restore button
                 val isValid = viewModel.taskTitleState.isNotBlank()
                 val buttonColor = if (isValid) {
-                    colorResource(id = R.color.nice_color)
+                    LocalDynamicColors.current.niceColor
                 } else {
                     Color.Gray
                 }
@@ -500,7 +501,7 @@ fun AddTaskView(
                             ) {
                                 Text(
                                     text = "Cancel",
-                                    color = colorResource(id = R.color.nice_color),
+                                    color = LocalDynamicColors.current.niceColor,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Medium
                                 )
@@ -516,7 +517,7 @@ fun AddTaskView(
                             ) {
                                 Text(
                                     text = "Discard",
-                                    color = colorResource(id = R.color.nice_color),
+                                    color = LocalDynamicColors.current.niceColor,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.SemiBold
                                 )
@@ -575,7 +576,7 @@ fun AddTaskView(
                             ) {
                                 Text(
                                     text = "Cancel",
-                                    color = colorResource(id = R.color.nice_color),
+                                    color = LocalDynamicColors.current.niceColor,
                                     fontSize = 14.sp,
                                     fontWeight = FontWeight.Medium
                                 )

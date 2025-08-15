@@ -31,7 +31,8 @@ object AppColors {
 object QuickColors {
     @get:Composable
     val niceColor: Color
-        get() = LocalDynamicColors.current.niceColor
+        get() = LocalDynamicColors.current.niceColorState
+
 
     @get:Composable
     val blueToday: Color

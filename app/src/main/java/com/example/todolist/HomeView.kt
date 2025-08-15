@@ -26,6 +26,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.todolist.ui.theme.LocalDynamicColors
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
@@ -84,7 +85,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 modifier = Modifier.padding(20.dp),
                 contentColor = Color.White,
                 shape = RoundedCornerShape(16.dp),
-                containerColor = colorResource(id = R.color.nice_color),
+                containerColor = LocalDynamicColors.current.niceColor,
                 onClick = {
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                     viewModel.setTaskBeingEdited(false)

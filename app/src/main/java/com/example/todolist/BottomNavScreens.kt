@@ -91,6 +91,7 @@ import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
+import com.example.todolist.ui.theme.LocalDynamicColors
 
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalLayoutApi::class)
@@ -150,7 +151,7 @@ fun BottomNavScreens(
     }
 
     // Get colors outside of remember block for consistency
-    val niceBlueColor = colorResource(id = R.color.nice_color)
+    val niceBlueColor = LocalDynamicColors.current.niceColor
 
     // Memoize grouped tasks with better performance
     val groupedTasks = remember(tasksToDisplay, dateInfo, currentRoute, searchQuery, selectedLabel, niceBlueColor) {

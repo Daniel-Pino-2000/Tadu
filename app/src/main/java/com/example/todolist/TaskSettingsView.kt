@@ -32,6 +32,7 @@ import androidx.compose.ui.window.Dialog
 import com.example.todoapp.viewmodel.SettingsViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import com.example.todolist.ui.theme.LocalDynamicColors
 
 @Composable
 fun SettingsScreen(
@@ -426,9 +427,15 @@ private fun ColorPickerDialog(
     onColorSelected: (Color) -> Unit,
     onDismiss: () -> Unit
 ) {
+    // Access dynamic colors
+    val dynamicColors = LocalDynamicColors.current
+
+    // Current selected color state, default to #0733F5
+    var currentColor by remember { mutableStateOf(dynamicColors.niceColorState ?: Color(0xFF0733F5)) }
+
     val predefinedColors = listOf(
         Color(0xFF6750A4), // Purple
-        Color(0xFF1976D2), // Blue
+        Color(0xFF0733F5), // Blue
         Color(0xFF388E3C), // Green
         Color(0xFFFF5722), // Orange
         Color(0xFFD32F2F), // Red

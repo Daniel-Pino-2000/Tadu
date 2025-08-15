@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.todolist.data.Task
+import com.example.todolist.ui.theme.LocalDynamicColors
 import java.text.SimpleDateFormat
 import java.util.*
 import kotlin.collections.forEach
@@ -353,7 +354,7 @@ fun deleteHistoryDialog(viewModel: TaskViewModel, tasks: List<Task>, onDismiss: 
                 ) {
                     Text(
                         text = "Cancel",
-                        color = colorResource(id = R.color.nice_color),
+                        color = LocalDynamicColors.current.niceColor,
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     )

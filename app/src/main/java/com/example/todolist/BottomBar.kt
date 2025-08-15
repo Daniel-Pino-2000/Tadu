@@ -31,6 +31,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.example.todolist.ui.theme.LocalDynamicColors
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
@@ -106,7 +107,7 @@ fun BottomBar(currentScreen: Screen, currentRoute: String, viewModel: TaskViewMo
                                         Modifier.background(
                                             brush = Brush.radialGradient(
                                                 colors = listOf(
-                                                    colorResource(id = R.color.nice_color).copy(alpha = 0.2f),
+                                                    LocalDynamicColors.current.niceColor.copy(alpha = 0.2f),
                                                     Color.Transparent
                                                 ),
                                                 radius = 60f
@@ -127,7 +128,7 @@ fun BottomBar(currentScreen: Screen, currentRoute: String, viewModel: TaskViewMo
                                         .then(
                                             if (isSelected) {
                                                 Modifier.background(
-                                                    colorResource(id = R.color.nice_color),
+                                                    LocalDynamicColors.current.niceColor,
                                                     CircleShape
                                                 )
                                             } else Modifier
@@ -149,7 +150,7 @@ fun BottomBar(currentScreen: Screen, currentRoute: String, viewModel: TaskViewMo
                                     text = item.bTitle,
                                     fontSize = 11.sp,
                                     fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Normal,
-                                    color = if (isSelected) colorResource(id = R.color.nice_color) else Color.Gray
+                                    color = if (isSelected) LocalDynamicColors.current.niceColor else Color.Gray
                                 )
                             }
                         }

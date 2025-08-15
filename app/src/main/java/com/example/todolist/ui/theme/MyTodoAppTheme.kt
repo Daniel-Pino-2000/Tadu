@@ -117,7 +117,7 @@ fun createDarkColorScheme(accentColor: Color) = DarkColors.copy(
 fun MyToDoAppTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false, // Set to false to use custom accent colors
-    accentColor: Color = Color(0xFF1976D2), // Default blue
+    accentColor: Color = Color(0xFF0733F5), // Default blue
     content: @Composable () -> Unit
 ) {
     val colorScheme = when {
