@@ -52,7 +52,7 @@ fun ReminderDateTimePicker(
             .padding(horizontal = 16.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (reminderDateTime.isSet) {
-                colorResource(id = R.color.nice_blue).copy(alpha = 0.06f)
+                colorResource(id = R.color.nice_color).copy(alpha = 0.06f)
             } else {
                 Color.Gray.copy(alpha = 0.03f)
             }
@@ -62,7 +62,7 @@ fun ReminderDateTimePicker(
         border = if (reminderDateTime.isSet) {
             BorderStroke(
                 1.dp,
-                colorResource(id = R.color.nice_blue).copy(alpha = 0.2f)
+                colorResource(id = R.color.nice_color).copy(alpha = 0.2f)
             )
         } else null
     ) {
@@ -77,7 +77,7 @@ fun ReminderDateTimePicker(
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = if (reminderDateTime.isSet)
-                        colorResource(id = R.color.nice_blue)
+                        colorResource(id = R.color.nice_color)
                     else Color.Black,
                     modifier = Modifier.weight(1f)
                 )
@@ -91,7 +91,7 @@ fun ReminderDateTimePicker(
                     ) {
                         Text(
                             text = "Clear",
-                            color = colorResource(id = R.color.nice_blue),
+                            color = colorResource(id = R.color.nice_color),
                             fontSize = 14.sp
                         )
                     }
@@ -134,13 +134,13 @@ fun ReminderDateTimePicker(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.outlinedCardColors(
                     containerColor = if (reminderDateTime.date.isNotEmpty())
-                        colorResource(id = R.color.nice_blue).copy(alpha = 0.05f)
+                        colorResource(id = R.color.nice_color).copy(alpha = 0.05f)
                     else Color.Transparent
                 ),
                 border = BorderStroke(
                     1.dp,
                     if (reminderDateTime.date.isNotEmpty())
-                        colorResource(id = R.color.nice_blue).copy(alpha = 0.3f)
+                        colorResource(id = R.color.nice_color).copy(alpha = 0.3f)
                     else Color.Gray.copy(alpha = 0.3f)
                 )
             ) {
@@ -154,7 +154,7 @@ fun ReminderDateTimePicker(
                         imageVector = Icons.Default.CalendarToday,
                         contentDescription = "Date",
                         tint = if (reminderDateTime.date.isNotEmpty())
-                            colorResource(id = R.color.nice_blue)
+                            colorResource(id = R.color.nice_color)
                         else Color.Gray,
                         modifier = Modifier.size(20.dp)
                     )
@@ -167,7 +167,7 @@ fun ReminderDateTimePicker(
                         else "Select Date",
                         fontSize = 15.sp,
                         color = if (reminderDateTime.date.isNotEmpty())
-                            colorResource(id = R.color.nice_blue)
+                            colorResource(id = R.color.nice_color)
                         else Color.Gray
                     )
                 }
@@ -207,13 +207,13 @@ fun ReminderDateTimePicker(
                 modifier = Modifier.fillMaxWidth(),
                 colors = CardDefaults.outlinedCardColors(
                     containerColor = if (reminderDateTime.time.isNotEmpty())
-                        colorResource(id = R.color.nice_blue).copy(alpha = 0.05f)
+                        colorResource(id = R.color.nice_color).copy(alpha = 0.05f)
                     else Color.Transparent
                 ),
                 border = BorderStroke(
                     1.dp,
                     if (reminderDateTime.time.isNotEmpty())
-                        colorResource(id = R.color.nice_blue).copy(alpha = 0.3f)
+                        colorResource(id = R.color.nice_color).copy(alpha = 0.3f)
                     else Color.Gray.copy(alpha = 0.3f)
                 )
             ) {
@@ -227,7 +227,7 @@ fun ReminderDateTimePicker(
                         imageVector = Icons.Default.AccessTime,
                         contentDescription = "Time",
                         tint = if (reminderDateTime.time.isNotEmpty())
-                            colorResource(id = R.color.nice_blue)
+                            colorResource(id = R.color.nice_color)
                         else Color.Gray,
                         modifier = Modifier.size(20.dp)
                     )
@@ -240,7 +240,7 @@ fun ReminderDateTimePicker(
                         else "Select Time",
                         fontSize = 15.sp,
                         color = if (reminderDateTime.time.isNotEmpty())
-                            colorResource(id = R.color.nice_blue)
+                            colorResource(id = R.color.nice_color)
                         else Color.Gray
                     )
                 }
@@ -253,7 +253,7 @@ fun ReminderDateTimePicker(
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
-                        containerColor = colorResource(id = R.color.nice_blue).copy(alpha = 0.1f)
+                        containerColor = colorResource(id = R.color.nice_color).copy(alpha = 0.1f)
                     ),
                     shape = RoundedCornerShape(8.dp)
                 ) {
@@ -265,7 +265,7 @@ fun ReminderDateTimePicker(
                     ) {
                         Text(
                             text = "✓",
-                            color = colorResource(id = R.color.nice_blue),
+                            color = colorResource(id = R.color.nice_color),
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -275,7 +275,7 @@ fun ReminderDateTimePicker(
                         Text(
                             text = "Reminder set for ${reminderDateTime.date} at ${reminderDateTime.time}",
                             fontSize = 13.sp,
-                            color = colorResource(id = R.color.nice_blue),
+                            color = colorResource(id = R.color.nice_color),
                             fontWeight = FontWeight.Medium
                         )
                     }

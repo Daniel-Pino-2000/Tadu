@@ -353,7 +353,7 @@ fun deleteHistoryDialog(viewModel: TaskViewModel, tasks: List<Task>, onDismiss: 
                 ) {
                     Text(
                         text = "Cancel",
-                        color = colorResource(id = R.color.nice_blue),
+                        color = colorResource(id = R.color.nice_color),
                         fontSize = 14.sp,
                         fontWeight = FontWeight.Medium
                     )

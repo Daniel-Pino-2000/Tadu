@@ -1,10 +1,6 @@
 package com.example.todolist
 
-import android.graphics.Color
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Help
-import androidx.compose.material.icons.automirrored.filled.Label
-import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Help
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Label
@@ -30,14 +26,14 @@ object PriorityUtils {
     val priorityCircleShape = mapOf(
         1 to R.color.red_yesterday,
         2 to R.color.orange,
-        3 to R.color.nice_blue,
+        3 to R.color.nice_color,
         4 to R.color.searchBar_gray
     )
 
     val priorityBorderColor = mapOf(
         1 to R.color.red_yesterday,
         2 to R.color.orange,
-        3 to R.color.nice_blue,
+        3 to R.color.nice_color,
     )
 
     val priorityIcons = mapOf(

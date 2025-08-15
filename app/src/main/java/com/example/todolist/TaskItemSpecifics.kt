@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
-import androidx.compose.material.Divider
 import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
@@ -59,18 +58,9 @@ import java.time.format.DateTimeFormatter
 import java.util.Calendar
 import java.util.Locale
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.runtime.*
 import androidx.compose.ui.draw.*
-import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.res.colorResource
-import androidx.compose.ui.unit.dp
-import kotlin.math.sin
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 
@@ -216,7 +206,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, undoToa
                                 contentDescription = "Has reminder",
                                 modifier = Modifier.size(16.dp),
                                 tint = if (task.reminderTime!! <= System.currentTimeMillis()) colorResource(id = R.color.orange)
-                                        else colorResource(id = R.color.nice_blue).copy(alpha = 0.7f)
+                                        else colorResource(id = R.color.nice_color).copy(alpha = 0.7f)
                             )
 
                             // Add spacing if there's also a location icon
@@ -335,7 +325,7 @@ fun CircularCheckbox(
     onCheckedChange: (Boolean) -> Unit,
 ) {
     val size: Dp = 23.dp
-    val checkedColor: Color = colorResource(id = R.color.nice_blue)
+    val checkedColor: Color = colorResource(id = R.color.nice_color)
     val checkmarkColor: Color = Color.White
     var intPriority = 4
 

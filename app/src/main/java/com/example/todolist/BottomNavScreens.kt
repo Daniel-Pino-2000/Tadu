@@ -9,9 +9,6 @@ import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.animateFloat
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -82,7 +79,6 @@ import java.time.format.DateTimeFormatter
 import java.util.Locale
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.material.Card
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.draw.scale
@@ -154,7 +150,7 @@ fun BottomNavScreens(
     }
 
     // Get colors outside of remember block for consistency
-    val niceBlueColor = colorResource(id = R.color.nice_blue)
+    val niceBlueColor = colorResource(id = R.color.nice_color)
 
     // Memoize grouped tasks with better performance
     val groupedTasks = remember(tasksToDisplay, dateInfo, currentRoute, searchQuery, selectedLabel, niceBlueColor) {

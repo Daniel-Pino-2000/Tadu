@@ -35,7 +35,6 @@ import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Alarm
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Label
@@ -57,7 +56,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -125,7 +123,7 @@ fun ScrollableRow(viewModel: TaskViewModel, isHistoryMode: Boolean) {
             },
             shape = RoundedCornerShape(16.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                cursorColor = colorResource(id = R.color.nice_blue),
+                cursorColor = colorResource(id = R.color.nice_color),
                 focusedBorderColor = Color.Blue,
                 unfocusedBorderColor = Color.Black,
                 disabledBorderColor = Color.Black,
@@ -378,7 +376,7 @@ fun LabelButton(
 
     // Color based on whether labels are selected
     val iconTint = if (viewModel.taskLabel.isNotEmpty())
-        colorResource(id = R.color.nice_blue) else Color.Gray
+        colorResource(id = R.color.nice_color) else Color.Gray
 
     Box {
         OutlinedButton(
@@ -445,7 +443,7 @@ fun LabelButton(
                             Icon(
                                 imageVector = Icons.Default.Label,
                                 contentDescription = null,
-                                tint = colorResource(id = R.color.nice_blue),
+                                tint = colorResource(id = R.color.nice_color),
                                 modifier = Modifier.size(16.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
@@ -466,7 +464,7 @@ fun LabelButton(
                 Icon(
                     imageVector = Icons.Default.Add,
                     contentDescription = null,
-                    tint = colorResource(id = R.color.nice_blue),
+                    tint = colorResource(id = R.color.nice_color),
                     modifier = Modifier.size(16.dp)
                 )
                 Spacer(modifier = Modifier.width(8.dp))
@@ -531,8 +529,8 @@ fun NewLabelDialog(
                         .fillMaxWidth()
                         .focusRequester(focusRequester),
                     colors = OutlinedTextFieldDefaults.colors(
-                        cursorColor = colorResource(id = R.color.nice_blue),
-                        focusedBorderColor = colorResource(id = R.color.nice_blue),
+                        cursorColor = colorResource(id = R.color.nice_color),
+                        focusedBorderColor = colorResource(id = R.color.nice_color),
                         unfocusedBorderColor = Color.Gray
                     ),
                     keyboardOptions = KeyboardOptions.Default.copy(
@@ -559,7 +557,7 @@ fun NewLabelDialog(
                     ) {
                         Text(
                             text = "Cancel",
-                            color = colorResource(id = R.color.nice_blue),
+                            color = colorResource(id = R.color.nice_color),
                             fontSize = 14.sp,
                             fontWeight = FontWeight.Medium
                         )
@@ -577,7 +575,7 @@ fun NewLabelDialog(
                         Text(
                             text = "Add",
                             color = if (labelText.isNotBlank())
-                                colorResource(id = R.color.nice_blue) else Color.Gray,
+                                colorResource(id = R.color.nice_color) else Color.Gray,
                             fontSize = 14.sp,
                             fontWeight = FontWeight.SemiBold
                         )

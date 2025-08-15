@@ -3,8 +3,6 @@ package com.example.todolist
 import android.annotation.SuppressLint
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -28,12 +26,10 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
-import com.example.todolist.data.Task
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import java.util.Date
 
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @RequiresApi(Build.VERSION_CODES.O)
@@ -88,7 +84,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                 modifier = Modifier.padding(20.dp),
                 contentColor = Color.White,
                 shape = RoundedCornerShape(16.dp),
-                containerColor = colorResource(id = R.color.nice_blue),
+                containerColor = colorResource(id = R.color.nice_color),
                 onClick = {
                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                     viewModel.setTaskBeingEdited(false)

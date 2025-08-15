@@ -36,7 +36,7 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import com.example.mytodoapp.ui.theme.MyToDoAppTheme
+import com.example.todolist.ui.theme.MyToDoAppTheme
 import com.example.todoapp.data.SettingsRepository
 import com.example.todoapp.data.createSettingsRepository
 import com.example.todoapp.viewmodel.SettingsViewModel
