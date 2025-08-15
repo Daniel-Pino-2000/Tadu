@@ -2,6 +2,17 @@
 
 package com.example.todoapp.ui.settings
 
+import android.Manifest
+import android.app.AlarmManager
+import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Context
+import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
+import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -29,16 +40,39 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import androidx.work.Worker
+import androidx.work.WorkerParameters
 import com.example.todoapp.viewmodel.SettingsViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.todolist.ui.theme.LocalDynamicColors
+import java.util.concurrent.TimeUnit
+
+// Helper function to check notification permission
+private fun checkNotificationPermission(context: Context): Boolean {
+    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.POST_NOTIFICATIONS
+        ) == PackageManager.PERMISSION_GRANTED
+    } else {
+        // For older versions, check if notifications are enabled via NotificationManager
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.areNotificationsEnabled()
+    }
+}
 
 @Composable
 fun SettingsScreen(
     navController: NavHostController,
     viewModel: SettingsViewModel = viewModel()
 ) {
+    val context = LocalContext.current
+
     // Collect states from ViewModel
     val currentThemeMode by viewModel.themeMode.collectAsState()
     val accentColor by viewModel.accentColor.collectAsState()
@@ -46,9 +80,39 @@ fun SettingsScreen(
     val clearHistoryEnabled by viewModel.clearHistoryEnabled.collectAsState()
 
     var backPressed by remember { mutableStateOf(false)}
-
     var showThemeDialog by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
+    var showPermissionRationale by remember { mutableStateOf(false) }
+
+    // Track notification permission status
+    var hasNotificationPermission by remember { mutableStateOf(checkNotificationPermission(context)) }
+
+    // Permission launcher for notification permission
+    val notificationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        hasNotificationPermission = isGranted
+        if (isGranted) {
+            viewModel.updateNotificationsEnabled(true)
+        } else {
+            viewModel.updateNotificationsEnabled(false)
+            showPermissionRationale = true
+        }
+    }
+
+    // Re-check permission when returning from settings
+    LaunchedEffect(Unit) {
+        hasNotificationPermission = checkNotificationPermission(context)
+    }
+
+    // Handle history cleanup work scheduling
+    LaunchedEffect(clearHistoryEnabled) {
+        if (clearHistoryEnabled) {
+            scheduleHistoryCleanup(context, true)
+        } else {
+            WorkManager.getInstance(context).cancelUniqueWork("history_cleanup_work")
+        }
+    }
 
     Column(
         modifier = Modifier
@@ -153,12 +217,54 @@ fun SettingsScreen(
                     SettingsSwitchItem(
                         icon = Icons.Default.Notifications,
                         title = "Enable Notifications",
-                        subtitle = "Get reminded about your tasks",
+                        subtitle = when {
+                            !hasNotificationPermission -> "Permission required - tap to enable"
+                            notificationsEnabled -> "Get reminded about your tasks"
+                            else -> "Tap to enable task notifications"
+                        },
                         checked = notificationsEnabled,
+                        enabled = hasNotificationPermission, // Disable switch if no permission
                         onCheckedChange = { enabled ->
-                            viewModel.updateNotificationsEnabled(enabled)
+                            if (enabled) {
+                                // User wants to enable notifications
+                                if (hasNotificationPermission) {
+                                    viewModel.updateNotificationsEnabled(true)
+                                } else {
+                                    // Need to request permission first
+                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                    } else {
+                                        showPermissionRationale = true
+                                    }
+                                }
+                            } else {
+                                // User wants to disable notifications
+                                viewModel.updateNotificationsEnabled(false)
+                            }
                         }
                     )
+
+                    // Show permission request item if no permission
+                    if (!hasNotificationPermission) {
+                        Divider(
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                            thickness = 0.5.dp
+                        )
+
+                        SettingsItem(
+                            icon = Icons.Default.Notifications,
+                            title = "Grant Permission",
+                            subtitle = "Allow notifications to enable this feature",
+                            onClick = {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                } else {
+                                    showPermissionRationale = true
+                                }
+                            }
+                        )
+                    }
                 }
             }
 
@@ -168,7 +274,11 @@ fun SettingsScreen(
                     SettingsSwitchItem(
                         icon = Icons.Default.History,
                         title = "Auto-clear task history",
-                        subtitle = "Remove task history after 30 days",
+                        subtitle = if (clearHistoryEnabled) {
+                            "Task history will be cleared every 30 days"
+                        } else {
+                            "Task history will be kept indefinitely"
+                        },
                         checked = clearHistoryEnabled,
                         onCheckedChange = { enabled ->
                             viewModel.updateClearHistoryEnabled(enabled)
@@ -203,6 +313,93 @@ fun SettingsScreen(
             },
             onDismiss = { showColorPicker = false }
         )
+    }
+
+    // Permission Rationale Dialog
+    if (showPermissionRationale) {
+        AlertDialog(
+            onDismissRequest = { showPermissionRationale = false },
+            title = {
+                Text(
+                    "Notification Permission Required",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+            },
+            text = {
+                Text(
+                    "To receive task reminders and notifications, please enable notification permission in your device settings.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showPermissionRationale = false
+                        // Open app settings
+                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
+                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+                        }
+                        context.startActivity(intent)
+                    }
+                ) {
+                    Text("Open Settings", fontWeight = FontWeight.Medium)
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { showPermissionRationale = false }
+                ) {
+                    Text("Cancel", fontWeight = FontWeight.Medium)
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
+    }
+}
+
+// Helper function to schedule history cleanup work
+private fun scheduleHistoryCleanup(context: Context, enabled: Boolean) {
+    val workManager = WorkManager.getInstance(context)
+
+    if (enabled) {
+        val cleanupWorkRequest = PeriodicWorkRequestBuilder<HistoryCleanupWorker>(30, TimeUnit.DAYS)
+            .build()
+
+        workManager.enqueueUniquePeriodicWork(
+            "history_cleanup_work",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            cleanupWorkRequest
+        )
+    } else {
+        workManager.cancelUniqueWork("history_cleanup_work")
+    }
+}
+
+// WorkManager Worker class for history cleanup
+class HistoryCleanupWorker(
+    context: Context,
+    params: WorkerParameters
+) : Worker(context, params) {
+
+    override fun doWork(): Result {
+        return try {
+            // TODO: Implement your history cleanup logic here
+            // This could involve:
+            // 1. Accessing your database/repository
+            // 2. Deleting tasks older than 30 days
+            // 3. Cleaning up related data
+
+            // Example implementation:
+            // val repository = TodoRepository(applicationContext)
+            // repository.deleteTasksOlderThan(30) // Delete tasks older than 30 days
+
+            // For now, we'll just return success
+            Result.success()
+        } catch (e: Exception) {
+            Result.retry()
+        }
     }
 }
 
@@ -294,12 +491,15 @@ private fun SettingsSwitchItem(
     title: String,
     subtitle: String? = null,
     checked: Boolean,
+    enabled: Boolean = true,
     onCheckedChange: (Boolean) -> Unit
 ) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onCheckedChange(!checked) }
+            .clickable(enabled = enabled) {
+                if (enabled) onCheckedChange(!checked)
+            }
             .padding(20.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -308,7 +508,7 @@ private fun SettingsSwitchItem(
                 .size(40.dp)
                 .clip(CircleShape)
                 .background(
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                    MaterialTheme.colorScheme.primary.copy(alpha = if (enabled) 0.1f else 0.05f),
                     CircleShape
                 ),
             contentAlignment = Alignment.Center
@@ -316,7 +516,7 @@ private fun SettingsSwitchItem(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = MaterialTheme.colorScheme.primary.copy(alpha = if (enabled) 1f else 0.5f),
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -329,23 +529,26 @@ private fun SettingsSwitchItem(
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.Medium
                 ),
-                color = MaterialTheme.colorScheme.onSurface
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = if (enabled) 1f else 0.6f)
             )
             subtitle?.let { subtitle ->
                 Text(
                     text = subtitle,
                     style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = if (enabled) 1f else 0.6f)
                 )
             }
         }
 
         Switch(
             checked = checked,
-            onCheckedChange = onCheckedChange,
+            onCheckedChange = if (enabled) onCheckedChange else null,
+            enabled = enabled,
             colors = SwitchDefaults.colors(
                 checkedThumbColor = MaterialTheme.colorScheme.primary,
-                checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f)
+                checkedTrackColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.5f),
+                disabledCheckedThumbColor = MaterialTheme.colorScheme.outline,
+                disabledCheckedTrackColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.3f)
             )
         )
     }
@@ -430,8 +633,8 @@ private fun ColorPickerDialog(
     // Access dynamic colors
     val dynamicColors = LocalDynamicColors.current
 
-    // Current selected color state, default to #0733F5
-    var currentColor by remember { mutableStateOf(dynamicColors.niceColorState ?: Color(0xFF0733F5)) }
+    // Current selected color state, default to current color
+    var selectedColor by remember { mutableStateOf(currentColor) }
 
     val predefinedColors = listOf(
         Color(0xFF6750A4), // Purple
@@ -479,8 +682,11 @@ private fun ColorPickerDialog(
                             rowColors.forEach { color ->
                                 ColorOption(
                                     color = color,
-                                    isSelected = currentColor == color,
-                                    onClick = { onColorSelected(color) }
+                                    isSelected = selectedColor == color,
+                                    onClick = {
+                                        selectedColor = color
+                                        onColorSelected(color)
+                                    }
                                 )
                             }
                         }

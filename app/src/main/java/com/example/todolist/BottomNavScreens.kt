@@ -151,11 +151,11 @@ fun BottomNavScreens(
     }
 
     // Get colors outside of remember block for consistency
-    val niceBlueColor = LocalDynamicColors.current.niceColor
+    val niceColor = LocalDynamicColors.current.niceColor
 
     // Memoize grouped tasks with better performance
-    val groupedTasks = remember(tasksToDisplay, dateInfo, currentRoute, searchQuery, selectedLabel, niceBlueColor) {
-        groupTasks(tasksToDisplay, currentRoute, searchQuery, selectedLabel, dateInfo, niceBlueColor)
+    val groupedTasks = remember(tasksToDisplay, dateInfo, currentRoute, searchQuery, selectedLabel, niceColor) {
+        groupTasks(tasksToDisplay, currentRoute, searchQuery, selectedLabel, dateInfo, niceColor)
     }
 
     // Memoize label data
@@ -199,7 +199,7 @@ fun BottomNavScreens(
                 },
                 onClearSelection = { selectedLabel = null },
                 labelData = labelData,
-                niceBlueColor = niceBlueColor,
+                niceBlueColor = niceColor,
                 searchFocusRequester = searchFocusRequester,
                 keyboardController = keyboardController,
                 focusManager = focusManager
@@ -528,13 +528,13 @@ private fun LabelFilterSection(
                 Box(
                     modifier = Modifier
                         .clip(RoundedCornerShape(10.dp))
-                        .background(Color(0xFFE3F2FD))
+                        .background(LocalDynamicColors.current.niceColor.copy(alpha = 0.1f))
                         .padding(horizontal = 8.dp, vertical = 2.dp)
                 ) {
                     Text(
                         text = "${labelData.size} label${if (labelData.size != 1) "s" else ""}",
                         fontSize = 12.sp,
-                        color = Color(0xFF1976D2),
+                        color = LocalDynamicColors.current.niceColor,
                         fontWeight = FontWeight.Medium
                     )
                 }
@@ -567,7 +567,7 @@ private fun LabelChip(
     Box(
         modifier = Modifier
             .clip(RoundedCornerShape(16.dp))
-            .background(Color(0xFFE3F2FD))
+            .background(LocalDynamicColors.current.niceColor.copy(alpha = 0.1f))
             .clickable { onClick() }
             .padding(horizontal = 14.dp, vertical = 8.dp)
     ) {
@@ -575,7 +575,7 @@ private fun LabelChip(
             Text(
                 text = label,
                 fontSize = 14.sp,
-                color = Color(0xFF1976D2),
+                color = LocalDynamicColors.current.niceColor,
                 fontWeight = FontWeight.Medium
             )
             Spacer(modifier = Modifier.width(6.dp))
@@ -583,7 +583,7 @@ private fun LabelChip(
                 modifier = Modifier
                     .size(18.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF1976D2)),
+                    .background(LocalDynamicColors.current.niceColor),
                 contentAlignment = Alignment.Center
             ) {
                 Text(

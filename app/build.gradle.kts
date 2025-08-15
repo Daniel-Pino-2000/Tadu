@@ -54,6 +54,8 @@ dependencies {
     // DataStore
     implementation("androidx.datastore:datastore-preferences:1.1.7")
 
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
+    implementation("androidx.activity:activity-compose:1.8.2")
 
     // Room
     implementation("androidx.room:room-runtime:2.7.1")
