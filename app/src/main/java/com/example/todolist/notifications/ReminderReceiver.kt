@@ -8,6 +8,11 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
+import com.example.todolist.settings.createSettingsRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class ReminderReceiver : BroadcastReceiver() {
 
@@ -15,18 +20,45 @@ class ReminderReceiver : BroadcastReceiver() {
         Log.d("ReminderReceiver", "Received reminder broadcast")
 
         val title = intent?.getStringExtra("TASK_TITLE") ?: return
+        val taskId = intent?.getLongExtra("TASK_ID", -1) ?: -1
+        val description = intent?.getStringExtra("TASK_DESCRIPTION") ?: ""
+        val reminderText = intent?.getStringExtra("REMINDER_TEXT") ?: ""
 
-        // Check permission on Android 13+ (API 33+)
+        // Check system notification permission on Android 13+ (API 33+)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             val permissionCheck = ContextCompat.checkSelfPermission(
                 context, Manifest.permission.POST_NOTIFICATIONS
             )
             if (permissionCheck != PackageManager.PERMISSION_GRANTED) {
-                Log.w("ReminderReceiver", "Notification permission not granted")
+                Log.w("ReminderReceiver", "System notification permission not granted")
                 return
             }
         }
 
-        showNotification(context, title)
+        // Use goAsync() for coroutine operations in BroadcastReceiver
+        val pendingResult = goAsync()
+
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Check if notifications are enabled in app settings
+                val settingsRepository = context.createSettingsRepository()
+                val notificationsEnabled = settingsRepository.notificationsEnabled.first()
+
+                if (!notificationsEnabled) {
+                    Log.d("ReminderReceiver", "Notifications disabled in app settings")
+                    pendingResult.finish()
+                    return@launch
+                }
+
+                // Show notification if all checks pass
+                showNotification(context, title, description, reminderText)
+                Log.d("ReminderReceiver", "Notification shown for task: $title")
+
+            } catch (e: Exception) {
+                Log.e("ReminderReceiver", "Error processing notification", e)
+            } finally {
+                pendingResult.finish()
+            }
+        }
     }
 }

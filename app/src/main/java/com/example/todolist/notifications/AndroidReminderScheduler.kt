@@ -1,7 +1,6 @@
 package com.example.todolist.notifications
 
 import android.Manifest
-import android.annotation.SuppressLint
 import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
@@ -11,12 +10,18 @@ import android.os.Build
 import android.util.Log
 import androidx.core.content.ContextCompat
 import com.example.todolist.data.Task
+import com.example.todolist.settings.createSettingsRepository
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 class AndroidReminderScheduler(
     private val context: Context
 ) : ReminderScheduler {
 
     private val alarmManager = context.getSystemService(AlarmManager::class.java)
+    private val settingsRepository = context.createSettingsRepository()
 
     override fun schedule(task: Task) {
         // Only schedule if reminder time is set and in the future
@@ -26,12 +31,31 @@ class AndroidReminderScheduler(
             return
         }
 
-        // Check permissions
-        if (!hasRequiredPermissions()) {
-            Log.w("ReminderScheduler", "Missing required permissions for scheduling exact alarms")
-            return
-        }
+        // Check in a coroutine since we need to read from DataStore
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                // Check if notifications are enabled in app settings
+                val notificationsEnabled = settingsRepository.notificationsEnabled.first()
+                if (!notificationsEnabled) {
+                    Log.d("ReminderScheduler", "Notifications disabled in settings, skipping schedule for task ${task.id}")
+                    return@launch
+                }
 
+                // Check system permissions
+                if (!hasRequiredPermissions()) {
+                    Log.w("ReminderScheduler", "Missing required permissions for scheduling exact alarms")
+                    return@launch
+                }
+
+                scheduleAlarm(task, reminderTime)
+
+            } catch (e: Exception) {
+                Log.e("ReminderScheduler", "Error checking settings for task ${task.id}", e)
+            }
+        }
+    }
+
+    private fun scheduleAlarm(task: Task, reminderTime: Long) {
         try {
             val intent = Intent(context, ReminderReceiver::class.java).apply {
                 putExtra("TASK_ID", task.id)
@@ -72,7 +96,7 @@ class AndroidReminderScheduler(
                         reminderTime,
                         pendingIntent
                     )
-                    Log.d("ReminderScheduler", "Scheduled inexact alarm for task ${task.id} at $reminderTime")
+                    Log.d("ReminderScheduler", "Scheduled inexact alarm for task ${task.id} at $reminderTime (inexact)")
                 }
             }
 
@@ -86,8 +110,10 @@ class AndroidReminderScheduler(
     override fun cancel(task: Task) {
         try {
             val intent = Intent(context, ReminderReceiver::class.java).apply {
-                putExtra("TASK_TITLE", task.title)
                 putExtra("TASK_ID", task.id)
+                putExtra("TASK_TITLE", task.title)
+                putExtra("TASK_DESCRIPTION", task.description)
+                putExtra("REMINDER_TEXT", task.reminderText)
             }
 
             val pendingIntent = PendingIntent.getBroadcast(
@@ -106,6 +132,14 @@ class AndroidReminderScheduler(
         }
     }
 
+    /**
+     * Cancel all scheduled reminders (useful when notifications are disabled globally)
+     */
+    fun cancelAllReminders() {
+        // This is a simplified version - you might want to keep track of active alarms
+        // or implement a more comprehensive solution based on your task management
+        Log.d("ReminderScheduler", "Global notification disable - consider cancelling all active reminders")
+    }
 
     private fun hasRequiredPermissions(): Boolean {
         return when {

@@ -16,10 +16,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.example.todoapp.data.SettingsRepository
-import com.example.todoapp.data.createSettingsRepository
-import com.example.todoapp.ui.settings.SettingsScreen
-import com.example.todoapp.viewmodel.SettingsViewModel
+import com.example.todolist.settings.createSettingsRepository
+import com.example.todolist.settings.SettingsViewModel
 import com.example.todolist.notifications.AndroidReminderScheduler
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)

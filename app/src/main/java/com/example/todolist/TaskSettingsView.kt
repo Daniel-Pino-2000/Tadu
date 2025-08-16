@@ -1,14 +1,10 @@
 @file:OptIn(ExperimentalMaterial3Api::class)
 
-package com.example.todoapp.ui.settings
+package com.example.todolist
 
 import android.Manifest
-import android.app.AlarmManager
-import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -34,36 +30,25 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.core.content.ContextCompat
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.example.todoapp.viewmodel.SettingsViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.example.todolist.ui.theme.LocalDynamicColors
 import java.util.concurrent.TimeUnit
+import com.example.todolist.notifications.canShowNotifications
+import com.example.todolist.settings.SettingsViewModel
 
 // Helper function to check notification permission
 private fun checkNotificationPermission(context: Context): Boolean {
-    return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        ContextCompat.checkSelfPermission(
-            context,
-            Manifest.permission.POST_NOTIFICATIONS
-        ) == PackageManager.PERMISSION_GRANTED
-    } else {
-        // For older versions, check if notifications are enabled via NotificationManager
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        notificationManager.areNotificationsEnabled()
-    }
+    return canShowNotifications(context)
 }
 
 @Composable
@@ -100,9 +85,13 @@ fun SettingsScreen(
         }
     }
 
-    // Re-check permission when returning from settings
+    // Re-check permission when returning from settings and sync app state
     LaunchedEffect(Unit) {
         hasNotificationPermission = checkNotificationPermission(context)
+        // If permission was revoked externally, update the setting
+        if (!hasNotificationPermission && notificationsEnabled) {
+            viewModel.updateNotificationsEnabled(false)
+        }
     }
 
     // Handle history cleanup work scheduling
@@ -222,8 +211,8 @@ fun SettingsScreen(
                             notificationsEnabled -> "Get reminded about your tasks"
                             else -> "Tap to enable task notifications"
                         },
-                        checked = notificationsEnabled,
-                        enabled = hasNotificationPermission, // Disable switch if no permission
+                        checked = notificationsEnabled && hasNotificationPermission, // Switch shows true only if both conditions met
+                        enabled = true, // Always allow interaction
                         onCheckedChange = { enabled ->
                             if (enabled) {
                                 // User wants to enable notifications

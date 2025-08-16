@@ -1,10 +1,8 @@
 package com.example.todolist
 
-import android.Manifest
 import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
@@ -24,23 +22,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
-import androidx.datastore.core.DataStore
-import androidx.datastore.preferences.core.Preferences
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.example.todolist.ui.theme.MyToDoAppTheme
-import com.example.todoapp.data.SettingsRepository
-import com.example.todoapp.data.createSettingsRepository
-import com.example.todoapp.viewmodel.SettingsViewModel
-import com.example.todoapp.ui.settings.ThemeMode
+import com.example.todolist.settings.createSettingsRepository
+import com.example.todolist.settings.SettingsViewModel
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {

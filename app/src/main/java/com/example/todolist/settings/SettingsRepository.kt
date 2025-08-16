@@ -1,4 +1,4 @@
-package com.example.todoapp.data
+package com.example.todolist.settings
 
 import android.content.Context
 import androidx.compose.ui.graphics.Color
@@ -10,7 +10,7 @@ import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
-import com.example.todoapp.ui.settings.ThemeMode
+import com.example.todolist.ThemeMode
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
