@@ -720,7 +720,7 @@ private fun ColorOption(
 ) {
     Box(
         modifier = Modifier
-            .size(48.dp)
+            .size(42.dp)
             .clip(CircleShape)
             .background(
                 if (isSelected) color else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
@@ -749,7 +749,7 @@ private fun ColorOption(
             // Unselected state - color dot in center
             Box(
                 modifier = Modifier
-                    .size(36.dp)
+                    .size(30.dp)
                     .clip(CircleShape)
                     .background(color)
             )
