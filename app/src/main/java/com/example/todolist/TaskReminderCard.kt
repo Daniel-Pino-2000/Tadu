@@ -7,6 +7,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.*
@@ -51,6 +52,15 @@ fun ReminderSection(
     val context = LocalContext.current
     val isDarkTheme = isSystemInDarkTheme()
 
+    var reminderConfig by remember {
+        mutableStateOf(
+            ReminderConfig(
+                enabled = initialReminder != null,
+                dateTime = initialReminder?.toReminderDateTime() ?: ReminderDateTime()
+            )
+        )
+    }
+
     // Permission launcher for notifications (Android 13+)
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission()
@@ -60,7 +70,13 @@ fun ReminderSection(
             checkExactAlarmPermission(context)
         } else {
             // Handle permission denied - you could show a message
-            // that reminders might not work properly
+            // Permission was denied
+            reminderConfig = reminderConfig.copy(
+                enabled = false,
+                dateTime = ReminderDateTime()
+            )
+            Toast.makeText(context, "Notification permission denied", Toast.LENGTH_SHORT).show()
+
         }
     }
 
@@ -89,14 +105,7 @@ fun ReminderSection(
         }
     }
 
-    var reminderConfig by remember {
-        mutableStateOf(
-            ReminderConfig(
-                enabled = initialReminder != null,
-                dateTime = initialReminder?.toReminderDateTime() ?: ReminderDateTime()
-            )
-        )
-    }
+
 
     // Update reminderConfig when initialReminder changes (when task data loads)
     LaunchedEffect(initialReminder) {

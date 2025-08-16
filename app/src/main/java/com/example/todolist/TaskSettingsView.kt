@@ -78,20 +78,27 @@ fun SettingsScreen(
     ) { isGranted ->
         hasNotificationPermission = isGranted
         if (isGranted) {
+            // When permission is granted, enable notifications in app settings
             viewModel.updateNotificationsEnabled(true)
         } else {
+            // When permission is denied, disable notifications in app settings
             viewModel.updateNotificationsEnabled(false)
             showPermissionRationale = true
         }
     }
 
-    // Re-check permission when returning from settings and sync app state
+    // Initialize and sync permission state when screen loads
     LaunchedEffect(Unit) {
-        hasNotificationPermission = checkNotificationPermission(context)
-        // If permission was revoked externally, update the setting
-        if (!hasNotificationPermission && notificationsEnabled) {
+        val currentPermissionState = checkNotificationPermission(context)
+        hasNotificationPermission = currentPermissionState
+
+        // Sync app setting with permission state on first load
+        // If permission is revoked externally, disable the setting
+        if (!currentPermissionState && notificationsEnabled) {
             viewModel.updateNotificationsEnabled(false)
         }
+        // If permission exists but setting is disabled, and this is likely first time setup,
+        // we could optionally enable it, but it's better to let user choose explicitly
     }
 
     // Handle history cleanup work scheduling
@@ -211,7 +218,7 @@ fun SettingsScreen(
                             notificationsEnabled -> "Get reminded about your tasks"
                             else -> "Tap to enable task notifications"
                         },
-                        checked = notificationsEnabled && hasNotificationPermission, // Switch shows true only if both conditions met
+                        checked = notificationsEnabled && hasNotificationPermission,
                         enabled = true, // Always allow interaction
                         onCheckedChange = { enabled ->
                             if (enabled) {
