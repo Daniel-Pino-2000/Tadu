@@ -10,6 +10,10 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.RequiresApi
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.*
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -19,6 +23,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toArgb
@@ -51,35 +56,33 @@ class MainActivity : ComponentActivity() {
             }
             val settingsViewModel = remember { SettingsViewModel(settingsRepository) }
 
-            // Collect settings state
-            val themeMode by settingsViewModel.themeMode.collectAsState()
-            val accentColor by settingsViewModel.accentColor.collectAsState()
-            val notificationsEnabled by settingsViewModel.notificationsEnabled.collectAsState()
+            // Collect the combined settings state
+            val settingsState by settingsViewModel.settingsState.collectAsState()
 
-            // Determine if dark theme should be used
-            val isDarkTheme = when (themeMode) {
+            // Simplified loading state - single state controls everything
+            var showMainContent by remember { mutableStateOf(false) }
+
+            // Determine theme early for consistent theming
+            val isDarkTheme = when (settingsState.themeMode) {
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK -> true
                 ThemeMode.SYSTEM -> isSystemInDarkTheme()
             }
 
+            // Streamlined loading sequence
+            LaunchedEffect(settingsState.settingsLoaded) {
+                if (settingsState.settingsLoaded) {
+                    delay(500) // Shorter delay for snappier feel
+                    showMainContent = true
+                }
+            }
+
+            // Apply theme consistently
             MyToDoAppTheme(
                 darkTheme = isDarkTheme,
-                accentColor = accentColor
+                accentColor = settingsState.accentColor
             ) {
                 SetSystemBarsColor(color = MaterialTheme.colorScheme.background)
-
-                val navController = rememberNavController()
-
-                // Check battery optimization on startup (only if notifications are enabled)
-                LaunchedEffect(notificationsEnabled) {
-                    if (notificationsEnabled) {
-                        delay(2000) // Give user time to see the app first
-                        if (!isBatteryOptimizationDisabled()) {
-                            showBatteryOptimizationDialog = true
-                        }
-                    }
-                }
 
                 Surface(
                     modifier = Modifier.fillMaxSize(),
@@ -90,17 +93,22 @@ class MainActivity : ComponentActivity() {
                             .fillMaxSize()
                             .windowInsetsPadding(WindowInsets.systemBars)
                     ) {
-                        Navigation(navController = navController)
+                        // Loading screen - only shows when main content is hidden
+                        if (!showMainContent) {
+                            LoadingScreen()
+                        }
 
-                        // Show battery optimization dialog when needed
-                        if (showBatteryOptimizationDialog) {
-                            PermissionExplanationDialog(
-                                onConfirm = {
-                                    showBatteryOptimizationDialog = false
-                                    openBatteryOptimizationSettings()
-                                },
-                                onDismiss = { showBatteryOptimizationDialog = false }
+                        // Main content with smooth fade-in, no overlapping animations
+                        AnimatedVisibility(
+                            visible = showMainContent,
+                            enter = fadeIn(
+                                animationSpec = tween(
+                                    durationMillis = 300,
+                                    easing = FastOutSlowInEasing
+                                )
                             )
+                        ) {
+                            MainContent()
                         }
                     }
                 }
@@ -108,7 +116,67 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    // Removed - no longer needed since we use the extension function
+    @Composable
+    private fun LoadingScreen() {
+        // Single smooth rotation animation - no complex overlapping animations
+        val infiniteTransition = rememberInfiniteTransition(label = "loading")
+        val rotationAngle by infiniteTransition.animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(
+                animation = tween(
+                    durationMillis = 1200, // Slightly slower for smoother feel
+                    easing = LinearEasing
+                )
+            ),
+            label = "rotation"
+        )
+
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            CircularProgressIndicator(
+                modifier = Modifier.size(40.dp),
+                strokeWidth = 3.dp,
+                color = MaterialTheme.colorScheme.primary
+            )
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    @Composable
+    private fun MainContent() {
+        val navController = rememberNavController()
+        val settingsRepository = remember { this@MainActivity.createSettingsRepository() }
+        val settingsViewModel = remember { SettingsViewModel(settingsRepository) }
+        val settingsState by settingsViewModel.settingsState.collectAsState()
+
+        // Check battery optimization on startup (only if notifications are enabled)
+        LaunchedEffect(settingsState.notificationsEnabled) {
+            if (settingsState.notificationsEnabled) {
+                delay(1500) // Slightly shorter delay
+                if (!isBatteryOptimizationDisabled()) {
+                    showBatteryOptimizationDialog = true
+                }
+            }
+        }
+
+        Box(modifier = Modifier.fillMaxSize()) {
+            Navigation(navController = navController)
+
+            // Show battery optimization dialog when needed
+            if (showBatteryOptimizationDialog) {
+                PermissionExplanationDialog(
+                    onConfirm = {
+                        showBatteryOptimizationDialog = false
+                        openBatteryOptimizationSettings()
+                    },
+                    onDismiss = { showBatteryOptimizationDialog = false }
+                )
+            }
+        }
+    }
 
     /**
      * Request battery optimization exemption - shows explanation dialog

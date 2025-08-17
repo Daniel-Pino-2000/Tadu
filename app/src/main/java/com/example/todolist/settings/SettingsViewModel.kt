@@ -5,16 +5,49 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todolist.ThemeMode
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
 
+data class SettingsState(
+    val isLoading: Boolean = true,
+    val settingsLoaded: Boolean = false,
+    val themeMode: ThemeMode = ThemeMode.SYSTEM,
+    val accentColor: Color = Color(0xFF1976D2),
+    val notificationsEnabled: Boolean = true,
+    val clearHistoryEnabled: Boolean = false
+)
+
 class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 
-    val themeMode = repo.themeMode.stateIn(viewModelScope, SharingStarted.Lazily, ThemeMode.SYSTEM)
-    val accentColor = repo.accentColor.stateIn(viewModelScope, SharingStarted.Lazily, Color(0xFF1976D2))
-    val notificationsEnabled = repo.notificationsEnabled.stateIn(viewModelScope, SharingStarted.Lazily, true)
-    val clearHistoryEnabled = repo.clearHistoryEnabled.stateIn(viewModelScope, SharingStarted.Lazily, false)
+    // Combined settings state that indicates when all settings are loaded
+    val settingsState: StateFlow<SettingsState> = combine(
+        repo.themeMode,
+        repo.accentColor,
+        repo.notificationsEnabled,
+        repo.clearHistoryEnabled
+    ) { themeMode, accentColor, notificationsEnabled, clearHistoryEnabled ->
+        SettingsState(
+            isLoading = true, // Will be managed in MainActivity
+            settingsLoaded = true,
+            themeMode = themeMode,
+            accentColor = accentColor,
+            notificationsEnabled = notificationsEnabled,
+            clearHistoryEnabled = clearHistoryEnabled
+        )
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = SettingsState(isLoading = true, settingsLoaded = false)
+    )
+
+    // Individual flows for backward compatibility if needed elsewhere
+    val themeMode = repo.themeMode.stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.SYSTEM)
+    val accentColor = repo.accentColor.stateIn(viewModelScope, SharingStarted.Eagerly, Color(0xFF1976D2))
+    val notificationsEnabled = repo.notificationsEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
+    val clearHistoryEnabled = repo.clearHistoryEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
     fun updateThemeMode(mode: ThemeMode) {
         viewModelScope.launch { repo.setThemeMode(mode) }
