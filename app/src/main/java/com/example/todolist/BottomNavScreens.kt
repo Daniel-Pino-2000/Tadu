@@ -92,6 +92,7 @@ import com.airbnb.lottie.compose.LottieConstants
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
 import com.airbnb.lottie.compose.rememberLottieComposition
 import com.example.todolist.ui.theme.LocalDynamicColors
+import androidx.compose.material3.MaterialTheme
 
 
 @OptIn(ExperimentalMaterialApi::class, ExperimentalLayoutApi::class)
@@ -367,21 +368,22 @@ private fun SearchSection(
     keyboardController: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusManager: androidx.compose.ui.focus.FocusManager
 ) {
-    // Search TextField
+    val colorScheme = MaterialTheme.colorScheme
+
     OutlinedTextField(
         value = searchQuery,
         onValueChange = onSearchQueryChange,
         placeholder = {
             Text(
                 text = "Search tasks...",
-                color = Color(0xFF9E9E9E)
+                color = colorScheme.onSurfaceVariant.copy(alpha = 0.6f) // subtle adaptive text
             )
         },
         leadingIcon = {
             Icon(
                 Icons.Default.Search,
                 contentDescription = "Search",
-                tint = Color(0xFF757575)
+                tint = colorScheme.onSurfaceVariant
             )
         },
         trailingIcon = {
@@ -396,7 +398,7 @@ private fun SearchSection(
                     Icon(
                         Icons.Default.Clear,
                         contentDescription = "Clear",
-                        tint = Color(0xFF757575)
+                        tint = colorScheme.onSurfaceVariant
                     )
                 }
             }
@@ -409,10 +411,11 @@ private fun SearchSection(
         colors = OutlinedTextFieldDefaults.colors(
             focusedBorderColor = Color.Transparent,
             unfocusedBorderColor = Color.Transparent,
-            focusedContainerColor = Color(0xFFEEEEEE),
-            unfocusedContainerColor = Color(0xFFEEEEEE),
-            focusedTextColor = Color(0xFF424242),
-            unfocusedTextColor = Color(0xFF424242)
+            focusedContainerColor = colorScheme.surfaceContainerHigh,
+            unfocusedContainerColor = colorScheme.surfaceContainer,
+            focusedTextColor = colorScheme.onSurface,
+            unfocusedTextColor = colorScheme.onSurface,
+            cursorColor = colorScheme.primary
         ),
         singleLine = true,
         keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -442,6 +445,7 @@ private fun SearchSection(
         )
     }
 }
+
 
 @Composable
 private fun SelectedLabelSection(
