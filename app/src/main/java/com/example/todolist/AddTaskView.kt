@@ -208,13 +208,23 @@ fun AddTaskView(
                 onValueChange = { newValue ->
                     viewModel.onTaskTitleChanged(newValue)
                 },
-                textStyle = textStyle,
-                placeholder = { Text("Task Title", style = TextStyle(fontSize = 20.sp, color = Color.Gray)) },
+                textStyle = textStyle.copy(color = MaterialTheme.colorScheme.onSurface),
+                placeholder = {
+                    Text(
+                        "Task Title",
+                        style = TextStyle(
+                            fontSize = 20.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                },
                 colors = TextFieldDefaults.textFieldColors(
                     cursorColor = LocalDynamicColors.current.niceColor,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
-                    backgroundColor = Color.Transparent
+                    backgroundColor = Color.Transparent,
+                    textColor = MaterialTheme.colorScheme.onSurface,
+                    placeholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 modifier = Modifier.focusRequester(focusRequester),
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
@@ -230,13 +240,26 @@ fun AddTaskView(
                 onValueChange = { newValue ->
                     viewModel.onTaskDescriptionChanged(newValue)
                 },
-                textStyle = TextStyle(fontSize = 16.sp, color = Color.Black),
-                placeholder = { Text("Description", style = TextStyle(fontSize = 16.sp, color = Color.Gray)) },
+                textStyle = TextStyle(
+                    fontSize = 16.sp,
+                    color = MaterialTheme.colorScheme.onSurface
+                ),
+                placeholder = {
+                    Text(
+                        "Description",
+                        style = TextStyle(
+                            fontSize = 16.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    )
+                },
                 colors = TextFieldDefaults.textFieldColors(
                     cursorColor = LocalDynamicColors.current.niceColor,
                     focusedIndicatorColor = Color.Transparent,
                     unfocusedIndicatorColor = Color.Transparent,
-                    backgroundColor = Color.Transparent
+                    backgroundColor = Color.Transparent,
+                    textColor = MaterialTheme.colorScheme.onSurface,
+                    placeholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
                 readOnly = isHistoryMode // Make read-only in history mode
             )

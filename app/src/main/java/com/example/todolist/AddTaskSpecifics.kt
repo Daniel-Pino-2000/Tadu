@@ -364,22 +364,103 @@ fun addTaskToCalendar(context: Context, title: String, deadline: String) {
             .toInstant()
             .toEpochMilli()
 
-        val intent = Intent(Intent.ACTION_INSERT).apply {
+        // Primary approach: Calendar app intent with proper MIME type
+        val calendarIntent = Intent(Intent.ACTION_INSERT).apply {
             data = CalendarContract.Events.CONTENT_URI
+            type = "vnd.android.cursor.dir/event" // Add MIME type for better app detection
             putExtra(CalendarContract.Events.TITLE, title)
             putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startMillis)
             putExtra(CalendarContract.EXTRA_EVENT_END_TIME, startMillis + 60 * 60 * 1000)
         }
 
-        if (intent.resolveActivity(context.packageManager) != null) {
-            context.startActivity(intent)
-        } else {
+        // Now resolveActivity should work better with the queries declaration
+        val resolvedActivity = calendarIntent.resolveActivity(context.packageManager)
+        if (resolvedActivity != null) {
+            context.startActivity(calendarIntent)
+            return
+        }
+
+        // Fallback approaches if primary fails
+        val success = trySpecificCalendarApps(context, title, startMillis) ||
+                tryGenericCalendarIntent(context, title, startMillis)
+
+        if (!success) {
             Toast.makeText(context, "No calendar app found", Toast.LENGTH_SHORT).show()
         }
 
     } catch (e: Exception) {
         Log.e("AddToCalendar", "Failed to parse date or launch calendar", e)
         Toast.makeText(context, "Failed to add event to calendar", Toast.LENGTH_SHORT).show()
+    }
+}
+
+private fun tryLaunchIntent(context: Context, intent: Intent): Boolean {
+    return try {
+        context.startActivity(intent)
+        true
+    } catch (e: Exception) {
+        Log.d("AddToCalendar", "Primary intent failed: ${e.message}")
+        false
+    }
+}
+
+private fun trySpecificCalendarApps(context: Context, title: String, startMillis: Long): Boolean {
+    val calendarApps = listOf(
+        "com.google.android.calendar", // Google Calendar
+        "com.samsung.android.calendar", // Samsung Calendar
+        "com.android.calendar",         // AOSP Calendar
+        "com.htc.calendar",            // HTC Calendar
+        "com.lge.calendar",            // LG Calendar
+        "com.miui.calendar",           // Xiaomi Calendar
+        "com.huawei.calendar"          // Huawei Calendar
+    )
+
+    for (packageName in calendarApps) {
+        try {
+            val intent = Intent(Intent.ACTION_INSERT).apply {
+                data = CalendarContract.Events.CONTENT_URI
+                putExtra(CalendarContract.Events.TITLE, title)
+                putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startMillis)
+                putExtra(CalendarContract.EXTRA_EVENT_END_TIME, startMillis + 60 * 60 * 1000)
+                setPackage(packageName)
+            }
+
+            context.startActivity(intent)
+            return true
+        } catch (e: Exception) {
+            Log.d("AddToCalendar", "Failed to launch $packageName: ${e.message}")
+        }
+    }
+    return false
+}
+
+private fun tryGenericCalendarIntent(context: Context, title: String, startMillis: Long): Boolean {
+    return try {
+        // Fallback: Use ACTION_EDIT instead of ACTION_INSERT
+        val editIntent = Intent(Intent.ACTION_EDIT).apply {
+            data = CalendarContract.Events.CONTENT_URI
+            putExtra(CalendarContract.Events.TITLE, title)
+            putExtra(CalendarContract.EXTRA_EVENT_BEGIN_TIME, startMillis)
+            putExtra(CalendarContract.EXTRA_EVENT_END_TIME, startMillis + 60 * 60 * 1000)
+        }
+        context.startActivity(editIntent)
+        true
+    } catch (e: Exception) {
+        Log.d("AddToCalendar", "Generic calendar intent failed: ${e.message}")
+
+        // Last resort: Try to open any calendar app without pre-filling data
+        try {
+            val basicIntent = Intent().apply {
+                action = Intent.ACTION_MAIN
+                addCategory(Intent.CATEGORY_APP_CALENDAR)
+            }
+            context.startActivity(basicIntent)
+            Toast.makeText(context, "Calendar opened - please add event manually", Toast.LENGTH_LONG).show()
+            true
+        } catch (e2: Exception) {
+            Log.d("AddToCalendar", "Basic calendar intent failed: ${e2.message}")
+            false
+        }
     }
 }
 

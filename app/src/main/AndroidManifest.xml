@@ -2,6 +2,40 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Add this queries section to declare which apps/intents you want to interact with -->
+    <queries>
+        <!-- Query for calendar apps that can handle calendar events -->
+        <intent>
+            <action android:name="android.intent.action.INSERT" />
+            <data android:mimeType="vnd.android.cursor.dir/event" />
+        </intent>
+
+        <!-- Alternative query for calendar content -->
+        <intent>
+            <action android:name="android.intent.action.INSERT" />
+            <data android:scheme="content"
+                android:host="com.android.calendar" />
+        </intent>
+
+        <!-- Query for calendar apps by category -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.APP_CALENDAR" />
+        </intent>
+
+        <!-- Specific calendar app packages (optional - for targeting specific apps) -->
+        <package android:name="com.google.android.calendar" />
+        <package android:name="com.samsung.android.calendar" />
+        <package android:name="com.android.calendar" />
+        <package android:name="com.htc.calendar" />
+        <package android:name="com.lge.calendar" />
+        <package android:name="com.miui.calendar" />
+        <package android:name="com.huawei.calendar" />
+
+        <!-- Provider query for calendar content -->
+        <provider android:authorities="com.android.calendar" />
+    </queries>
+
 
     <!-- For scheduling exact alarms (Android 12+) -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
@@ -15,6 +49,9 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
 
     <application
         android:name=".TaskListApp"
