@@ -45,7 +45,7 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
      * Flow of accent color preference
      */
     val accentColor: Flow<Color> = dataStore.data.map { preferences ->
-        val colorInt = preferences[ACCENT_COLOR_KEY] ?: Color(0xFF1976D2).toArgb()
+        val colorInt = preferences[ACCENT_COLOR_KEY] ?: Color(0xFF0733F5).toArgb()
         Color(colorInt)
     }
 

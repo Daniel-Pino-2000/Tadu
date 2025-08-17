@@ -171,6 +171,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, undoToa
                         if (task.description.isNotEmpty()) {
                             Spacer(modifier = Modifier.height(4.dp)) // Original spacing
                             Text(
+                                modifier = Modifier.padding(start = 3.dp),
                                 text = task.description,
                                 maxLines = 1, // Original single line
                                 overflow = TextOverflow.Ellipsis,

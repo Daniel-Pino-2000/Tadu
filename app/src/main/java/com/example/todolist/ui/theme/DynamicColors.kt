@@ -9,11 +9,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 
 // Create composition locals for dynamic colors
-val LocalAccentColor = compositionLocalOf { Color(0xFF1976D2) }
+val LocalAccentColor = compositionLocalOf { Color(0xFF0733F5) }
 val LocalDynamicColors = compositionLocalOf { DynamicColors() }
 
 data class DynamicColors(
-    var niceColor: Color = Color(0xFF1976D2), // Make it var
+    var niceColor: Color = Color(0xFF0733F5), // Make it var
     val lightGray: Color = Color(0xFFF2F3FA),
     val blueToday: Color = Color(0xFF1976D2),
     val redYesterday: Color = Color(0xFFCF0C0C),
@@ -34,7 +34,6 @@ data class DynamicColors(
 fun createDynamicColors(accentColor: Color): DynamicColors {
     return DynamicColors(
         niceColor = accentColor,
-        blueToday = accentColor,
         // Keep other colors as they are, or modify them based on accent color if needed
         lightGray = Color(0xFFF2F3FA),
         redYesterday = Color(0xFFCF0C0C),

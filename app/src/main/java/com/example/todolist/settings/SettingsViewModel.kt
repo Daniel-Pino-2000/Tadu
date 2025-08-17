@@ -15,7 +15,7 @@ data class SettingsState(
     val isLoading: Boolean = true,
     val settingsLoaded: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val accentColor: Color = Color(0xFF1976D2),
+    val accentColor: Color = Color(0xFF0733F5),
     val notificationsEnabled: Boolean = true,
     val clearHistoryEnabled: Boolean = false
 )
@@ -45,7 +45,7 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 
     // Individual flows for backward compatibility if needed elsewhere
     val themeMode = repo.themeMode.stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.SYSTEM)
-    val accentColor = repo.accentColor.stateIn(viewModelScope, SharingStarted.Eagerly, Color(0xFF1976D2))
+    val accentColor = repo.accentColor.stateIn(viewModelScope, SharingStarted.Eagerly, Color(0xFF0733F5))
     val notificationsEnabled = repo.notificationsEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
     val clearHistoryEnabled = repo.clearHistoryEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 

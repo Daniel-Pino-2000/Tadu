@@ -51,18 +51,18 @@ fun showNotification(
                 description = CHANNEL_DESCRIPTION
                 enableLights(true)
                 enableVibration(true)
+                setShowBadge(true)
             }
 
-            val manager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            val manager =
+                context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
             manager.createNotificationChannel(channel)
         }
 
-        // Create intent to open the app when notification is tapped
+        // Intent to open MainActivity when tapped
         val intent = try {
             Intent(context, Class.forName("com.example.todolist.MainActivity")).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-                // You can add extras here to navigate to specific task if needed
-                // putExtra("TASK_ID", taskId)
             }
         } catch (e: ClassNotFoundException) {
             Log.e("NotificationUtils", "MainActivity class not found", e)
@@ -76,34 +76,35 @@ fun showNotification(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        // Prepare notification content
-        val contentText = when {
-            reminderText.isNotBlank() -> reminderText
-            taskDescription.isNotBlank() -> "Don't forget: $taskDescription"
-            else -> "You set a reminder for \"$taskTitle\". Don't forget to complete it!"
-        }
+        // Improved notification text content
+        val (notificationTitle, contentText, expandedText) = buildNotificationText(
+            taskTitle, taskDescription, reminderText
+        )
 
-        // Build and show notification
+        // Build notification
         val notification = NotificationCompat.Builder(context, CHANNEL_ID)
-            .setSmallIcon(R.mipmap.ic_launcher) // Consider using a better icon like R.drawable.ic_notification
-            .setContentTitle("Task Reminder")
-            .setContentText("$taskTitle")
-            .setStyle(
-                NotificationCompat.BigTextStyle()
-                    .bigText(contentText)
-            )
+            .setSmallIcon(R.mipmap.ic_launcher) // Use dedicated notification icon
+            .setContentTitle(notificationTitle)
+            .setContentText(contentText)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(expandedText))
             .setContentIntent(pendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setCategory(NotificationCompat.CATEGORY_REMINDER)
             .setAutoCancel(true)
-            .setVibrate(longArrayOf(0, 250, 250, 250))
+            .setDefaults(NotificationCompat.DEFAULT_ALL) // Better than manual vibration
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
+            .setWhen(System.currentTimeMillis())
+            .setShowWhen(true)
             .build()
 
-        // Use a unique notification ID based on current time to avoid overwriting
+        // Use unique ID to avoid overwriting other notifications
         val notificationId = System.currentTimeMillis().toInt()
         notificationManager.notify(notificationId, notification)
 
-        Log.d("NotificationUtils", "Notification displayed with ID: $notificationId for task: $taskTitle")
+        Log.d(
+            "NotificationUtils",
+            "Notification displayed with ID: $notificationId for task: $taskTitle"
+        )
 
     } catch (e: SecurityException) {
         Log.e("NotificationUtils", "Security exception when showing notification", e)
@@ -113,10 +114,51 @@ fun showNotification(
 }
 
 /**
- * Check if the app can show notifications (considers both system permission and app-level settings)
+ * Builds well-formatted notification text following Material Design guidelines.
+ * Returns Triple of (title, contentText, expandedText)
+ */
+private fun buildNotificationText(
+    taskTitle: String,
+    taskDescription: String,
+    reminderText: String
+): Triple<String, String, String> {
+    // Title should clearly indicate it's a reminder
+    val title = "Task Reminder: $taskTitle"
+
+    // Content text for collapsed notification (should be under 40 chars when possible)
+    val contentText = when {
+        reminderText.isNotBlank() -> reminderText.take(50).let {
+            if (reminderText.length > 50) "$it..." else it
+        }
+        taskDescription.isNotBlank() -> taskDescription.take(50).let {
+            if (taskDescription.length > 50) "$it..." else it
+        }
+        else -> "Don't forget to complete this task"
+    }
+
+    // Expanded text for BigTextStyle (can be longer and more detailed)
+    val expandedText = buildString {
+        append("📋 Task Reminder")
+        append("\n\nTask: $taskTitle")
+
+        if (taskDescription.isNotBlank()) {
+            append("\n\nDescription: $taskDescription")
+        }
+
+        if (reminderText.isNotBlank()) {
+            append("\n\nReminder: $reminderText")
+        }
+
+        append("\n\nTap to open your to-do list")
+    }
+
+    return Triple(title, contentText, expandedText)
+}
+
+/**
+ * Check if the app can show notifications (system + app-level settings).
  */
 fun canShowNotifications(context: Context): Boolean {
-    // Check system permission for Android 13+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         if (ContextCompat.checkSelfPermission(
                 context,
@@ -127,7 +169,6 @@ fun canShowNotifications(context: Context): Boolean {
         }
     }
 
-    // Check if notifications are enabled at the app level
     val notificationManager = NotificationManagerCompat.from(context)
     return notificationManager.areNotificationsEnabled()
 }

@@ -704,8 +704,8 @@ private fun ColorPickerDialog(
     var selectedColor by remember { mutableStateOf(currentColor) }
 
     val predefinedColors = listOf(
-        Color(0xFF6750A4), // Purple
         Color(0xFF0733F5), // Blue
+        Color(0xFF6750A4), // Purple
         Color(0xFF388E3C), // Green
         Color(0xFFFF5722), // Orange
         Color(0xFFD32F2F), // Red

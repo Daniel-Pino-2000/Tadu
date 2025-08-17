@@ -21,7 +21,7 @@ import androidx.core.view.WindowCompat
 
 // Default color schemes
 private val LightColors = lightColorScheme(
-    primary = Color(0xFF1976D2),
+    primary = Color(0xFF0733F5),
     onPrimary = Color(0xFFFFFFFF),
     primaryContainer = Color(0xFFD3E3FD),
     onPrimaryContainer = Color(0xFF001C38),
