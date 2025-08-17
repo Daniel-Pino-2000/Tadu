@@ -252,10 +252,12 @@ fun ModernLabel(
             fontSize = 9.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
+            lineHeight = 12.sp, // keeps text height close to font size
             overflow = TextOverflow.Ellipsis
         )
     }
 }
+
 
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
