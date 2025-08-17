@@ -600,7 +600,7 @@ private fun LabelChip(
     }
 }
 
-// ENHANCED: Lottie Animation Empty State Component with improved sizing and positioning
+// ENHANCED: Lottie Animation Empty State Component with smooth loading
 @Composable
 private fun LottieEmptyState(
     currentRoute: String,
@@ -630,20 +630,20 @@ private fun LottieEmptyState(
         )
     }
 
-    // Load the Lottie composition with better error handling
+    // Load the Lottie composition
     val composition by rememberLottieComposition(
         LottieCompositionSpec.RawRes(animationResource)
     )
 
-    // Animate the composition with improved performance
+    // Animate the composition
     val progress by animateLottieCompositionAsState(
         composition = composition,
         iterations = LottieConstants.IterateForever,
-        speed = 1.0f, // Normal speed - you can adjust this
+        speed = 1.0f,
         restartOnPlay = false
     )
 
-    // Add subtle entrance animation for the entire component
+    // Smooth entrance animation that works like search
     val componentAlpha by animateFloatAsState(
         targetValue = if (composition != null) 1f else 0f,
         animationSpec = tween(
@@ -671,11 +671,11 @@ private fun LottieEmptyState(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Enhanced Lottie Animation with larger size and better positioning
+        // Enhanced Lottie Animation with better loading behavior
         Box(
             modifier = Modifier
-                .size(280.dp) // Increased from 200.dp to 280.dp
-                .offset(y = (-20).dp), // Moved up slightly for better visual balance
+                .size(280.dp)
+                .offset(y = (-20).dp),
             contentAlignment = Alignment.Center
         ) {
             if (composition != null) {
@@ -685,46 +685,36 @@ private fun LottieEmptyState(
                     modifier = Modifier.fillMaxSize()
                 )
             } else {
-                // Show a placeholder while loading
+                // Much cleaner placeholder - invisible until loaded
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(
-                            Color(0xFFF5F5F5),
-                            RoundedCornerShape(20.dp)
-                        ),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text(
-                        text = "🎬",
-                        fontSize = 48.sp,
-                        color = Color(0xFFBDBDBD)
-                    )
-                }
+                        .alpha(0f) // Completely transparent
+                )
             }
         }
 
-        Spacer(modifier = Modifier.height(32.dp)) // Increased spacing
+        Spacer(modifier = Modifier.height(32.dp))
 
         // Main message with enhanced styling
         Text(
             text = mainMessage,
-            fontSize = 28.sp, // Increased from 24.sp
+            fontSize = 28.sp,
             fontWeight = FontWeight.Bold,
             color = Color(0xFF2E7D32),
             textAlign = TextAlign.Center,
             lineHeight = 32.sp
         )
 
-        Spacer(modifier = Modifier.height(12.dp)) // Increased spacing
+        Spacer(modifier = Modifier.height(12.dp))
 
         // Sub message with enhanced styling
         Text(
             text = subMessage,
-            fontSize = 18.sp, // Increased from 16.sp
+            fontSize = 18.sp,
             color = Color(0xFF757575),
             textAlign = TextAlign.Center,
-            lineHeight = 26.sp, // Increased line height for better readability
+            lineHeight = 26.sp,
             modifier = Modifier.padding(horizontal = 16.dp)
         )
 
