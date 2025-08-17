@@ -40,6 +40,7 @@ import androidx.work.WorkManager
 import androidx.work.Worker
 import androidx.work.WorkerParameters
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
 import com.example.todolist.ui.theme.LocalDynamicColors
 import java.util.concurrent.TimeUnit
@@ -67,10 +68,13 @@ fun SettingsScreen(
     var backPressed by remember { mutableStateOf(false)}
     var showThemeDialog by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
-    var showPermissionRationale by remember { mutableStateOf(false) }
+    var showPermissionDialog by remember { mutableStateOf(false) }
 
-    // Track notification permission status
+    // Track notification permission status - this is the key fix
     var hasNotificationPermission by remember { mutableStateOf(checkNotificationPermission(context)) }
+
+    // Track if we should show rationale
+    var shouldShowRationale by remember { mutableStateOf(false) }
 
     // Permission launcher for notification permission
     val notificationPermissionLauncher = rememberLauncherForActivityResult(
@@ -78,27 +82,40 @@ fun SettingsScreen(
     ) { isGranted ->
         hasNotificationPermission = isGranted
         if (isGranted) {
-            // When permission is granted, enable notifications in app settings
+            // Permission granted - enable notifications
             viewModel.updateNotificationsEnabled(true)
         } else {
-            // When permission is denied, disable notifications in app settings
+            // Permission denied - disable notifications and show rationale if needed
             viewModel.updateNotificationsEnabled(false)
-            showPermissionRationale = true
+            shouldShowRationale = true
+            showPermissionDialog = true
         }
     }
 
-    // Initialize and sync permission state when screen loads
-    LaunchedEffect(Unit) {
+    // Function to update permission state and sync with ViewModel
+    fun updatePermissionStates() {
         val currentPermissionState = checkNotificationPermission(context)
         hasNotificationPermission = currentPermissionState
 
-        // Sync app setting with permission state on first load
-        // If permission is revoked externally, disable the setting
+        // Sync app setting with actual permission state
         if (!currentPermissionState && notificationsEnabled) {
+            // Permission was revoked externally, update our setting
             viewModel.updateNotificationsEnabled(false)
+        } else if (currentPermissionState && !notificationsEnabled) {
+            // Permission was granted externally but our setting is off
+            // Don't auto-enable, let user choose
         }
-        // If permission exists but setting is disabled, and this is likely first time setup,
-        // we could optionally enable it, but it's better to let user choose explicitly
+    }
+
+    // Check permission status when screen is resumed - CRITICAL FIX
+    LifecycleResumeEffect(Unit) {
+        updatePermissionStates()
+        onPauseOrDispose { }
+    }
+
+    // Initial permission check
+    LaunchedEffect(Unit) {
+        updatePermissionStates()
     }
 
     // Handle history cleanup work scheduling
@@ -212,26 +229,30 @@ fun SettingsScreen(
                 SettingsSection(title = "Notifications") {
                     SettingsSwitchItem(
                         icon = Icons.Default.Notifications,
-                        title = "Enable Notifications",
-                        subtitle = when {
-                            !hasNotificationPermission -> "Permission required - tap to enable"
-                            notificationsEnabled -> "Get reminded about your tasks"
-                            else -> "Tap to enable task notifications"
-                        },
+                        title = "Task Notifications",
+                        subtitle = getNotificationSubtitle(
+                            hasPermission = hasNotificationPermission,
+                            isEnabled = notificationsEnabled
+                        ),
+                        // FIXED: Switch state now properly reflects both permission AND user preference
                         checked = notificationsEnabled && hasNotificationPermission,
-                        enabled = true, // Always allow interaction
+                        enabled = true,
                         onCheckedChange = { enabled ->
                             if (enabled) {
                                 // User wants to enable notifications
                                 if (hasNotificationPermission) {
+                                    // Permission already granted, just enable
                                     viewModel.updateNotificationsEnabled(true)
                                 } else {
-                                    // Need to request permission first
-                                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                        notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                    } else {
-                                        showPermissionRationale = true
-                                    }
+                                    // Need to request permission
+                                    requestNotificationPermission(
+                                        context = context,
+                                        launcher = notificationPermissionLauncher,
+                                        onShowRationale = {
+                                            shouldShowRationale = true
+                                            showPermissionDialog = true
+                                        }
+                                    )
                                 }
                             } else {
                                 // User wants to disable notifications
@@ -239,28 +260,6 @@ fun SettingsScreen(
                             }
                         }
                     )
-
-                    // Show permission request item if no permission
-                    if (!hasNotificationPermission) {
-                        Divider(
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
-                            thickness = 0.5.dp
-                        )
-
-                        SettingsItem(
-                            icon = Icons.Default.Notifications,
-                            title = "Grant Permission",
-                            subtitle = "Allow notifications to enable this feature",
-                            onClick = {
-                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                                    notificationPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                                } else {
-                                    showPermissionRationale = true
-                                }
-                            }
-                        )
-                    }
                 }
             }
 
@@ -311,48 +310,152 @@ fun SettingsScreen(
         )
     }
 
-    // Permission Rationale Dialog
-    if (showPermissionRationale) {
-        AlertDialog(
-            onDismissRequest = { showPermissionRationale = false },
-            title = {
-                Text(
-                    "Notification Permission Required",
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontWeight = FontWeight.SemiBold
-                    )
-                )
+    // Permission Dialog
+    if (showPermissionDialog) {
+        NotificationPermissionDialog(
+            shouldShowRationale = shouldShowRationale,
+            onDismiss = {
+                showPermissionDialog = false
+                shouldShowRationale = false
             },
-            text = {
-                Text(
-                    "To receive task reminders and notifications, please enable notification permission in your device settings.",
-                    style = MaterialTheme.typography.bodyMedium
-                )
+            onOpenSettings = {
+                showPermissionDialog = false
+                shouldShowRationale = false
+                openAppNotificationSettings(context)
             },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        showPermissionRationale = false
-                        // Open app settings
-                        val intent = Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).apply {
-                            putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
-                        }
-                        context.startActivity(intent)
+            onRetry = {
+                showPermissionDialog = false
+                shouldShowRationale = false
+                requestNotificationPermission(
+                    context = context,
+                    launcher = notificationPermissionLauncher,
+                    onShowRationale = {
+                        shouldShowRationale = true
+                        showPermissionDialog = true
                     }
-                ) {
-                    Text("Open Settings", fontWeight = FontWeight.Medium)
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = { showPermissionRationale = false }
-                ) {
-                    Text("Cancel", fontWeight = FontWeight.Medium)
-                }
-            },
-            shape = RoundedCornerShape(24.dp)
+                )
+            }
         )
     }
+}
+
+/**
+ * Get appropriate subtitle text for notification setting
+ */
+private fun getNotificationSubtitle(hasPermission: Boolean, isEnabled: Boolean): String {
+    return when {
+        !hasPermission -> "Permission required - tap to enable"
+        isEnabled -> "Get reminded about your tasks"
+        else -> "Tap to enable task notifications"
+    }
+}
+
+/**
+ * Request notification permission with proper handling
+ */
+private fun requestNotificationPermission(
+    context: Context,
+    launcher: androidx.activity.result.ActivityResultLauncher<String>,
+    onShowRationale: () -> Unit
+) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
+    } else {
+        // For older Android versions, notifications are enabled by default
+        // but we should still check if they're disabled in system settings
+        if (!checkNotificationPermission(context)) {
+            onShowRationale()
+        }
+    }
+}
+
+/**
+ * Open app notification settings
+ */
+private fun openAppNotificationSettings(context: Context) {
+    val intent = Intent().apply {
+        when {
+            Build.VERSION.SDK_INT >= Build.VERSION_CODES.O -> {
+                action = Settings.ACTION_APP_NOTIFICATION_SETTINGS
+                putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName)
+            }
+            else -> {
+                action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+                data = android.net.Uri.fromParts("package", context.packageName, null)
+            }
+        }
+    }
+    context.startActivity(intent)
+}
+
+/**
+ * Improved notification permission dialog
+ */
+@Composable
+private fun NotificationPermissionDialog(
+    shouldShowRationale: Boolean,
+    onDismiss: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onRetry: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        icon = {
+            Icon(
+                imageVector = Icons.Default.Notifications,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary
+            )
+        },
+        title = {
+            Text(
+                text = if (shouldShowRationale) {
+                    "Notification Permission Required"
+                } else {
+                    "Enable Notifications"
+                },
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+        },
+        text = {
+            Text(
+                text = if (shouldShowRationale) {
+                    "Notifications are disabled for this app. To receive task reminders, please enable notifications in your device settings."
+                } else {
+                    "Allow notifications to get reminded about your tasks and deadlines."
+                },
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        confirmButton = {
+            if (shouldShowRationale) {
+                TextButton(onClick = onOpenSettings) {
+                    Text(
+                        "Open Settings",
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            } else {
+                TextButton(onClick = onRetry) {
+                    Text(
+                        "Allow",
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text(
+                    "Cancel",
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        },
+        shape = RoundedCornerShape(24.dp)
+    )
 }
 
 // Helper function to schedule history cleanup work
