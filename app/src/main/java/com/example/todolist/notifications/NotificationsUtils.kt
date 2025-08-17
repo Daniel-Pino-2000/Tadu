@@ -127,12 +127,15 @@ private fun buildNotificationText(
 
     // Content text for collapsed notification (should be under 40 chars when possible)
     val contentText = when {
-        reminderText.isNotBlank() -> reminderText.take(50).let {
-            if (reminderText.length > 50) "$it..." else it
-        }
+
         taskDescription.isNotBlank() -> taskDescription.take(50).let {
             if (taskDescription.length > 50) "$it..." else it
         }
+
+        reminderText.isNotBlank() -> reminderText.take(50).let {
+            if (reminderText.length > 50) "$it..." else it
+        }
+
         else -> "Don't forget to complete this task"
     }
 
