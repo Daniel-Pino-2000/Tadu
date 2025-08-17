@@ -16,6 +16,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.colorResource
 import androidx.core.view.WindowCompat
 
 // Default color schemes
@@ -52,7 +53,7 @@ private val LightColors = lightColorScheme(
     surfaceBright = Color(0xFFFDFCFF),
     surfaceContainerLowest = Color(0xFFFFFFFF),
     surfaceContainerLow = Color(0xFFF7F2FA),
-    surfaceContainer = Color(0xFFF1ECF4),
+    surfaceContainer = Color(0xFFF2F3FA),
     surfaceContainerHigh = Color(0xFFEBE6EE),
     surfaceContainerHighest = Color(0xFFE5E1E9)
 )
