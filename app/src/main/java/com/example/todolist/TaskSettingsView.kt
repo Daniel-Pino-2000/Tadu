@@ -30,6 +30,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -37,15 +38,14 @@ import androidx.compose.ui.window.Dialog
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import androidx.work.Worker
-import androidx.work.WorkerParameters
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
 import com.example.todolist.ui.theme.LocalDynamicColors
-import java.util.concurrent.TimeUnit
 import com.example.todolist.notifications.canShowNotifications
+import com.example.todolist.settings.HistoryCleanupWorker
 import com.example.todolist.settings.SettingsViewModel
+import java.util.concurrent.TimeUnit
 
 // Helper function to check notification permission
 private fun checkNotificationPermission(context: Context): Boolean {
@@ -149,18 +149,12 @@ fun SettingsScreen(
                             backPressed = true
                             navController.popBackStack()
                         }
-                    },
-                    modifier = Modifier
-                        .clip(CircleShape)
-                        .background(
-                            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                            CircleShape
-                        )
+                    }
                 ) {
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
-                        tint = MaterialTheme.colorScheme.onSurface
+                        tint = colorResource(id = R.color.dropMenuIcon_gray)
                     )
                 }
             },
@@ -270,9 +264,9 @@ fun SettingsScreen(
                         icon = Icons.Default.History,
                         title = "Auto-clear task history",
                         subtitle = if (clearHistoryEnabled) {
-                            "Task history will be cleared every 30 days"
+                            "All finished tasks will be cleared every 30 days"
                         } else {
-                            "Task history will be kept indefinitely"
+                            "Finished tasks will be kept indefinitely"
                         },
                         checked = clearHistoryEnabled,
                         onCheckedChange = { enabled ->
@@ -473,32 +467,6 @@ private fun scheduleHistoryCleanup(context: Context, enabled: Boolean) {
         )
     } else {
         workManager.cancelUniqueWork("history_cleanup_work")
-    }
-}
-
-// WorkManager Worker class for history cleanup
-class HistoryCleanupWorker(
-    context: Context,
-    params: WorkerParameters
-) : Worker(context, params) {
-
-    override fun doWork(): Result {
-        return try {
-            // TODO: Implement your history cleanup logic here
-            // This could involve:
-            // 1. Accessing your database/repository
-            // 2. Deleting tasks older than 30 days
-            // 3. Cleaning up related data
-
-            // Example implementation:
-            // val repository = TodoRepository(applicationContext)
-            // repository.deleteTasksOlderThan(30) // Delete tasks older than 30 days
-
-            // For now, we'll just return success
-            Result.success()
-        } catch (e: Exception) {
-            Result.retry()
-        }
     }
 }
 
