@@ -138,8 +138,6 @@ private fun buildNotificationText(
 
     // Expanded text for BigTextStyle (can be longer and more detailed)
     val expandedText = buildString {
-        append("📋 Task Reminder")
-        append("\n\nTask: $taskTitle")
 
         if (taskDescription.isNotBlank()) {
             append("\n\nDescription: $taskDescription")
