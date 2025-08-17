@@ -140,7 +140,7 @@ private fun buildNotificationText(
     val expandedText = buildString {
 
         if (taskDescription.isNotBlank()) {
-            append("\n\nDescription: $taskDescription")
+            append("\nDescription: $taskDescription")
         }
 
         if (reminderText.isNotBlank()) {
