@@ -25,14 +25,14 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,26 +71,25 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, undoToa
     var isChecked by remember { mutableStateOf(task.isCompleted) }
     val coroutineScope = rememberCoroutineScope()
 
-    val elevationValue = 8.dp
+    val elevationValue = 8.dp // Original elevation
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 15.dp, end = 15.dp),
+            .padding(start = 15.dp, end = 15.dp), // Original padding
         onClick = { onClick() },
-        backgroundColor = colorResource(id = R.color.light_gray),
-        shape = RoundedCornerShape(15.dp),
+        backgroundColor = MaterialTheme.colorScheme.surfaceContainer, // Visible card in dark mode
+        shape = RoundedCornerShape(15.dp), // Original radius
         elevation = elevationValue
     ) {
         Box(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(top = 12.dp, bottom = 12.dp, start = 8.dp, end = 8.dp),
+                    .padding(top = 12.dp, bottom = 12.dp, start = 8.dp, end = 8.dp), // Original padding
                 verticalAlignment = Alignment.Top
             ) {
-                Spacer(modifier = Modifier.width(6.dp))
-
+                Spacer(modifier = Modifier.width(6.dp)) // Original spacer
                 val priority: Int = if (task.priority.isNotEmpty()) {
                     task.priority.toInt()
                 } else {
@@ -130,7 +129,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, undoToa
                     }
                 )
 
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(8.dp)) // Original spacer
 
                 Box(
                     modifier = Modifier.fillMaxWidth()
@@ -153,9 +152,10 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, undoToa
                         ) {
                             Text(
                                 text = task.title,
-                                maxLines = 1,
+                                maxLines = 1, // Original single line
                                 overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.h6.copy(fontWeight = FontWeight.Light),
+                                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Light), // Original style
+                                color = MaterialTheme.colorScheme.onSurface, // Perfect contrast
                                 modifier = Modifier.weight(1f, fill = false)
                             )
 
@@ -163,22 +163,22 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, undoToa
                                 Spacer(modifier = Modifier.width(8.dp))
                                 ModernLabel(
                                     text = task.label,
-                                    modifier = Modifier.widthIn(max = 120.dp) // Limits label width
+                                    modifier = Modifier.widthIn(max = 120.dp) // Original width
                                 )
                             }
                         }
 
-                        Spacer(modifier = Modifier.height(4.dp))
-
                         if (task.description.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(4.dp)) // Original spacing
                             Text(
                                 text = task.description,
-                                maxLines = 1,
+                                maxLines = 1, // Original single line
                                 overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.body2
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant // Subtle secondary text
                             )
 
-                            Spacer(modifier = Modifier.height(4.dp))
+                            Spacer(modifier = Modifier.height(4.dp)) // Original spacing
                         }
 
                         Row(
@@ -189,7 +189,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, undoToa
                                 DeadlineItem(task, currentRoute)
                             }
 
-                            Spacer(modifier = Modifier.weight(1f))
+                            Spacer(modifier = Modifier.weight(1f)) // Original spacer
                         }
                     }
 
@@ -204,26 +204,25 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, undoToa
                             Icon(
                                 imageVector = Icons.Default.Notifications,
                                 contentDescription = "Has reminder",
-                                modifier = Modifier.size(16.dp),
+                                modifier = Modifier.size(16.dp), // Original size
                                 tint = if (task.reminderTime!! <= System.currentTimeMillis()) colorResource(id = R.color.orange)
-                                        else colorResource(id = R.color.nice_color).copy(alpha = 0.7f)
+                                else colorResource(id = R.color.nice_color).copy(alpha = 0.7f) // Blue for future reminders
                             )
 
                             // Add spacing if there's also a location icon
                             if (task.address.isNotEmpty()) {
-                                Spacer(modifier = Modifier.width(6.dp))
+                                Spacer(modifier = Modifier.width(6.dp)) // Original spacing
                             }
                         }
 
                         // Location indicator - show second (rightmost)
                         if (task.address.isNotEmpty()) {
-                            val context = LocalContext.current
                             Icon(
                                 imageVector = Icons.Default.LocationOn,
                                 contentDescription = "Has address",
                                 modifier = Modifier
-                                    .size(16.dp),
-                                tint = Color.Black,
+                                    .size(16.dp), // Original size
+                                tint = MaterialTheme.colorScheme.onSurface, // Theme-aware color
                             )
                         }
                     }
@@ -241,15 +240,15 @@ fun ModernLabel(
     Box(
         modifier = modifier
             .background(
-                color = Color.Black.copy(alpha = 0.08f),
+                color = MaterialTheme.colorScheme.primary.copy(alpha = 0.08f), // Much more subtle background like original
                 shape = RoundedCornerShape(6.dp)
             )
-            .padding(horizontal = 6.dp, vertical = 2.dp),
+            .padding(horizontal = 6.dp, vertical = 2.dp), // Original padding
         contentAlignment = Alignment.Center
     ) {
         Text(
             text = text,
-            color = Color.Black.copy(alpha = 0.7f),
+            color = MaterialTheme.colorScheme.primary, // Accent color text
             fontSize = 9.sp,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
@@ -289,7 +288,7 @@ fun DeadlineItem(task: Task, currentRoute: String) {
         "Yesterday" -> colorResource(id = R.color.red_yesterday)
         "Future" -> colorResource(id = R.color.green_tomorrow)
         "Tomorrow" -> colorResource(id = R.color.green_tomorrow)
-        else -> Color.Gray
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
     // Assign the text that will be displayed
@@ -300,19 +299,19 @@ fun DeadlineItem(task: Task, currentRoute: String) {
     }
 
     if (currentRoute != "today" || dateStatus != "Today") {
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        Row(verticalAlignment = Alignment.CenterVertically) { // Original simple styling
             Icon(
                 imageVector = Icons.Default.DateRange,
                 contentDescription = null,
                 tint = iconColor,
-                modifier = Modifier.size(16.dp)
+                modifier = Modifier.size(16.dp) // Original size
             )
-            Spacer(modifier = Modifier.padding(end = 2.dp))
+            Spacer(modifier = Modifier.padding(end = 2.dp)) // Original spacing
 
             Text(
                 text = dateText,
                 color = iconColor,
-                style = MaterialTheme.typography.body2
+                style = MaterialTheme.typography.bodyMedium // Original typography
             )
         }
     }
@@ -324,9 +323,9 @@ fun CircularCheckbox(
     priority: String = "4",
     onCheckedChange: (Boolean) -> Unit,
 ) {
-    val size: Dp = 23.dp
-    val checkedColor: Color = colorResource(id = R.color.nice_color)
-    val checkmarkColor: Color = Color.White
+    val size: Dp = 23.dp // Original size
+    val checkedColor: Color = colorResource(id = R.color.nice_color) // Original color
+    val checkmarkColor: Color = Color.White // Original color
     var intPriority = 4
 
     val hapticFeedback = LocalHapticFeedback.current
@@ -338,15 +337,15 @@ fun CircularCheckbox(
     val borderColor: Color = if (intPriority < 4) {
         PriorityUtils.getBorderColor(intPriority)
     } else {
-        Color.Gray
+        Color.Gray // Original fallback
     }
 
-    val uncheckedColor = PriorityUtils.getColor(intPriority)
+    val uncheckedColor = PriorityUtils.getColor(intPriority) // Original logic
 
     val border: Dp = if (intPriority < 4) {
         2.dp
     } else {
-        1.dp
+        1.dp // Original border
     }
 
     // Smooth scale animation for the whole checkbox
@@ -394,7 +393,7 @@ fun CircularCheckbox(
             .scale(checkboxScale)
             .clip(CircleShape)
             .background(
-                // Smooth color interpolation
+                // Smooth color interpolation - back to original logic
                 Color(
                     red = uncheckedColor.red + (borderColor.red - uncheckedColor.red) * backgroundProgress,
                     green = uncheckedColor.green + (borderColor.green - uncheckedColor.green) * backgroundProgress,
@@ -404,7 +403,7 @@ fun CircularCheckbox(
             )
             .border(border, borderColor, CircleShape)
             .clickable {
-                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress) // Vibration
+                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                 onCheckedChange(!checked)
             },
         contentAlignment = Alignment.Center
@@ -416,7 +415,7 @@ fun CircularCheckbox(
                 contentDescription = "Checked",
                 tint = checkmarkColor,
                 modifier = Modifier
-                    .size(size * 0.7f)
+                    .size(size * 0.65f)
                     .scale(checkmarkScale)
                     .rotate(checkmarkRotation)
             )
