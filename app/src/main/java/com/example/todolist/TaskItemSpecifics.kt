@@ -152,10 +152,10 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, undoToa
                         ) {
                             Text(
                                 text = task.title,
-                                maxLines = 1, // Original single line
+                                maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.headlineSmall.copy(fontWeight = FontWeight.Light), // Original style
-                                color = MaterialTheme.colorScheme.onSurface, // Perfect contrast
+                                style = MaterialTheme.typography.bodyLarge.copy(fontWeight = FontWeight.Medium),
+                                color = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.weight(1f, fill = false)
                             )
 

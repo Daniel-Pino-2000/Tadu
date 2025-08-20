@@ -705,15 +705,15 @@ private fun ColorPickerDialog(
 
     val predefinedColors = listOf(
         Color(0xFF0733F5), // Blue
-        Color(0xFF6750A4), // Purple
-        Color(0xFF388E3C), // Green
-        Color(0xFFFF5722), // Orange
-        Color(0xFFD32F2F), // Red
-        Color(0xFF7B1FA2), // Deep Purple
-        Color(0xFF303F9F), // Indigo
-        Color(0xFF00796B), // Teal
-        Color(0xFFF57C00), // Amber
-        Color(0xFF5D4037), // Brown
+        Color(0xFF7C3AED), // Rich Purple
+        Color(0xFF059669), // Rich Emerald
+        Color(0xFFEA580C), // Rich Orange
+        Color(0xFFDC2626), // Rich Red
+        Color(0xFF9333EA), // Rich Violet
+        Color(0xFF1E40AF), // Deep Blue
+        Color(0xFF0F766E), // Deep Teal
+        Color(0xFFCA8A04), // Rich Amber
+        Color(0xFF92400E), // Rich Brown
     )
 
     Dialog(onDismissRequest = onDismiss) {
