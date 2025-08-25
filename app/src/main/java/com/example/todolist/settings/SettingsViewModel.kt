@@ -1,6 +1,9 @@
 package com.example.todolist.settings
 
 import android.util.Log
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.todolist.ThemeMode
@@ -48,6 +51,14 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     val accentColor = repo.accentColor.stateIn(viewModelScope, SharingStarted.Eagerly, Color(0xFF0733F5))
     val notificationsEnabled = repo.notificationsEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
     val clearHistoryEnabled = repo.clearHistoryEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
+
+    @Composable
+    fun isDarkTheme(): Boolean {
+        val currentThemeMode = themeMode.collectAsState().value
+        return currentThemeMode == ThemeMode.DARK ||
+                (currentThemeMode == ThemeMode.SYSTEM && isSystemInDarkTheme())
+    }
+
 
     fun updateThemeMode(mode: ThemeMode) {
         viewModelScope.launch { repo.setThemeMode(mode) }
