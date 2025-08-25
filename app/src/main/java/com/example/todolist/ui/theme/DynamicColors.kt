@@ -1,3 +1,5 @@
+// Updated theme.kt file with proper theme handling
+
 package com.example.todolist.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -10,11 +12,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 
 // Create composition locals for dynamic colors
-val LocalAccentColor = compositionLocalOf { Color(0xFF0733F5) } // Keep your nice blue as default
+val LocalAccentColor = compositionLocalOf { Color(0xFF0733F5) }
 val LocalDynamicColors = compositionLocalOf { DynamicColors() }
 
 data class DynamicColors(
-    var niceColor: Color = Color(0xFF0733F5), // Keep your nice blue as default
+    var niceColor: Color = Color(0xFF0733F5),
     val lightGray: Color = Color(0xFFF2F3FA),
     val blueToday: Color = Color(0xFF1976D2),
     val redYesterday: Color = Color(0xFFCF0C0C),
@@ -29,17 +31,9 @@ data class DynamicColors(
     var niceColorState by mutableStateOf(niceColor)
 }
 
-/**
- * Get commonly used accent colors optimized for each theme
- * This is best practice because:
- * 1. Colors need different saturation/brightness for optimal visibility
- * 2. Dark themes require more vibrant colors to stand out against dark backgrounds
- * 3. Light themes need more muted colors for better contrast and readability
- * 4. Prevents accessibility issues with poor contrast ratios
- */
 fun getCommonAccentColors(isDarkTheme: Boolean): List<Color> {
     return if (isDarkTheme) {
-        // Dark theme: More vibrant/brighter colors so they pop against dark backgrounds
+        // Dark theme colors
         listOf(
             Color(0xFF4285F4), // Your nice blue (brightened for dark theme)
             Color(0xFFBB86FC), // Light Purple
@@ -51,7 +45,7 @@ fun getCommonAccentColors(isDarkTheme: Boolean): List<Color> {
             Color(0xFFFF5252), // Red
         )
     } else {
-        // Light theme: Slightly muted but still distinct for contrast
+        // Light theme colors
         listOf(
             Color(0xFF0733F5), // Your nice blue (original)
             Color(0xFF7B1FA2), // Purple
@@ -65,14 +59,8 @@ fun getCommonAccentColors(isDarkTheme: Boolean): List<Color> {
     }
 }
 
-
-/**
- * Apply theme-specific adjustments to accent colors
- * Best practice: Different themes need different color treatments for optimal UX
- */
 private fun getThemeAdjustedAccentColor(color: Color, isDarkTheme: Boolean): Color {
     return if (isDarkTheme) {
-        // Dark theme: Increase brightness and saturation for better visibility
         Color(
             red = (color.red + (1f - color.red) * 0.3f).coerceIn(0f, 1f),
             green = (color.green + (1f - color.green) * 0.3f).coerceIn(0f, 1f),
@@ -84,18 +72,13 @@ private fun getThemeAdjustedAccentColor(color: Color, isDarkTheme: Boolean): Col
     }
 }
 
-/**
- * Create dynamic colors based on accent color and theme
- * Uses theme-specific color adjustments for optimal user experience
- */
+// Updated to accept isDarkTheme parameter instead of using isSystemInDarkTheme()
 @Composable
-fun createDynamicColors(accentColor: Color): DynamicColors {
-    val isDarkTheme = isSystemInDarkTheme()
+fun createDynamicColors(accentColor: Color, isDarkTheme: Boolean): DynamicColors {
     val adjustedAccentColor = getThemeAdjustedAccentColor(accentColor, isDarkTheme)
 
     return DynamicColors(
         niceColor = adjustedAccentColor,
-        // Theme-specific color adjustments for better visibility and consistency
         lightGray = if (isDarkTheme) Color(0xFF2A2D32) else Color(0xFFF2F3FA),
         blueToday = if (isDarkTheme) Color(0xFF4285F4) else Color(0xFF0733F5),
         redYesterday = if (isDarkTheme) Color(0xFFEF5350) else Color(0xFFCF0C0C),
@@ -112,9 +95,10 @@ fun createDynamicColors(accentColor: Color): DynamicColors {
 @Composable
 fun ProvideDynamicColors(
     accentColor: Color,
+    isDarkTheme: Boolean, // Add this parameter
     content: @Composable () -> Unit
 ) {
-    val dynamicColors = createDynamicColors(accentColor)
+    val dynamicColors = createDynamicColors(accentColor, isDarkTheme)
 
     CompositionLocalProvider(
         LocalAccentColor provides accentColor,

@@ -59,7 +59,7 @@ private val LightColors = lightColorScheme(
 )
 
 private val DarkColors = darkColorScheme(
-    primary = Color(0xFFA4C8FF),
+    primary = Color(0xFF4285F4),
     onPrimary = Color(0xFF003062),
     primaryContainer = Color(0xFF004788),
     onPrimaryContainer = Color(0xFFD3E3FD),
@@ -167,6 +167,7 @@ fun MyToDoAppTheme(
     ) {
         ProvideDynamicColors(
             accentColor = accentColor,
+            isDarkTheme = darkTheme,
             content = content
         )
     }

@@ -5,9 +5,11 @@ package com.example.todolist
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -46,36 +48,11 @@ import com.example.todolist.ui.theme.getCommonAccentColors
 import com.example.todolist.notifications.canShowNotifications
 import com.example.todolist.settings.HistoryCleanupWorker
 import com.example.todolist.settings.SettingsViewModel
-import com.example.todolist.ui.theme.DynamicColors
 import java.util.concurrent.TimeUnit
 
 // Helper function to check notification permission
 private fun checkNotificationPermission(context: Context): Boolean {
     return canShowNotifications(context)
-}
-
-/**
- * Apply theme-specific adjustments to accent colors for optimal visibility
- * This follows Material Design best practices for color contrast
- */
-private fun getThemeAdjustedAccentColor(color: Color, isDarkTheme: Boolean): Color {
-    return if (isDarkTheme) {
-        // Dark theme: Increase brightness and saturation for better visibility
-        Color(
-            red = (color.red + (1f - color.red) * 0.3f).coerceIn(0f, 1f),
-            green = (color.green + (1f - color.green) * 0.3f).coerceIn(0f, 1f),
-            blue = (color.blue + (1f - color.blue) * 0.3f).coerceIn(0f, 1f),
-            alpha = color.alpha
-        )
-    } else {
-        // Light theme: Slightly darken for better contrast against light backgrounds
-        Color(
-            red = (color.red * 0.85f).coerceIn(0f, 1f),
-            green = (color.green * 0.85f).coerceIn(0f, 1f),
-            blue = (color.blue * 0.85f).coerceIn(0f, 1f),
-            alpha = color.alpha
-        )
-    }
 }
 
 @Composable
@@ -84,13 +61,21 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel()
 ) {
     val context = LocalContext.current
-    val dynamicColors = LocalDynamicColors.current // Access dynamic colors
+    val dynamicColors = LocalDynamicColors.current
 
     // Collect states from ViewModel
     val currentThemeMode by viewModel.themeMode.collectAsState()
     val accentColor by viewModel.accentColor.collectAsState()
     val notificationsEnabled by viewModel.notificationsEnabled.collectAsState()
     val clearHistoryEnabled by viewModel.clearHistoryEnabled.collectAsState()
+
+    // Determine current dark theme state in Composable context
+    val systemInDarkTheme = isSystemInDarkTheme()
+    val isDarkTheme = when (currentThemeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> systemInDarkTheme
+    }
 
     var backPressed by remember { mutableStateOf(false)}
     var showThemeDialog by remember { mutableStateOf(false) }
@@ -99,8 +84,6 @@ fun SettingsScreen(
 
     // Track notification permission status
     var hasNotificationPermission by remember { mutableStateOf(checkNotificationPermission(context)) }
-
-    // Track if we should show rationale
     var shouldShowRationale by remember { mutableStateOf(false) }
 
     // Permission launcher for notification permission
@@ -174,7 +157,7 @@ fun SettingsScreen(
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
-                        tint = dynamicColors.dropMenuIconGray // Use dynamic color
+                        tint = dynamicColors.dropMenuIconGray
                     )
                 }
             },
@@ -196,7 +179,6 @@ fun SettingsScreen(
                 SettingsSection(title = "Appearance") {
                     // Theme Mode Setting
                     SettingsItem(
-                        viewModel,
                         icon = Icons.Default.Palette,
                         title = "Theme",
                         subtitle = when (currentThemeMode) {
@@ -215,7 +197,6 @@ fun SettingsScreen(
 
                     // Accent Color Setting
                     SettingsItem(
-                        viewModel,
                         icon = Icons.Default.Palette,
                         title = "Accent Color",
                         subtitle = "Customize app colors",
@@ -225,7 +206,7 @@ fun SettingsScreen(
                                 modifier = Modifier
                                     .size(32.dp)
                                     .clip(CircleShape)
-                                    .background(dynamicColors.niceColor) // Use dynamic accent color
+                                    .background(dynamicColors.niceColor)
                                     .padding(2.dp)
                             ) {
                                 Box(
@@ -302,7 +283,39 @@ fun SettingsScreen(
         ThemeSelectionDialog(
             currentTheme = currentThemeMode,
             onThemeSelected = { theme ->
+                // Update theme mode first
                 viewModel.updateThemeMode(theme)
+
+                // Determine what the new dark theme state will be
+                val newIsDarkTheme = when (theme) {
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.DARK -> true
+                    ThemeMode.SYSTEM -> systemInDarkTheme
+                }
+
+                // Find the closest matching color from the new theme's color set
+                val oldColors = getCommonAccentColors(!newIsDarkTheme) // Old theme colors
+                val newColors = getCommonAccentColors(newIsDarkTheme)   // New theme colors
+
+                // Find the index of the current color in the old theme's colors
+                val currentIndex = oldColors.indexOfFirst { color ->
+                    // Compare colors with some tolerance for floating point precision
+                    kotlin.math.abs(color.red - accentColor.red) < 0.01f &&
+                            kotlin.math.abs(color.green - accentColor.green) < 0.01f &&
+                            kotlin.math.abs(color.blue - accentColor.blue) < 0.01f
+                }
+
+                // If we found a match, use the same index in the new theme colors
+                // Otherwise, keep the first color from the new theme
+                val newAccentColor = if (currentIndex >= 0 && currentIndex < newColors.size) {
+                    newColors[currentIndex]
+                } else {
+                    newColors[0] // Default to first color if no match found
+                }
+
+                // Update the accent color to the theme-appropriate version
+                viewModel.updateAccentColor(newAccentColor)
+
                 showThemeDialog = false
             },
             onDismiss = { showThemeDialog = false }
@@ -312,8 +325,8 @@ fun SettingsScreen(
     // Color Picker Dialog
     if (showColorPicker) {
         ColorPickerDialog(
-            viewModel,
             currentColor = accentColor,
+            isDarkTheme = isDarkTheme,
             onColorSelected = { color ->
                 viewModel.updateAccentColor(color)
                 showColorPicker = false
@@ -367,7 +380,7 @@ private fun getNotificationSubtitle(hasPermission: Boolean, isEnabled: Boolean):
  */
 private fun requestNotificationPermission(
     context: Context,
-    launcher: androidx.activity.result.ActivityResultLauncher<String>,
+    launcher: ActivityResultLauncher<String>,
     onShowRationale: () -> Unit
 ) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
@@ -391,7 +404,7 @@ private fun openAppNotificationSettings(context: Context) {
             }
             else -> {
                 action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                data = android.net.Uri.fromParts("package", context.packageName, null)
+                data = Uri.fromParts("package", context.packageName, null)
             }
         }
     }
@@ -468,7 +481,6 @@ private fun NotificationPermissionDialog(
     )
 }
 
-
 @Composable
 private fun SettingsSection(
     title: String,
@@ -497,7 +509,6 @@ private fun SettingsSection(
 
 @Composable
 private fun SettingsItem(
-    viewModel: SettingsViewModel,
     icon: ImageVector,
     title: String,
     subtitle: String? = null,
@@ -693,12 +704,11 @@ private fun ThemeSelectionDialog(
 
 @Composable
 private fun ColorPickerDialog(
-    viewModel: SettingsViewModel,
     currentColor: Color,
+    isDarkTheme: Boolean,
     onColorSelected: (Color) -> Unit,
     onDismiss: () -> Unit
 ) {
-    val isDarkTheme = viewModel.isDarkTheme()
     var selectedColor by remember { mutableStateOf(currentColor) }
 
     // Use theme-specific accent colors for optimal visibility
@@ -725,20 +735,17 @@ private fun ColorPickerDialog(
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
 
-
-                // Color Grid - now shows 2 rows with 4 colors each
+                // Color Grid - shows 2 rows with 4 colors each
                 Column(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    predefinedColors.chunked(4).forEach { rowColors -> // <-- now 4 per row
+                    predefinedColors.chunked(4).forEach { rowColors ->
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             rowColors.forEach { color ->
                                 ColorOption(
-                                    viewModel,
-                                    color = color, // Already theme-optimized from getCommonAccentColors()
-                                    originalColor = color,
+                                    color = color,
                                     isSelected = selectedColor == color,
                                     onClick = {
                                         selectedColor = color
@@ -749,7 +756,6 @@ private fun ColorPickerDialog(
                         }
                     }
                 }
-
 
                 Spacer(modifier = Modifier.height(24.dp))
 
@@ -776,9 +782,7 @@ private fun ColorPickerDialog(
 
 @Composable
 private fun ColorOption(
-    viewModel: SettingsViewModel,
     color: Color,
-    originalColor: Color,
     isSelected: Boolean,
     onClick: () -> Unit
 ) {
@@ -814,7 +818,7 @@ private fun ColorOption(
                 )
             }
         } else {
-            // Unselected state - color dot in center (theme-adjusted)
+            // Unselected state - color dot in center
             Box(
                 modifier = Modifier
                     .size(30.dp)

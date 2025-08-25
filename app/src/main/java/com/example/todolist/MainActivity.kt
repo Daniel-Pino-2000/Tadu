@@ -62,11 +62,12 @@ class MainActivity : ComponentActivity() {
             // Simplified loading state - single state controls everything
             var showMainContent by remember { mutableStateOf(false) }
 
-            // Determine theme early for consistent theming
+            // Determine theme - handle this in Composable context
+            val systemInDarkTheme = isSystemInDarkTheme()
             val isDarkTheme = when (settingsState.themeMode) {
                 ThemeMode.LIGHT -> false
                 ThemeMode.DARK -> true
-                ThemeMode.SYSTEM -> isSystemInDarkTheme()
+                ThemeMode.SYSTEM -> systemInDarkTheme
             }
 
             // Streamlined loading sequence
@@ -108,7 +109,7 @@ class MainActivity : ComponentActivity() {
                                 )
                             )
                         ) {
-                            MainContent()
+                            MainContent(settingsViewModel)
                         }
                     }
                 }
@@ -146,10 +147,8 @@ class MainActivity : ComponentActivity() {
 
     @RequiresApi(Build.VERSION_CODES.O)
     @Composable
-    private fun MainContent() {
+    private fun MainContent(settingsViewModel: SettingsViewModel) {
         val navController = rememberNavController()
-        val settingsRepository = remember { this@MainActivity.createSettingsRepository() }
-        val settingsViewModel = remember { SettingsViewModel(settingsRepository) }
         val settingsState by settingsViewModel.settingsState.collectAsState()
 
         // Check battery optimization on startup (only if notifications are enabled)
