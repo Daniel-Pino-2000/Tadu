@@ -188,7 +188,7 @@ fun DeadlinePickerButton(
                 context,
                 { _, selectedYear, selectedMonth, selectedDay ->
                     val selectedLocalDate = LocalDate.of(selectedYear, selectedMonth + 1, selectedDay)
-                    val formatter = DateTimeFormatter.ofPattern("MMM dd")
+                    val formatter = DateTimeFormatter.ofPattern("MMM dd yyyy")
                     val selectedDate = selectedLocalDate.format(formatter)
                     onDateSelected(selectedDate)
                 },

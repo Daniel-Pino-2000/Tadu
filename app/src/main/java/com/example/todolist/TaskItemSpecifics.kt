@@ -263,19 +263,23 @@ fun ModernLabel(
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun DeadlineItem(task: Task, currentRoute: String) {
-    // Format the date for the comparison
     val today = LocalDate.now()
     val currentYear = today.year
-    val formatter = DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH)
+    val formatterWithYear = DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH)
+    val formatterWithoutYear = DateTimeFormatter.ofPattern("MMM dd", Locale.ENGLISH)
 
     val yesterday = today.minusDays(1)
     val tomorrow = today.plusDays(1)
 
-    // Parse the selectedDate string to LocalDate by appending current year
-    val deadlineText = task.deadline.trim().replaceFirstChar { it.uppercaseChar() }
-    val parsedDate = LocalDate.parse("$deadlineText $currentYear", formatter)
+    // Parse the date – assume task.deadline may or may not have a year
+    val parsedDate = try {
+        // Try parsing with year first
+        LocalDate.parse(task.deadline, formatterWithYear)
+    } catch (e: Exception) {
+        // If no year is provided, assume current year
+        LocalDate.parse("${task.deadline} $currentYear", formatterWithYear)
+    }
 
-    // Check the different possible dates
     val dateStatus: String = when {
         parsedDate.isEqual(today) -> "Today"
         parsedDate.isEqual(yesterday) -> "Yesterday"
@@ -284,41 +288,43 @@ fun DeadlineItem(task: Task, currentRoute: String) {
         else -> "Future"
     }
 
-    // Select the color depending on the result of the comparison
     val iconColor = when (dateStatus) {
         "Today" -> colorResource(id = R.color.blue_today)
-        "Past" -> colorResource(id = R.color.red_yesterday)
-        "Yesterday" -> colorResource(id = R.color.red_yesterday)
-        "Future" -> colorResource(id = R.color.green_tomorrow)
-        "Tomorrow" -> colorResource(id = R.color.green_tomorrow)
+        "Past", "Yesterday" -> colorResource(id = R.color.red_yesterday)
+        "Future", "Tomorrow" -> colorResource(id = R.color.green_tomorrow)
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
 
-    // Assign the text that will be displayed
-    val dateText = if (dateStatus == "Today" || dateStatus == "Yesterday" || dateStatus == "Tomorrow") {
-        dateStatus
-    } else {
-        task.deadline
+    // Build display text
+    val dateText = when (dateStatus) {
+        "Today", "Yesterday", "Tomorrow" -> dateStatus
+        else -> {
+            if (parsedDate.year != currentYear) {
+                parsedDate.format(formatterWithYear) // include year
+            } else {
+                parsedDate.format(formatterWithoutYear) // omit year
+            }
+        }
     }
 
     if (currentRoute != "today" || dateStatus != "Today") {
-        Row(verticalAlignment = Alignment.CenterVertically) { // Original simple styling
+        Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(
                 imageVector = Icons.Default.DateRange,
                 contentDescription = null,
                 tint = iconColor,
-                modifier = Modifier.size(16.dp) // Original size
+                modifier = Modifier.size(16.dp)
             )
-            Spacer(modifier = Modifier.padding(end = 2.dp)) // Original spacing
-
+            Spacer(modifier = Modifier.padding(end = 2.dp))
             Text(
                 text = dateText,
                 color = iconColor,
-                style = MaterialTheme.typography.bodyMedium // Original typography
+                style = MaterialTheme.typography.bodyMedium
             )
         }
     }
 }
+
 
 @Composable
 fun CircularCheckbox(
@@ -440,7 +446,7 @@ fun DatePicker(onDateSelected: (String) -> Unit) {
         context,
         { _, selectedYear, selectedMonth, selectedDay ->
             val selectedLocalDate = LocalDate.of(selectedYear, selectedMonth + 1, selectedDay)
-            val formatter = DateTimeFormatter.ofPattern("MMM dd")
+            val formatter = DateTimeFormatter.ofPattern("MMM dd yyyy")
             val selectedDate = selectedLocalDate.format(formatter)
             onDateSelected(selectedDate)
         },

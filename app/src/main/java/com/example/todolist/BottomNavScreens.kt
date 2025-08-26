@@ -248,36 +248,37 @@ private fun filterTasks(
     selectedLabel: String?,
     dateInfo: DateInfo
 ): List<Task> {
+
+    val formatterWithYear = dateInfo.formatter // "MMM dd yyyy"
+    val formatterWithoutYear = DateTimeFormatter.ofPattern("MMM dd", Locale.ENGLISH)
+
+    fun parseTaskDate(deadline: String): LocalDate? {
+        val trimmed = deadline.trim()
+        return runCatching { LocalDate.parse(trimmed, formatterWithYear) }.getOrElse {
+            runCatching {
+                val legacy = LocalDate.parse(trimmed, formatterWithoutYear)
+                legacy.withYear(dateInfo.currentYear)
+            }.getOrNull()
+        }
+    }
+
     return when (currentRoute) {
         "today" -> tasks.filter { task ->
-
-                try {
-                    val taskDate = LocalDate.parse("${task.deadline} ${dateInfo.currentYear}", dateInfo.formatter)
-                    !taskDate.isAfter(dateInfo.today)
-                } catch (e: Exception) {
-                    false
-                }
-
+            val taskDate = parseTaskDate(task.deadline)
+            taskDate != null && !taskDate.isAfter(dateInfo.today) // includes overdue + today
         }
-        "search" -> {
-            when {
-                searchQuery.isNotBlank() -> {
-                    tasks.filter { task ->
-                        task.title.contains(searchQuery, ignoreCase = true)
-                    }
-                }
-                selectedLabel != null -> {
-                    tasks.filter { task ->
-                        task.label.equals(selectedLabel, ignoreCase = true)
-                    }
-                }
-                else -> emptyList()
-            }
+
+
+        "search" -> when {
+            searchQuery.isNotBlank() -> tasks.filter { it.title.contains(searchQuery, ignoreCase = true) }
+            selectedLabel != null -> tasks.filter { it.label.equals(selectedLabel, ignoreCase = true) }
+            else -> emptyList()
         }
         "inbox" -> tasks
         else -> tasks
     }
 }
+
 
 // Separate function for grouping tasks - more efficient
 @RequiresApi(Build.VERSION_CODES.O)
@@ -332,28 +333,43 @@ private fun groupTasks(
 
 // Helper function to categorize tasks by date
 @RequiresApi(Build.VERSION_CODES.O)
-private fun categorizeTasksByDate(tasks: List<Task>, dateInfo: DateInfo): Triple<MutableList<Task>, MutableList<Task>, MutableList<Task>> {
+private fun categorizeTasksByDate(
+    tasks: List<Task>,
+    dateInfo: DateInfo
+): Triple<MutableList<Task>, MutableList<Task>, MutableList<Task>> {
+
     val overdueTasks = mutableListOf<Task>()
     val todayTasks = mutableListOf<Task>()
     val futureTasks = mutableListOf<Task>()
 
-    tasks.forEach { task ->
+    // dateInfo.formatter should be "MMM dd yyyy" (Locale.ENGLISH)
+    val formatterWithYear = dateInfo.formatter
+    val formatterWithoutYear = DateTimeFormatter.ofPattern("MMM dd", Locale.ENGLISH)
 
-            try {
-                val taskDate = LocalDate.parse("${task.deadline} ${dateInfo.currentYear}", dateInfo.formatter)
-                when {
-                    taskDate.isBefore(dateInfo.today) -> overdueTasks.add(task)
-                    taskDate.isEqual(dateInfo.today) -> todayTasks.add(task)
-                    else -> futureTasks.add(task)
-                }
-            } catch (e: Exception) {
-                todayTasks.add(task)
+    tasks.forEach { task ->
+        val trimmed = task.deadline.trim()
+
+        val taskDate: LocalDate? =
+            // 1) New data: already includes a year ("MMM dd yyyy")
+            runCatching { LocalDate.parse(trimmed, formatterWithYear) }.getOrElse {
+                // 2) Legacy data: no year ("MMM dd") -> assume current year
+                runCatching {
+                    val legacy = LocalDate.parse(trimmed, formatterWithoutYear)
+                    legacy.withYear(dateInfo.currentYear)
+                }.getOrNull()
             }
 
+        when {
+            taskDate == null -> todayTasks.add(task) // keep prior fallback behavior
+            taskDate.isBefore(dateInfo.today) -> overdueTasks.add(task)
+            taskDate.isEqual(dateInfo.today) -> todayTasks.add(task)
+            else -> futureTasks.add(task)
+        }
     }
 
     return Triple(overdueTasks, todayTasks, futureTasks)
 }
+
 
 @Composable
 private fun SearchSection(
