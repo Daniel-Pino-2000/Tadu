@@ -141,7 +141,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
                     // Set today's date as deadline if we're on Today screen and deadline is empty
                     if (currentRoute == Screen.BottomScreen.Today.bRoute && task.deadline.isEmpty()) {
                         val today = LocalDate.now()
-                        val formatter = DateTimeFormatter.ofPattern("MMM dd")
+                        val formatter = DateTimeFormatter.ofPattern("MMM dd yyyy")
                         val todayFormatted = today.format(formatter)
 
                         val updatedTask = task.copy(deadline = todayFormatted)
