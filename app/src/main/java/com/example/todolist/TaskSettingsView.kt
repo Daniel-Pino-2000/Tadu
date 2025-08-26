@@ -283,44 +283,53 @@ fun SettingsScreen(
         ThemeSelectionDialog(
             currentTheme = currentThemeMode,
             onThemeSelected = { theme ->
-                // Update theme mode first
-                viewModel.updateThemeMode(theme)
+                // Determine current effective theme
+                val currentIsDarkTheme = when (currentThemeMode) {
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.DARK -> true
+                    ThemeMode.SYSTEM -> systemInDarkTheme
+                }
 
-                // Determine what the new dark theme state will be
+                // Determine new effective theme
                 val newIsDarkTheme = when (theme) {
                     ThemeMode.LIGHT -> false
                     ThemeMode.DARK -> true
                     ThemeMode.SYSTEM -> systemInDarkTheme
                 }
 
-                // Find the closest matching color from the new theme's color set
-                val oldColors = getCommonAccentColors(!newIsDarkTheme) // Old theme colors
-                val newColors = getCommonAccentColors(newIsDarkTheme)   // New theme colors
+                // Update theme mode first
+                viewModel.updateThemeMode(theme)
 
-                // Find the index of the current color in the old theme's colors
-                val currentIndex = oldColors.indexOfFirst { color ->
-                    // Compare colors with some tolerance for floating point precision
-                    kotlin.math.abs(color.red - accentColor.red) < 0.01f &&
-                            kotlin.math.abs(color.green - accentColor.green) < 0.01f &&
-                            kotlin.math.abs(color.blue - accentColor.blue) < 0.01f
+                // Only update accent color if effective theme changes
+                if (newIsDarkTheme != currentIsDarkTheme) {
+                    // Find the closest matching color from the new theme's color set
+                    val oldColors = getCommonAccentColors(currentIsDarkTheme) // Old theme colors
+                    val newColors = getCommonAccentColors(newIsDarkTheme)     // New theme colors
+
+                    // Find the index of the current color in the old theme's colors
+                    val currentIndex = oldColors.indexOfFirst { color ->
+                        kotlin.math.abs(color.red - accentColor.red) < 0.01f &&
+                                kotlin.math.abs(color.green - accentColor.green) < 0.01f &&
+                                kotlin.math.abs(color.blue - accentColor.blue) < 0.01f
+                    }
+
+                    // If we found a match, use the same index in the new theme colors
+                    val newAccentColor = if (currentIndex >= 0 && currentIndex < newColors.size) {
+                        newColors[currentIndex]
+                    } else {
+                        newColors[0] // Default to first color if no match found
+                    }
+
+                    // Update the accent color to the theme-appropriate version
+                    viewModel.updateAccentColor(newAccentColor)
                 }
-
-                // If we found a match, use the same index in the new theme colors
-                // Otherwise, keep the first color from the new theme
-                val newAccentColor = if (currentIndex >= 0 && currentIndex < newColors.size) {
-                    newColors[currentIndex]
-                } else {
-                    newColors[0] // Default to first color if no match found
-                }
-
-                // Update the accent color to the theme-appropriate version
-                viewModel.updateAccentColor(newAccentColor)
 
                 showThemeDialog = false
             },
             onDismiss = { showThemeDialog = false }
         )
     }
+
 
     // Color Picker Dialog
     if (showColorPicker) {
