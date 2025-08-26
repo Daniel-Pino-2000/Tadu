@@ -5,12 +5,15 @@ package com.example.todolist
 import android.Manifest
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
@@ -30,7 +33,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -42,6 +44,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
 import com.example.todolist.ui.theme.LocalDynamicColors
+import com.example.todolist.ui.theme.getCommonAccentColors
 import com.example.todolist.notifications.canShowNotifications
 import com.example.todolist.settings.HistoryCleanupWorker
 import com.example.todolist.settings.SettingsViewModel
@@ -58,6 +61,7 @@ fun SettingsScreen(
     viewModel: SettingsViewModel = viewModel()
 ) {
     val context = LocalContext.current
+    val dynamicColors = LocalDynamicColors.current
 
     // Collect states from ViewModel
     val currentThemeMode by viewModel.themeMode.collectAsState()
@@ -65,15 +69,21 @@ fun SettingsScreen(
     val notificationsEnabled by viewModel.notificationsEnabled.collectAsState()
     val clearHistoryEnabled by viewModel.clearHistoryEnabled.collectAsState()
 
+    // Determine current dark theme state in Composable context
+    val systemInDarkTheme = isSystemInDarkTheme()
+    val isDarkTheme = when (currentThemeMode) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> systemInDarkTheme
+    }
+
     var backPressed by remember { mutableStateOf(false)}
     var showThemeDialog by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
     var showPermissionDialog by remember { mutableStateOf(false) }
 
-    // Track notification permission status - this is the key fix
+    // Track notification permission status
     var hasNotificationPermission by remember { mutableStateOf(checkNotificationPermission(context)) }
-
-    // Track if we should show rationale
     var shouldShowRationale by remember { mutableStateOf(false) }
 
     // Permission launcher for notification permission
@@ -82,10 +92,8 @@ fun SettingsScreen(
     ) { isGranted ->
         hasNotificationPermission = isGranted
         if (isGranted) {
-            // Permission granted - enable notifications
             viewModel.updateNotificationsEnabled(true)
         } else {
-            // Permission denied - disable notifications and show rationale if needed
             viewModel.updateNotificationsEnabled(false)
             shouldShowRationale = true
             showPermissionDialog = true
@@ -97,17 +105,12 @@ fun SettingsScreen(
         val currentPermissionState = checkNotificationPermission(context)
         hasNotificationPermission = currentPermissionState
 
-        // Sync app setting with actual permission state
         if (!currentPermissionState && notificationsEnabled) {
-            // Permission was revoked externally, update our setting
             viewModel.updateNotificationsEnabled(false)
-        } else if (currentPermissionState && !notificationsEnabled) {
-            // Permission was granted externally but our setting is off
-            // Don't auto-enable, let user choose
         }
     }
 
-    // Check permission status when screen is resumed - CRITICAL FIX
+    // Check permission status when screen is resumed
     LifecycleResumeEffect(Unit) {
         updatePermissionStates()
         onPauseOrDispose { }
@@ -154,7 +157,7 @@ fun SettingsScreen(
                     Icon(
                         imageVector = Icons.Default.ArrowBack,
                         contentDescription = "Back",
-                        tint = colorResource(id = R.color.dropMenuIcon_gray)
+                        tint = dynamicColors.dropMenuIconGray
                     )
                 }
             },
@@ -186,7 +189,7 @@ fun SettingsScreen(
                         onClick = { showThemeDialog = true }
                     )
 
-                    Divider(
+                    HorizontalDivider(
                         modifier = Modifier.padding(horizontal = 16.dp),
                         color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
                         thickness = 0.5.dp
@@ -203,14 +206,14 @@ fun SettingsScreen(
                                 modifier = Modifier
                                     .size(32.dp)
                                     .clip(CircleShape)
-                                    .background(accentColor)
+                                    .background(dynamicColors.niceColor)
                                     .padding(2.dp)
                             ) {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxSize()
                                         .clip(CircleShape)
-                                        .background(accentColor)
+                                        .background(dynamicColors.niceColor)
                                 )
                             }
                         }
@@ -228,17 +231,13 @@ fun SettingsScreen(
                             hasPermission = hasNotificationPermission,
                             isEnabled = notificationsEnabled
                         ),
-                        // FIXED: Switch state now properly reflects both permission AND user preference
                         checked = notificationsEnabled && hasNotificationPermission,
                         enabled = true,
                         onCheckedChange = { enabled ->
                             if (enabled) {
-                                // User wants to enable notifications
                                 if (hasNotificationPermission) {
-                                    // Permission already granted, just enable
                                     viewModel.updateNotificationsEnabled(true)
                                 } else {
-                                    // Need to request permission
                                     requestNotificationPermission(
                                         context = context,
                                         launcher = notificationPermissionLauncher,
@@ -249,7 +248,6 @@ fun SettingsScreen(
                                     )
                                 }
                             } else {
-                                // User wants to disable notifications
                                 viewModel.updateNotificationsEnabled(false)
                             }
                         }
@@ -285,7 +283,39 @@ fun SettingsScreen(
         ThemeSelectionDialog(
             currentTheme = currentThemeMode,
             onThemeSelected = { theme ->
+                // Update theme mode first
                 viewModel.updateThemeMode(theme)
+
+                // Determine what the new dark theme state will be
+                val newIsDarkTheme = when (theme) {
+                    ThemeMode.LIGHT -> false
+                    ThemeMode.DARK -> true
+                    ThemeMode.SYSTEM -> systemInDarkTheme
+                }
+
+                // Find the closest matching color from the new theme's color set
+                val oldColors = getCommonAccentColors(!newIsDarkTheme) // Old theme colors
+                val newColors = getCommonAccentColors(newIsDarkTheme)   // New theme colors
+
+                // Find the index of the current color in the old theme's colors
+                val currentIndex = oldColors.indexOfFirst { color ->
+                    // Compare colors with some tolerance for floating point precision
+                    kotlin.math.abs(color.red - accentColor.red) < 0.01f &&
+                            kotlin.math.abs(color.green - accentColor.green) < 0.01f &&
+                            kotlin.math.abs(color.blue - accentColor.blue) < 0.01f
+                }
+
+                // If we found a match, use the same index in the new theme colors
+                // Otherwise, keep the first color from the new theme
+                val newAccentColor = if (currentIndex >= 0 && currentIndex < newColors.size) {
+                    newColors[currentIndex]
+                } else {
+                    newColors[0] // Default to first color if no match found
+                }
+
+                // Update the accent color to the theme-appropriate version
+                viewModel.updateAccentColor(newAccentColor)
+
                 showThemeDialog = false
             },
             onDismiss = { showThemeDialog = false }
@@ -296,6 +326,7 @@ fun SettingsScreen(
     if (showColorPicker) {
         ColorPickerDialog(
             currentColor = accentColor,
+            isDarkTheme = isDarkTheme,
             onColorSelected = { color ->
                 viewModel.updateAccentColor(color)
                 showColorPicker = false
@@ -349,14 +380,12 @@ private fun getNotificationSubtitle(hasPermission: Boolean, isEnabled: Boolean):
  */
 private fun requestNotificationPermission(
     context: Context,
-    launcher: androidx.activity.result.ActivityResultLauncher<String>,
+    launcher: ActivityResultLauncher<String>,
     onShowRationale: () -> Unit
 ) {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         launcher.launch(Manifest.permission.POST_NOTIFICATIONS)
     } else {
-        // For older Android versions, notifications are enabled by default
-        // but we should still check if they're disabled in system settings
         if (!checkNotificationPermission(context)) {
             onShowRationale()
         }
@@ -375,7 +404,7 @@ private fun openAppNotificationSettings(context: Context) {
             }
             else -> {
                 action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
-                data = android.net.Uri.fromParts("package", context.packageName, null)
+                data = Uri.fromParts("package", context.packageName, null)
             }
         }
     }
@@ -450,24 +479,6 @@ private fun NotificationPermissionDialog(
         },
         shape = RoundedCornerShape(24.dp)
     )
-}
-
-// Helper function to schedule history cleanup work
-private fun scheduleHistoryCleanup(context: Context, enabled: Boolean) {
-    val workManager = WorkManager.getInstance(context)
-
-    if (enabled) {
-        val cleanupWorkRequest = PeriodicWorkRequestBuilder<HistoryCleanupWorker>(30, TimeUnit.DAYS)
-            .build()
-
-        workManager.enqueueUniquePeriodicWork(
-            "history_cleanup_work",
-            ExistingPeriodicWorkPolicy.UPDATE,
-            cleanupWorkRequest
-        )
-    } else {
-        workManager.cancelUniqueWork("history_cleanup_work")
-    }
 }
 
 @Composable
@@ -694,27 +705,14 @@ private fun ThemeSelectionDialog(
 @Composable
 private fun ColorPickerDialog(
     currentColor: Color,
+    isDarkTheme: Boolean,
     onColorSelected: (Color) -> Unit,
     onDismiss: () -> Unit
 ) {
-    // Access dynamic colors
-    val dynamicColors = LocalDynamicColors.current
-
-    // Current selected color state, default to current color
     var selectedColor by remember { mutableStateOf(currentColor) }
 
-    val predefinedColors = listOf(
-        Color(0xFF0733F5), // Blue
-        Color(0xFF7C3AED), // Rich Purple
-        Color(0xFF059669), // Rich Emerald
-        Color(0xFFEA580C), // Rich Orange
-        Color(0xFFDC2626), // Rich Red
-        Color(0xFF9333EA), // Rich Violet
-        Color(0xFF1E40AF), // Deep Blue
-        Color(0xFF0F766E), // Deep Teal
-        Color(0xFFCA8A04), // Rich Amber
-        Color(0xFF92400E), // Rich Brown
-    )
+    // Use theme-specific accent colors for optimal visibility
+    val predefinedColors = getCommonAccentColors(isDarkTheme)
 
     Dialog(onDismissRequest = onDismiss) {
         Card(
@@ -737,14 +735,13 @@ private fun ColorPickerDialog(
                     modifier = Modifier.padding(bottom = 24.dp)
                 )
 
-                // Color Grid
+                // Color Grid - shows 2 rows with 4 colors each
                 Column(
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
-                    predefinedColors.chunked(5).forEach { rowColors ->
+                    predefinedColors.chunked(4).forEach { rowColors ->
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            modifier = Modifier.fillMaxWidth()
                         ) {
                             rowColors.forEach { color ->
                                 ColorOption(
@@ -794,7 +791,11 @@ private fun ColorOption(
             .size(42.dp)
             .clip(CircleShape)
             .background(
-                if (isSelected) color else MaterialTheme.colorScheme.outline.copy(alpha = 0.2f),
+                if (isSelected) {
+                    color
+                } else {
+                    MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
+                },
                 CircleShape
             )
             .clickable { onClick() }
@@ -825,6 +826,24 @@ private fun ColorOption(
                     .background(color)
             )
         }
+    }
+}
+
+// Helper function to schedule history cleanup work
+private fun scheduleHistoryCleanup(context: Context, enabled: Boolean) {
+    val workManager = WorkManager.getInstance(context)
+
+    if (enabled) {
+        val cleanupWorkRequest = PeriodicWorkRequestBuilder<HistoryCleanupWorker>(30, TimeUnit.DAYS)
+            .build()
+
+        workManager.enqueueUniquePeriodicWork(
+            "history_cleanup_work",
+            ExistingPeriodicWorkPolicy.UPDATE,
+            cleanupWorkRequest
+        )
+    } else {
+        workManager.cancelUniqueWork("history_cleanup_work")
     }
 }
 
