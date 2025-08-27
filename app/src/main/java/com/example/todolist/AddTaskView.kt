@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.ButtonDefaults
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.colorResource
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.*
@@ -55,6 +54,7 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Event
 import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.MaterialTheme
+import com.example.todolist.settings.SettingsViewModel
 import com.example.todolist.ui.theme.LocalDynamicColors
 
 /**
@@ -78,6 +78,7 @@ import com.example.todolist.ui.theme.LocalDynamicColors
 fun AddTaskView(
     id: Long,
     viewModel: TaskViewModel,
+    settingsViewModel: SettingsViewModel? = null, // optional
     onDismiss: () -> Unit,
     onSubmit: (task: Task) -> Unit,
     isHistoryMode: Boolean = false, // New parameter to indicate if we're in history mode
@@ -272,6 +273,7 @@ fun AddTaskView(
             // Reminder Section - now handles its own UI and returns data via callback
             if (!isHistoryMode) {
                 ReminderSection(
+                    settingsViewModel?.themeMode,
                     initialReminder = reminderTime,
                     onReminderChanged = { newReminderTime, newReminderText ->
                         reminderTime = newReminderTime

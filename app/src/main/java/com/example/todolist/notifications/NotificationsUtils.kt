@@ -114,20 +114,19 @@ fun showNotification(
 }
 
 /**
- * Builds well-formatted notification text following Material Design guidelines.
- * Returns Triple of (title, contentText, expandedText)
- */
+* Builds well-formatted notification text following Material Design guidelines.
+* Returns Triple of (title, contentText, expandedText)
+*/
 private fun buildNotificationText(
     taskTitle: String,
     taskDescription: String,
     reminderText: String
 ): Triple<String, String, String> {
-    // Title should clearly indicate it's a reminder
+    // Always include task title in the notification title
     val title = "Task Reminder: $taskTitle"
 
-    // Content text for collapsed notification (should be under 40 chars when possible)
+    // Content text (collapsed view) → prefer description, then reminder, then fallback
     val contentText = when {
-
         taskDescription.isNotBlank() -> taskDescription.take(50).let {
             if (taskDescription.length > 50) "$it..." else it
         }
@@ -136,25 +135,27 @@ private fun buildNotificationText(
             if (reminderText.length > 50) "$it..." else it
         }
 
-        else -> "Don't forget to complete this task"
+        else -> "Don't forget: $taskTitle"
     }
 
-    // Expanded text for BigTextStyle (can be longer and more detailed)
+    // Expanded text (big view) → only show non-empty parts, clean spacing
     val expandedText = buildString {
-
         if (taskDescription.isNotBlank()) {
-            append("\nDescription: $taskDescription")
+            append("Description: $taskDescription")
         }
 
         if (reminderText.isNotBlank()) {
-            append("\n\nReminder: $reminderText")
+            if (isNotEmpty()) append("\n\n") // spacing only if description exists
+            append("Reminder: $reminderText")
         }
 
-        append("\n\nTap to open your to-do list")
+        if (isNotEmpty()) append("\n\n")
+        append("Tap to open your to-do list")
     }
 
     return Triple(title, contentText, expandedText)
 }
+
 
 /**
  * Check if the app can show notifications (system + app-level settings).

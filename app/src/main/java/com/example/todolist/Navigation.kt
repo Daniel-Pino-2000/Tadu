@@ -54,7 +54,7 @@ fun Navigation(
     ) {
         // Home screen
         composable(Screen.Home.route) {
-            HomeView(navController, viewModel)
+            HomeView(navController, viewModel, settingsViewModel)
         }
 
         // History screen with vertical slide from bottom

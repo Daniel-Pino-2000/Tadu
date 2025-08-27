@@ -52,12 +52,6 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     val notificationsEnabled = repo.notificationsEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
     val clearHistoryEnabled = repo.clearHistoryEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
-    @Composable
-    fun isDarkTheme(): Boolean {
-        val currentThemeMode = themeMode.collectAsState().value
-        return currentThemeMode == ThemeMode.DARK ||
-                (currentThemeMode == ThemeMode.SYSTEM && isSystemInDarkTheme())
-    }
 
 
     fun updateThemeMode(mode: ThemeMode) {

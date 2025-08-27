@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.AlarmManager
 import android.content.Context
 import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Build
 import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -30,10 +29,10 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarToday
 import androidx.compose.material.icons.filled.Settings
-import androidx.core.content.ContextCompat
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.example.todolist.notifications.canShowNotifications
+import kotlinx.coroutines.flow.StateFlow
 
 enum class ReminderState {
     DISABLED,           // User has disabled reminders
@@ -46,12 +45,24 @@ enum class ReminderState {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReminderSection(
+    themeMode: StateFlow<ThemeMode>?,
     modifier: Modifier = Modifier,
     initialReminder: Long? = null,
-    onReminderChanged: (reminderTime: Long?, reminderText: String?) -> Unit
+    onReminderChanged: (Long?, String?) -> Unit,
 ) {
     val context = LocalContext.current
-    val isDarkTheme = isSystemInDarkTheme()
+
+    val themeModeValue: ThemeMode? = themeMode?.collectAsState()?.value
+
+    val isDarkTheme: Boolean = when (themeModeValue) {
+        ThemeMode.LIGHT -> false
+        ThemeMode.DARK -> true
+        ThemeMode.SYSTEM -> isSystemInDarkTheme()
+        null -> isSystemInDarkTheme() // fallback when no VM passed
+    }
+
+
+
 
     // Reminder configuration state
     var reminderConfig by remember {
@@ -238,6 +249,8 @@ fun ReminderSection(
         ReminderState.ACTIVE -> colorResource(id = R.color.nice_color)
         ReminderState.EXPIRED -> if (isDarkTheme) Color(0xFFFF8A65) else Color(0xFFFF7043)
     }
+
+
 
     // Main Reminder Card
     Card(

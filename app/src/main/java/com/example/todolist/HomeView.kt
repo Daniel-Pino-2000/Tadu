@@ -26,6 +26,7 @@ import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.example.todolist.settings.SettingsViewModel
 import com.example.todolist.ui.theme.LocalDynamicColors
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -35,7 +36,7 @@ import java.time.format.DateTimeFormatter
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
-fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
+fun HomeView(navController: NavHostController, viewModel: TaskViewModel, settingsViewModel: SettingsViewModel) {
     val uiState by viewModel.uiState.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
@@ -130,6 +131,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel) {
         AddTaskView(
             uiState.currentId,
             viewModel,
+            settingsViewModel,
             onDismiss = {
                 viewModel.setShowBottomSheet(false)
                 viewModel.setTaskBeingEdited(false)

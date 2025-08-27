@@ -138,6 +138,30 @@ fun SettingsScreen(
         previousClearHistoryEnabled = clearHistoryEnabled
     }
 
+    // Handle system theme changes for accent color updates
+    LaunchedEffect(systemInDarkTheme, currentThemeMode, accentColor) {
+        // Only update accent color if we're following system theme and the effective theme changed
+        if (currentThemeMode == ThemeMode.SYSTEM) {
+            val oldColors = getCommonAccentColors(!systemInDarkTheme) // Previous theme colors
+            val newColors = getCommonAccentColors(systemInDarkTheme)   // Current theme colors
+
+            // Find current accent color index in the old theme set
+            val currentIndex = oldColors.indexOfFirst { color ->
+                kotlin.math.abs(color.red - accentColor.red) < 0.01f &&
+                        kotlin.math.abs(color.green - accentColor.green) < 0.01f &&
+                        kotlin.math.abs(color.blue - accentColor.blue) < 0.01f
+            }
+
+            // If we found a match and the colors are different, update to the corresponding color
+            if (currentIndex >= 0 && currentIndex < newColors.size) {
+                val newAccentColor = newColors[currentIndex]
+                if (newAccentColor != accentColor) {
+                    viewModel.updateAccentColor(newAccentColor)
+                }
+            }
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
