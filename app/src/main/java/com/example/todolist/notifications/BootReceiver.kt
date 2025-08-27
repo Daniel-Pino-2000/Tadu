@@ -72,15 +72,19 @@ class BootReceiver : BroadcastReceiver() {
     private fun scheduleHistoryCleanup(context: Context) {
         val workManager = WorkManager.getInstance(context)
 
+        // Cancel any existing work first to ensure clean state
+        workManager.cancelUniqueWork("history_cleanup_work")
+
         val cleanupWorkRequest = PeriodicWorkRequestBuilder<HistoryCleanupWorker>(30, TimeUnit.DAYS)
+            .setInitialDelay(30, TimeUnit.DAYS) // Ensure it waits 30 days before first execution
             .build()
 
         workManager.enqueueUniquePeriodicWork(
             "history_cleanup_work",
-            ExistingPeriodicWorkPolicy.UPDATE,
+            ExistingPeriodicWorkPolicy.KEEP, // Use KEEP to prevent immediate execution
             cleanupWorkRequest
         )
 
-        Log.d("BootReceiver", "History cleanup work scheduled")
+        Log.d("BootReceiver", "History cleanup work scheduled with 30-day initial delay")
     }
 }
