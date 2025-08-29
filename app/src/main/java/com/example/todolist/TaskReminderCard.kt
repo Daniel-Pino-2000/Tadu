@@ -32,6 +32,7 @@ import androidx.compose.material.icons.filled.Settings
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import com.example.todolist.notifications.canShowNotifications
+import com.example.todolist.settings.SettingsViewModel
 import kotlinx.coroutines.flow.StateFlow
 
 enum class ReminderState {
@@ -45,14 +46,16 @@ enum class ReminderState {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReminderSection(
-    themeMode: StateFlow<ThemeMode>?,
+    settingsViewModel: SettingsViewModel,
     modifier: Modifier = Modifier,
     initialReminder: Long? = null,
     onReminderChanged: (Long?, String?) -> Unit,
 ) {
     val context = LocalContext.current
 
-    val themeModeValue: ThemeMode? = themeMode?.collectAsState()?.value
+    val themeModeValue: ThemeMode = settingsViewModel.themeMode.collectAsState().value
+
+    val accentColor: Color = settingsViewModel.accentColor.collectAsState().value
 
     val isDarkTheme: Boolean = when (themeModeValue) {
         ThemeMode.LIGHT -> false
@@ -201,10 +204,10 @@ fun ReminderSection(
         ReminderState.PERMISSION_DENIED -> Color(0xFFFFA726).copy(
             alpha = if (isDarkTheme) 0.15f else 0.08f
         )
-        ReminderState.PENDING -> colorResource(id = R.color.nice_color).copy(
+        ReminderState.PENDING -> accentColor.copy(
             alpha = if (isDarkTheme) 0.12f else 0.06f
         )
-        ReminderState.ACTIVE -> colorResource(id = R.color.nice_color).copy(
+        ReminderState.ACTIVE -> accentColor.copy(
             alpha = if (isDarkTheme) 0.12f else 0.06f
         )
         ReminderState.EXPIRED -> Color(0xFFFF8A50).copy(
@@ -219,10 +222,10 @@ fun ReminderSection(
         ReminderState.PERMISSION_DENIED -> Color(0xFFFFA726).copy(
             alpha = if (isDarkTheme) 0.4f else 0.3f
         )
-        ReminderState.PENDING -> colorResource(id = R.color.nice_color).copy(
+        ReminderState.PENDING -> accentColor.copy(
             alpha = if (isDarkTheme) 0.4f else 0.2f
         )
-        ReminderState.ACTIVE -> colorResource(id = R.color.nice_color).copy(
+        ReminderState.ACTIVE -> accentColor.copy(
             alpha = if (isDarkTheme) 0.4f else 0.2f
         )
         ReminderState.EXPIRED -> Color(0xFFFF8A50).copy(
@@ -235,8 +238,8 @@ fun ReminderSection(
             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f)
         } else Color.Gray
         ReminderState.PERMISSION_DENIED -> Color(0xFFFFA726)
-        ReminderState.PENDING -> colorResource(id = R.color.nice_color)
-        ReminderState.ACTIVE -> colorResource(id = R.color.nice_color)
+        ReminderState.PENDING -> accentColor
+        ReminderState.ACTIVE -> accentColor
         ReminderState.EXPIRED -> if (isDarkTheme) Color(0xFFFFAB91) else Color(0xFFE65100)
     }
 
@@ -245,19 +248,40 @@ fun ReminderSection(
             MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
         } else Color.Gray
         ReminderState.PERMISSION_DENIED -> Color(0xFFFFA726)
-        ReminderState.PENDING -> colorResource(id = R.color.nice_color)
-        ReminderState.ACTIVE -> colorResource(id = R.color.nice_color)
+        ReminderState.PENDING -> accentColor
+        ReminderState.ACTIVE -> accentColor
         ReminderState.EXPIRED -> if (isDarkTheme) Color(0xFFFF8A65) else Color(0xFFFF7043)
     }
 
+    // Helper: blend two colors together
+    fun blendColors(fg: Color, bg: Color, ratio: Float): Color {
+        return Color(
+            red = (fg.red * ratio + bg.red * (1 - ratio)),
+            green = (fg.green * ratio + bg.green * (1 - ratio)),
+            blue = (fg.blue * ratio + bg.blue * (1 - ratio)),
+            alpha = 1f
+        )
+    }
 
+// Choose background based on theme
+    val adjustedContainerColor = if (isDarkTheme) {
+        // Blend container with dark theme surface so it’s darker & subtle
+        blendColors(containerColor, MaterialTheme.colorScheme.surface, 0.25f)
+    } else {
+        containerColor
+    }
 
     // Main Reminder Card
     Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp),
-        colors = CardDefaults.cardColors(containerColor = containerColor),
+        colors = CardDefaults.cardColors(
+            containerColor = adjustedContainerColor,
+            contentColor = contentColor,
+            disabledContainerColor = adjustedContainerColor,
+            disabledContentColor = contentColor.copy(alpha = 0.6f)
+        ),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = if (isDarkTheme) 2.dp else 0.dp),
         border = borderColor?.let { BorderStroke(1.dp, it) }
@@ -312,12 +336,12 @@ fun ReminderSection(
                         checkedThumbColor = when (reminderState) {
                             ReminderState.EXPIRED -> if (isDarkTheme) Color(0xFFFF8A65) else Color(0xFFFF7043)
                             ReminderState.PERMISSION_DENIED -> Color(0xFFFFA726)
-                            else -> colorResource(id = R.color.nice_color)
+                            else -> accentColor
                         },
                         checkedTrackColor = when (reminderState) {
                             ReminderState.EXPIRED -> if (isDarkTheme) Color(0xFFFF8A65).copy(alpha = 0.4f) else Color(0xFFFF7043).copy(alpha = 0.3f)
                             ReminderState.PERMISSION_DENIED -> Color(0xFFFFA726).copy(alpha = 0.3f)
-                            else -> colorResource(id = R.color.nice_color).copy(alpha = 0.3f)
+                            else -> accentColor.copy(alpha = 0.3f)
                         },
                         uncheckedThumbColor = if (isDarkTheme) MaterialTheme.colorScheme.onSurface else Color.White,
                         uncheckedTrackColor = if (isDarkTheme) MaterialTheme.colorScheme.outline.copy(alpha = 0.4f) else Color.Gray.copy(alpha = 0.3f)
@@ -385,17 +409,17 @@ fun ReminderSection(
                                     imageVector = Icons.Default.AccessTime,
                                     contentDescription = null,
                                     modifier = Modifier.size(14.dp),
-                                    tint = colorResource(id = R.color.nice_color)
+                                    tint = accentColor
                                 )
                                 Text(
                                     "Active • Tap to edit",
                                     fontSize = 12.sp,
-                                    color = colorResource(id = R.color.nice_color)
+                                    color = accentColor
                                 )
                             }
                         },
                         colors = AssistChipDefaults.assistChipColors(
-                            containerColor = colorResource(id = R.color.nice_color).copy(alpha = if (isDarkTheme) 0.2f else 0.1f)
+                            containerColor = accentColor.copy(alpha = if (isDarkTheme) 0.2f else 0.1f)
                         ),
                         modifier = Modifier.height(28.dp)
                     )
@@ -437,7 +461,7 @@ fun ReminderSection(
                         onClick = { showReminderDialog = true },
                         modifier = Modifier.fillMaxWidth().height(36.dp),
                         colors = ButtonDefaults.textButtonColors(
-                            contentColor = colorResource(id = R.color.nice_color)
+                            contentColor = accentColor
                         )
                     ) {
                         Icon(
@@ -491,7 +515,7 @@ fun ReminderSection(
                                 contentDescription = "Set Reminder",
                                 tint = when (reminderState) {
                                     ReminderState.EXPIRED -> if (isDarkTheme) Color(0xFFFF8A65) else Color(0xFFFF7043)
-                                    else -> colorResource(id = R.color.nice_color)
+                                    else -> accentColor
                                 },
                                 modifier = Modifier.size(20.dp)
                             )

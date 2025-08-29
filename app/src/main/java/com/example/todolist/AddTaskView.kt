@@ -78,7 +78,7 @@ import com.example.todolist.ui.theme.LocalDynamicColors
 fun AddTaskView(
     id: Long,
     viewModel: TaskViewModel,
-    settingsViewModel: SettingsViewModel? = null, // optional
+    settingsViewModel: SettingsViewModel,
     onDismiss: () -> Unit,
     onSubmit: (task: Task) -> Unit,
     isHistoryMode: Boolean = false, // New parameter to indicate if we're in history mode
@@ -273,7 +273,7 @@ fun AddTaskView(
             // Reminder Section - now handles its own UI and returns data via callback
             if (!isHistoryMode) {
                 ReminderSection(
-                    settingsViewModel?.themeMode,
+                    settingsViewModel,
                     initialReminder = reminderTime,
                     onReminderChanged = { newReminderTime, newReminderText ->
                         reminderTime = newReminderTime

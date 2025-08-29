@@ -207,7 +207,7 @@ fun TaskItem(task: Task, viewModel: TaskViewModel, currentRoute: String, undoToa
                                 contentDescription = "Has reminder",
                                 modifier = Modifier.size(16.dp), // Original size
                                 tint = if (task.reminderTime!! <= System.currentTimeMillis()) colorResource(id = R.color.orange)
-                                else colorResource(id = R.color.nice_color).copy(alpha = 0.7f) // Blue for future reminders
+                                else MaterialTheme.colorScheme.primary.copy(alpha = 0.7f) // Blue for future reminders
                             )
 
                             // Add spacing if there's also a location icon

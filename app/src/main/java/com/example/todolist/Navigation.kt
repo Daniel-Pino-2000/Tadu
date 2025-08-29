@@ -89,7 +89,7 @@ fun Navigation(
                 )
             }
         ) {
-            TaskHistoryView(viewModel, navController)
+            TaskHistoryView(viewModel, settingsViewModel, navController)
         }
 
         // Reminders screen
@@ -184,6 +184,7 @@ fun Navigation(
                         AddTaskView(
                             selectedTaskId ?: uiState.currentId,
                             viewModel,
+                            settingsViewModel,
                             onDismiss = {
                                 viewModel.setShowBottomSheet(false)
                                 viewModel.setTaskBeingEdited(false)

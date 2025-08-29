@@ -35,6 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import com.example.todolist.data.Task
+import com.example.todolist.settings.SettingsViewModel
 import com.example.todolist.ui.theme.LocalDynamicColors
 import java.text.SimpleDateFormat
 import java.util.*
@@ -44,7 +45,7 @@ import kotlin.collections.forEach
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun TaskHistoryView(viewModel: TaskViewModel, navController: NavHostController) {
+fun TaskHistoryView(viewModel: TaskViewModel, settingsViewModel: SettingsViewModel, navController: NavHostController) {
 
     val taskList = viewModel.getFinishedTasks.collectAsState(initial = listOf())
     val tasks = taskList.value
@@ -146,6 +147,7 @@ fun TaskHistoryView(viewModel: TaskViewModel, navController: NavHostController) 
             AddTaskView(
                 id = uiState.currentId,
                 viewModel = viewModel,
+                settingsViewModel = settingsViewModel,
                 onDismiss = {
                     viewModel.setShowBottomSheet(false)
                     viewModel.setTaskBeingEdited(false)
