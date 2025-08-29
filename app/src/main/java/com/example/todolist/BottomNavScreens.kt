@@ -200,7 +200,7 @@ fun BottomNavScreens(
                 },
                 onClearSelection = { selectedLabel = null },
                 labelData = labelData,
-                niceBlueColor = niceColor,
+                niceColor = niceColor,
                 searchFocusRequester = searchFocusRequester,
                 keyboardController = keyboardController,
                 focusManager = focusManager
@@ -379,7 +379,7 @@ private fun SearchSection(
     onLabelSelectionChange: (String?) -> Unit,
     onClearSelection: () -> Unit,
     labelData: List<Pair<String, Int>>,
-    niceBlueColor: Color,
+    niceColor: Color,
     searchFocusRequester: FocusRequester,
     keyboardController: androidx.compose.ui.platform.SoftwareKeyboardController?,
     focusManager: androidx.compose.ui.focus.FocusManager
@@ -448,7 +448,7 @@ private fun SearchSection(
         SelectedLabelSection(
             selectedLabel = selectedLabel,
             onClearSelection = onClearSelection,
-            niceBlueColor = niceBlueColor
+            niceColor = niceColor
         )
     } else if (searchQuery.isBlank()) {
         LabelFilterSection(
@@ -467,7 +467,7 @@ private fun SearchSection(
 private fun SelectedLabelSection(
     selectedLabel: String,
     onClearSelection: () -> Unit,
-    niceBlueColor: Color
+    niceColor: Color
 ) {
     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
         Row(
@@ -481,14 +481,14 @@ private fun SelectedLabelSection(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
-                tint = niceBlueColor,
+                tint = niceColor,
                 modifier = Modifier.size(18.dp)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
                 text = "Back to labels",
                 fontSize = 14.sp,
-                color = niceBlueColor,
+                color = niceColor,
                 fontWeight = FontWeight.Medium
             )
         }
@@ -509,13 +509,13 @@ private fun SelectedLabelSection(
             Box(
                 modifier = Modifier
                     .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFE8F5E8))
+                    .background(niceColor.copy(alpha = 0.1f))
                     .padding(horizontal = 12.dp, vertical = 4.dp)
             ) {
                 Text(
                     text = selectedLabel,
                     fontSize = 14.sp,
-                    color = Color(0xFF2E7D32),
+                    color = niceColor,
                     fontWeight = FontWeight.SemiBold
                 )
             }
