@@ -337,7 +337,7 @@ fun MinimalTaskCard(
 
     // Colors (animate to avoid harsh jumps). Keep geometry constant to prevent layout jitter.
     val expiredRed = Color(0xFFDC2626)
-    val expiredBackground = Color(0xFFFEF2F2)
+    val expiredBackground = MaterialTheme.colorScheme.surfaceContainer
     val expiredBorder = Color(0xFFEF4444)
     val expiredText = Color(0xFF991B1B)
 
