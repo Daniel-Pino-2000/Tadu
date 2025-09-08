@@ -353,8 +353,8 @@ fun DropUpPriorityButton(viewModel: TaskViewModel, isHistoryMode: Boolean) {
 @RequiresApi(Build.VERSION_CODES.O)
 fun addTaskToCalendar(context: Context, title: String, deadline: String) {
     try {
-        val currentYear = LocalDate.now().year
-        val deadlineWithYear = "$deadline $currentYear"
+
+        val deadlineWithYear = deadline
 
         val formatter = DateTimeFormatter.ofPattern("MMM dd yyyy", Locale.ENGLISH)
         val parsedDate = LocalDate.parse(deadlineWithYear, formatter)

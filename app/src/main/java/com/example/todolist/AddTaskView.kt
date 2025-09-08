@@ -316,7 +316,7 @@ fun AddTaskView(
                 }
             }
 
-            var addToCalendar by remember { mutableStateOf(false) } // Checkbox state
+            var addToCalendar by remember { mutableStateOf(false) }
 
             Spacer(modifier = Modifier.height(4.dp))
 
