@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.room.Room
 import com.myapp.tadu.data.TaskDatabase
 import com.myapp.tadu.data.TaskRepository
+import com.myapp.tadu.data.remote.TaskCloudService
 import com.myapp.tadu.notifications.AndroidReminderScheduler
 import com.myapp.tadu.notifications.ReminderScheduler
 
@@ -14,8 +15,12 @@ object Graph {
     lateinit var reminderScheduler: ReminderScheduler
         private set
 
+
     val taskRepository by lazy {
-        TaskRepository(taskDao = database.taskDao())
+        TaskRepository(
+            taskDao = database.taskDao(),
+            cloudService = TaskCloudService()
+        )
     }
 
     fun provide(context: Context) {

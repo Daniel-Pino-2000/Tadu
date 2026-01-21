@@ -34,6 +34,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import com.google.firebase.auth.FirebaseAuth
+import com.myapp.tadu.Graph.taskRepository
 import com.myapp.tadu.navigation.Navigation
 import com.myapp.tadu.ui.theme.MyToDoAppTheme
 import com.myapp.tadu.settings.createSettingsRepository
@@ -155,6 +157,22 @@ class MainActivity : ComponentActivity() {
         val navController = rememberNavController()
         val authViewModel: AuthViewModel = viewModel()
         val settingsState by settingsViewModel.settingsState.collectAsState()
+
+        // Check if user is logged in
+        val currentUser = FirebaseAuth.getInstance().currentUser
+        val isLoggedIn = currentUser != null
+
+        // Navigation starts based on login state
+        LaunchedEffect(Unit) {
+            if (!isLoggedIn) {
+                navController.navigate("login") {
+                    popUpTo(0) // clear back stack so user can't go back
+                }
+            } else {
+                // User logged in: sync tasks from Firebase
+                taskRepository.syncFromCloud()
+            }
+        }
 
         // Check battery optimization on startup (only if notifications are enabled)
         LaunchedEffect(settingsState.notificationsEnabled) {

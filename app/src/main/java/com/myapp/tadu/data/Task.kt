@@ -8,37 +8,35 @@ import java.util.Date
 @Entity(tableName = "task-table")
 data class Task(
     @PrimaryKey(autoGenerate = true)
-    val id: Long = 0L,
+    var id: Long = 0L,
     @ColumnInfo(name = "task-title")
-    val title: String = "",
+    var title: String = "",
     @ColumnInfo(name = "task-description")
-    val description: String = "",
+    var description: String = "",
     @ColumnInfo(name = "task-date")
-    val date: String = Date().toString(),
+    var date: String = Date().toString(),
     @ColumnInfo(name = "task-address")
-    val address: String = "",
+    var address: String = "",
     @ColumnInfo(name = "task-priority")
-    val priority: String,
+    var priority: String = "",  // ADDED DEFAULT VALUE
     @ColumnInfo(name = "task-deadline")
     var deadline: String = Date().toString(),
 
     @ColumnInfo(name = "task-deleted")
-    var isDeleted: Boolean =  false,
+    var isDeleted: Boolean = false,
     @ColumnInfo(name = "task-deletion-date")
     var deletionDate: Long? = null,
     @ColumnInfo(name = "task-completed")
-    var isCompleted: Boolean =  false,
+    var isCompleted: Boolean = false,
     @ColumnInfo(name = "task-completion-date")
     var completionDate: Long? = null,
 
     @ColumnInfo(name = "task-label")
-    val label: String = "",// Default label
+    var label: String = "",  // Changed to var
 
     @ColumnInfo(name = "task-reminder-time")
     var reminderTime: Long? = null,
 
     @ColumnInfo(name = "task-reminder-text")
     var reminderText: String? = null
-
-
 )

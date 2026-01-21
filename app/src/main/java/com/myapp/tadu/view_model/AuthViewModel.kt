@@ -14,8 +14,8 @@ import com.myapp.tadu.data.remote.User
 class AuthViewModel : ViewModel() {
     private val userRepository: UserRepository
 
-    private val _authResult = MutableLiveData<Result<User>>()
-    val authResult: LiveData<Result<User>> get() = _authResult
+    private val _authResult = MutableLiveData<Result<User>?>()
+    val authResult: LiveData<Result<User>?> get() = _authResult
 
 
     init {
@@ -35,5 +35,17 @@ class AuthViewModel : ViewModel() {
         viewModelScope.launch {
             _authResult.value = userRepository.login(email, password)
         }
+    }
+
+    fun logout() {
+        viewModelScope.launch {
+            userRepository.logout()
+            _authResult.value = null           // clear any previous auth result
+        }
+    }
+
+    // Optional helper to check if user is logged in
+    fun isUserLoggedIn(): Boolean {
+        return userRepository.currentUserId != null
     }
 }

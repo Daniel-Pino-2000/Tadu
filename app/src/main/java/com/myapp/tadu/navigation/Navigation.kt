@@ -114,7 +114,7 @@ fun Navigation(
         composable(
             Screen.Settings.route
         ) {
-            SettingsScreen(navController, settingsViewModel)
+            SettingsScreen(navController, settingsViewModel, authViewModel)
         }
 
         composable(Screen.SignupScreen.route) {

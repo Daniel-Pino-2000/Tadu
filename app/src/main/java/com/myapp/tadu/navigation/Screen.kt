@@ -17,7 +17,7 @@ sealed class Screen(val title: String, val route: String) {
     object Reminders: Screen("Reminders", "reminders")
     object Settings: Screen("Settings", "settings")
     object Home: Screen("Home", "home")
-    object LoginScreen: Screen("LogIn", "loginscreen")
+    object LoginScreen: Screen("LogIn", "login")
     object SignupScreen: Screen("SignUp", "signupscreen")
 
     sealed class BottomScreen(

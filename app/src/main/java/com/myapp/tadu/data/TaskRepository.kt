@@ -1,12 +1,15 @@
 package com.myapp.tadu.data
 
+import com.myapp.tadu.data.remote.TaskCloudService
 import kotlinx.coroutines.flow.Flow
 
 class TaskRepository(
-    private val taskDao: TaskDao
+    private val taskDao: TaskDao,
+    private val cloudService: TaskCloudService
 ) {
     suspend fun addTask(task: Task) {
         taskDao.addTask(task)
+        cloudService.saveTask(task)
     }
 
     fun getTasks() : Flow<List<Task>> =taskDao.getAllTasks()
@@ -31,18 +34,30 @@ class TaskRepository(
     // In TaskRepository
     suspend fun softDeleteTask(taskId: Long) {
         taskDao.softDeleteTask(taskId)
+        taskDao.getTaskById(taskId).collect { task ->
+            cloudService.deleteTask(task)
+        }
     }
 
     suspend fun markTaskCompleted(taskId: Long) {
         taskDao.markTaskCompleted(taskId)
+        taskDao.getTaskById(taskId).collect { task ->
+            cloudService.saveTask(task)
+        }
     }
 
     suspend fun markTaskPending(taskId: Long) {
         taskDao.markTaskPending(taskId)
+        taskDao.getTaskById(taskId).collect { task ->
+            cloudService.saveTask(task)
+        }
     }
 
     suspend fun restoreTask(taskId: Long) {
         taskDao.restoreTask(taskId)
+        taskDao.getTaskById(taskId).collect { task ->
+            cloudService.saveTask(task)
+        }
     }
 
 
@@ -52,10 +67,18 @@ class TaskRepository(
 
     suspend fun updateATask(task: Task) {
         taskDao.updateATask(task)
+        cloudService.saveTask(task)
     }
 
     suspend fun deleteATask(task: Task) {
         taskDao.deleteATask(task)
+        cloudService.deleteTask(task)
+    }
+
+    // Optional: restore from cloud on app start
+    suspend fun syncFromCloud() {
+        val cloudTasks = cloudService.getAllTasks()
+        cloudTasks.forEach { taskDao.addTask(it) }
     }
 
 

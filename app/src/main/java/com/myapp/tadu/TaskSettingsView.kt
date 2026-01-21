@@ -48,6 +48,7 @@ import com.myapp.tadu.ui.theme.getCommonAccentColors
 import com.myapp.tadu.notifications.canShowNotifications
 import com.myapp.tadu.settings.HistoryCleanupWorker
 import com.myapp.tadu.settings.SettingsViewModel
+import com.myapp.tadu.view_model.AuthViewModel
 import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
@@ -59,7 +60,8 @@ private fun checkNotificationPermission(context: Context): Boolean {
 @Composable
 fun SettingsScreen(
     navController: NavHostController,
-    viewModel: SettingsViewModel = viewModel()
+    viewModel: SettingsViewModel = viewModel(),
+    authViewModel: AuthViewModel = viewModel()
 ) {
     val context = LocalContext.current
     val dynamicColors = LocalDynamicColors.current
@@ -252,6 +254,16 @@ fun SettingsScreen(
                         }
                     )
                 }
+
+                Button(onClick = {
+                    authViewModel.logout() // calls FirebaseAuth.signOut()
+                    navController.navigate("login") {
+                        popUpTo("home") { inclusive = true } // clear HomeView from backstack
+                    }
+                }) {
+                    Text("Logout")
+                }
+
             }
 
             // Notifications & Reminders Section

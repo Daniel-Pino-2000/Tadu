@@ -38,11 +38,11 @@ fun LoginScreen(
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
 
-    // ✅ Observe custom Result<User> from LiveData
+    // Observe custom Result<User> from LiveData
     val result: com.myapp.tadu.data.remote.Result<com.myapp.tadu.data.remote.User>? by
     authViewModel.authResult.observeAsState(initial = null)
 
-    // ✅ React to result changes
+    // React to result changes
     result?.let { res ->
         when (res) {
             is com.myapp.tadu.data.remote.Result.Success -> {

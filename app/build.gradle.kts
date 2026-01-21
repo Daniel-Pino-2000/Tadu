@@ -1,15 +1,9 @@
-import org.gradle.kotlin.dsl.implementation
-
-
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("kotlin-kapt")
-
-    // Add the Google services Gradle plugin
     id("com.google.gms.google-services")
-
 }
 
 android {
@@ -50,61 +44,71 @@ android {
 
 dependencies {
 
-    implementation("androidx.compose.runtime:runtime-livedata:1.5.0")
+    // ----------------------
+    // Firebase (using BoM for version management)
+    // ----------------------
+    implementation(platform("com.google.firebase:firebase-bom:33.7.0"))
+    implementation("com.google.firebase:firebase-analytics-ktx")
+    implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
 
+    // ----------------------
+    // Coroutines for Firebase
+    // ----------------------
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-play-services:1.7.3")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
 
-    // Import the Firebase BoM
-    implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
+    implementation("androidx.compose.runtime:runtime-livedata")
 
-    // When using the BoM, don't specify versions in Firebase dependencies
-    implementation("com.google.firebase:firebase-analytics")
-
-    implementation(platform("com.google.firebase:firebase-bom:32.6.0"))
-    implementation("com.google.firebase:firebase-auth")
-    implementation("com.google.firebase:firebase-firestore")
-
-
-    // Icons
-    implementation("androidx.compose.material:material-icons-extended:<version>")
-
-    implementation("androidx.core:core-ktx:1.12.0") // or latest stable version
-
-    // Animation
-    implementation("com.airbnb.android:lottie-compose:6.1.0")
-
-    // DataStore
-    implementation("androidx.datastore:datastore-preferences:1.1.7")
-
-    implementation("androidx.work:work-runtime-ktx:2.8.1")
-    implementation("androidx.activity:activity-compose:1.8.2")
-
-    // Room
-    implementation("androidx.room:room-runtime:2.7.1")
-    implementation("androidx.room:room-ktx:2.7.1")
-    implementation(libs.firebase.auth.ktx)
-    kapt("androidx.room:room-compiler:2.7.1")
-
-
+    // ----------------------
+    // Jetpack Compose
+    // ----------------------
+    implementation(platform("androidx.compose:compose-bom:2024.04.01"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-graphics")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.material:material:1.6.7")  // Material 2
+    implementation("androidx.compose.material3:material3")  // Material 3
     implementation("androidx.compose.animation:animation")
     implementation("androidx.compose.animation:animation-core")
-
     implementation("androidx.navigation:navigation-compose:2.9.0")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.28.0")
-    implementation(libs.androidx.material)
-    implementation(libs.androidx.core.ktx)
-    implementation(libs.androidx.lifecycle.runtime.ktx)
-    implementation(libs.androidx.activity.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.ui)
-    implementation(libs.androidx.ui.graphics)
-    implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
-    implementation(libs.androidx.navigation.runtime.android)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
-    androidTestImplementation(platform(libs.androidx.compose.bom))
-    androidTestImplementation(libs.androidx.ui.test.junit4)
-    debugImplementation(libs.androidx.ui.tooling)
-    debugImplementation(libs.androidx.ui.test.manifest)
+
+    // ----------------------
+    // Room
+    // ----------------------
+    implementation("androidx.room:room-runtime:2.7.1")
+    implementation("androidx.room:room-ktx:2.7.1")
+    kapt("androidx.room:room-compiler:2.7.1")
+
+    // ----------------------
+    // AndroidX / Core
+    // ----------------------
+    implementation("androidx.core:core-ktx:1.12.0")
+    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.2")
+    implementation("androidx.navigation:navigation-runtime-android:2.9.0")
+    implementation("androidx.datastore:datastore-preferences:1.1.7")
+    implementation("androidx.work:work-runtime-ktx:2.8.1")
+
+    // ----------------------
+    // Animation
+    // ----------------------
+    implementation("com.airbnb.android:lottie-compose:6.1.0")
+
+    // ----------------------
+    // Testing
+    // ----------------------
+    testImplementation("junit:junit:4.13.2")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
+    androidTestImplementation(platform("androidx.compose:compose-bom:2024.04.01"))
+    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
+
+    // ----------------------
+    // Debug
+    // ----------------------
+    debugImplementation("androidx.compose.ui:ui-tooling")
+    debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
