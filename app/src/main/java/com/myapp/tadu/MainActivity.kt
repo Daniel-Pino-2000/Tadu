@@ -32,10 +32,13 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
+import com.myapp.tadu.navigation.Navigation
 import com.myapp.tadu.ui.theme.MyToDoAppTheme
 import com.myapp.tadu.settings.createSettingsRepository
 import com.myapp.tadu.settings.SettingsViewModel
+import com.myapp.tadu.view_model.AuthViewModel
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -57,6 +60,8 @@ class MainActivity : ComponentActivity() {
 
             // Collect the combined settings state
             val settingsState by settingsViewModel.settingsState.collectAsState()
+
+
 
             // Simplified loading state - single state controls everything
             var showMainContent by remember { mutableStateOf(false) }
@@ -148,6 +153,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun MainContent(settingsViewModel: SettingsViewModel) {
         val navController = rememberNavController()
+        val authViewModel: AuthViewModel = viewModel()
         val settingsState by settingsViewModel.settingsState.collectAsState()
 
         // Check battery optimization on startup (only if notifications are enabled)
@@ -161,7 +167,7 @@ class MainActivity : ComponentActivity() {
         }
 
         Box(modifier = Modifier.fillMaxSize()) {
-            Navigation(navController = navController)
+            Navigation(navController = navController, authViewModel = authViewModel)
 
             // Show battery optimization dialog when needed
             if (showBatteryOptimizationDialog) {

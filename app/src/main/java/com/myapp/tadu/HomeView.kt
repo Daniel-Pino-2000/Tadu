@@ -26,6 +26,8 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
+import com.myapp.tadu.navigation.Screen
+import com.myapp.tadu.navigation.screenInBottom
 import com.myapp.tadu.settings.SettingsViewModel
 import com.myapp.tadu.ui.theme.LocalDynamicColors
 import kotlinx.coroutines.flow.first

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1098722938945",
+    "project_id": "tadu-f609d",
+    "storage_bucket": "tadu-f609d.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1098722938945:android:610c10bf55615bec57f6c0",
+        "android_client_info": {
+          "package_name": "com.myapp.tadu"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAGGPd2tmDnBPV1GACUknoeRiFw7GVIzFo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -30,6 +30,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.myapp.tadu.navigation.Screen
+import com.myapp.tadu.navigation.screenInBottom
 import com.myapp.tadu.ui.theme.LocalDynamicColors
 
 @RequiresApi(Build.VERSION_CODES.O)

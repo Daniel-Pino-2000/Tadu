@@ -1,3 +1,4 @@
+import org.gradle.kotlin.dsl.implementation
 
 
 plugins {
@@ -5,6 +6,10 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     id("kotlin-kapt")
+
+    // Add the Google services Gradle plugin
+    id("com.google.gms.google-services")
+
 }
 
 android {
@@ -44,6 +49,21 @@ android {
 }
 
 dependencies {
+
+    implementation("androidx.compose.runtime:runtime-livedata:1.5.0")
+
+
+    // Import the Firebase BoM
+    implementation(platform("com.google.firebase:firebase-bom:34.8.0"))
+
+    // When using the BoM, don't specify versions in Firebase dependencies
+    implementation("com.google.firebase:firebase-analytics")
+
+    implementation(platform("com.google.firebase:firebase-bom:32.6.0"))
+    implementation("com.google.firebase:firebase-auth")
+    implementation("com.google.firebase:firebase-firestore")
+
+
     // Icons
     implementation("androidx.compose.material:material-icons-extended:<version>")
 
@@ -61,6 +81,7 @@ dependencies {
     // Room
     implementation("androidx.room:room-runtime:2.7.1")
     implementation("androidx.room:room-ktx:2.7.1")
+    implementation(libs.firebase.auth.ktx)
     kapt("androidx.room:room-compiler:2.7.1")
 
 
