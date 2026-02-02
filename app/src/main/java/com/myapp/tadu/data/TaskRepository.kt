@@ -37,7 +37,7 @@ class TaskRepository(
     suspend fun softDeleteTask(taskId: Long) {
         taskDao.softDeleteTask(taskId)
         val task = taskDao.getTaskById(taskId).first()
-        cloudService.deleteTask(task)
+        cloudService.saveTask(task)
     }
 
     // Mark a task as completed
