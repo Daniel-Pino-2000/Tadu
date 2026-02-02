@@ -63,8 +63,6 @@ class MainActivity : ComponentActivity() {
             // Collect the combined settings state
             val settingsState by settingsViewModel.settingsState.collectAsState()
 
-
-
             // Simplified loading state - single state controls everything
             var showMainContent by remember { mutableStateOf(false) }
 
@@ -158,54 +156,73 @@ class MainActivity : ComponentActivity() {
         val authViewModel: AuthViewModel = viewModel()
         val settingsState by settingsViewModel.settingsState.collectAsState()
 
-        // Check if user is logged in
+        // Check if user is logged in - initialize properly
         var isLoggedIn by remember {
             mutableStateOf(FirebaseAuth.getInstance().currentUser != null)
         }
+
+        // Track if initial auth check is complete
+        var authCheckComplete by remember { mutableStateOf(false) }
 
         DisposableEffect(Unit) {
             val auth = FirebaseAuth.getInstance()
             val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
                 isLoggedIn = firebaseAuth.currentUser != null
+                authCheckComplete = true // Mark auth check as complete
             }
 
             auth.addAuthStateListener(listener)
+
+            // Trigger initial check immediately
+            isLoggedIn = auth.currentUser != null
+            authCheckComplete = true
+
             onDispose { auth.removeAuthStateListener(listener) }
         }
 
+        // Only sync from cloud if user is logged in
         LaunchedEffect(isLoggedIn) {
-            if (!isLoggedIn) {
-                navController.navigate("login") {
-                    popUpTo(0)
-                }
-            } else {
+            if (isLoggedIn) {
                 taskRepository.syncFromCloud()
             }
         }
 
-
-        // Check battery optimization on startup (only if notifications are enabled)
-        LaunchedEffect(settingsState.notificationsEnabled) {
-            if (settingsState.notificationsEnabled) {
-                delay(1500) // Slightly shorter delay
+        // Check battery optimization ONLY after user is logged in AND notifications are enabled
+        LaunchedEffect(isLoggedIn, settingsState.notificationsEnabled) {
+            if (isLoggedIn && settingsState.notificationsEnabled) {
+                delay(1500)
                 if (!isBatteryOptimizationDisabled()) {
                     showBatteryOptimizationDialog = true
                 }
             }
         }
 
-        Box(modifier = Modifier.fillMaxSize()) {
-            Navigation(navController = navController, authViewModel = authViewModel)
-
-            // Show battery optimization dialog when needed
-            if (showBatteryOptimizationDialog) {
-                PermissionExplanationDialog(
-                    onConfirm = {
-                        showBatteryOptimizationDialog = false
-                        openBatteryOptimizationSettings()
-                    },
-                    onDismiss = { showBatteryOptimizationDialog = false }
+        // Show loading until auth check is complete
+        if (!authCheckComplete) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            Box(modifier = Modifier.fillMaxSize()) {
+                Navigation(
+                    navController = navController,
+                    authViewModel = authViewModel,
+                    isLoggedIn = isLoggedIn // Pass login state
                 )
+
+                // Show battery optimization dialog when needed (only if logged in)
+                if (showBatteryOptimizationDialog && isLoggedIn) {
+                    PermissionExplanationDialog(
+                        onConfirm = {
+                            showBatteryOptimizationDialog = false
+                            openBatteryOptimizationSettings()
+                        },
+                        onDismiss = { showBatteryOptimizationDialog = false }
+                    )
+                }
             }
         }
     }

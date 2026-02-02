@@ -35,25 +35,25 @@ import com.myapp.tadu.view_model.AuthViewModel
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun Navigation(
-    navController: NavHostController,  // now passed from above
-    authViewModel: AuthViewModel
+    navController: NavHostController,
+    authViewModel: AuthViewModel,
+    isLoggedIn: Boolean // New parameter to determine start destination
 ) {
     val context = LocalContext.current
 
     // Manually create ViewModel with injected ReminderScheduler and Repository
     val viewModel = remember {
         TaskViewModel(
-            taskRepository = Graph.taskRepository, // or your actual repository instance
+            taskRepository = Graph.taskRepository,
             reminderScheduler = AndroidReminderScheduler(context)
         )
     }
 
     // SettingsViewModel with proper repository
     val settingsViewModel = remember {
-        val repo = context.createSettingsRepository() // ✅ uses your DataStore
+        val repo = context.createSettingsRepository()
         SettingsViewModel(repo)
     }
-
 
     val uiState by viewModel.uiState.collectAsState()
 
@@ -62,8 +62,33 @@ fun Navigation(
 
     NavHost(
         navController = navController,
-        startDestination = Screen.Home.route
+        startDestination = if (isLoggedIn) Screen.Home.route else Screen.LoginScreen.route // Dynamic start
     ) {
+        // Login screen
+        composable(Screen.LoginScreen.route) {
+            LoginScreen(
+                onNavigateToSignUp = { navController.navigate(Screen.SignupScreen.route) },
+                authViewModel = authViewModel,
+                onSignInSuccess = {
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.LoginScreen.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // Signup screen
+        composable(Screen.SignupScreen.route) {
+            SignUpScreen(
+                authViewModel = authViewModel,
+                onNavigateToLogin = {
+                    navController.navigate(Screen.LoginScreen.route) {
+                        popUpTo(Screen.SignupScreen.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
         // Home screen
         composable(Screen.Home.route) {
             HomeView(navController, viewModel, settingsViewModel)
@@ -105,30 +130,13 @@ fun Navigation(
         }
 
         // Reminders screen
-        composable(
-            Screen.Reminders.route
-        ) {
+        composable(Screen.Reminders.route) {
             TaskRemindersScreen(viewModel, navController)
         }
 
-        composable(
-            Screen.Settings.route
-        ) {
+        // Settings screen
+        composable(Screen.Settings.route) {
             SettingsScreen(navController, settingsViewModel, authViewModel)
-        }
-
-        composable(Screen.SignupScreen.route) {
-            SignUpScreen(
-                authViewModel = authViewModel,
-                onNavigateToLogin = { navController.navigate(Screen.LoginScreen.route) }
-            )
-        }
-        composable(Screen.LoginScreen.route) {
-            LoginScreen(
-                onNavigateToSignUp = { navController.navigate(Screen.SignupScreen.route) },
-                authViewModel = authViewModel,
-                onSignInSuccess = { navController.navigate(Screen.Home.route)}
-            )
         }
 
         // Calendar screen with scale and fade animation
