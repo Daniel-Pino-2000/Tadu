@@ -5,25 +5,28 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.myapp.tadu.Graph
+import com.myapp.tadu.data.TaskRepository
 import com.myapp.tadu.data.remote.Injection
-import com.myapp.tadu.data.remote.UserRepository
-import kotlinx.coroutines.launch
 import com.myapp.tadu.data.remote.Result
 import com.myapp.tadu.data.remote.User
+import com.myapp.tadu.data.remote.UserRepository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
-class AuthViewModel : ViewModel() {
-    private val userRepository: UserRepository
+class AuthViewModel(
+    private val taskRepository: TaskRepository = Graph.taskRepository
+) : ViewModel() {
+
+    private val userRepository: UserRepository = UserRepository(
+        FirebaseAuth.getInstance(),
+        Injection.instance()
+    )
 
     private val _authResult = MutableLiveData<Result<User>?>()
     val authResult: LiveData<Result<User>?> get() = _authResult
 
 
-    init {
-        userRepository = UserRepository(
-            FirebaseAuth.getInstance(),
-            Injection.instance()
-        )
-    }
 
     fun signUp(email: String, password: String, firstName: String, lastName: String) {
         viewModelScope.launch {
@@ -38,14 +41,21 @@ class AuthViewModel : ViewModel() {
     }
 
     fun logout() {
-        viewModelScope.launch {
+        viewModelScope.launch(Dispatchers.IO) {
+            // 1Clear local tasks so next user sees empty DB
+            taskRepository.clearLocalTasks()
+
+            // Sign out from Firebase
             userRepository.logout()
-            _authResult.value = null           // clear any previous auth result
+
+            // Clear previous auth result
+            _authResult.postValue(null)
         }
     }
 
-    // Optional helper to check if user is logged in
     fun isUserLoggedIn(): Boolean {
         return userRepository.currentUserId != null
     }
 }
+
+

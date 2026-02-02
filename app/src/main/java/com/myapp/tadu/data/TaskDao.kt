@@ -14,6 +14,10 @@ abstract class TaskDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     abstract suspend fun addTask(taskEntity: Task)
 
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    abstract suspend fun upsertTask(task: Task)
+
+
     // Get active tasks only
     @Query("SELECT * FROM `task-table` WHERE `task-deleted` = 0")
     abstract fun getActiveTasks(): Flow<List<Task>>
@@ -81,4 +85,8 @@ abstract class TaskDao {
     // 2. Get tasks by specific label
     @Query("SELECT * FROM `task-table` WHERE `task-label` = :label AND `task-deleted` = 0")
     abstract fun getTasksByLabel(label: String): Flow<List<Task>>
+
+    @Query("DELETE FROM `task-table`")
+    abstract suspend fun clearAllTasks()
+
 }

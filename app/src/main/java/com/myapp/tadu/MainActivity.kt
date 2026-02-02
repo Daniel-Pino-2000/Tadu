@@ -159,20 +159,30 @@ class MainActivity : ComponentActivity() {
         val settingsState by settingsViewModel.settingsState.collectAsState()
 
         // Check if user is logged in
-        val currentUser = FirebaseAuth.getInstance().currentUser
-        val isLoggedIn = currentUser != null
+        var isLoggedIn by remember {
+            mutableStateOf(FirebaseAuth.getInstance().currentUser != null)
+        }
 
-        // Navigation starts based on login state
-        LaunchedEffect(Unit) {
+        DisposableEffect(Unit) {
+            val auth = FirebaseAuth.getInstance()
+            val listener = FirebaseAuth.AuthStateListener { firebaseAuth ->
+                isLoggedIn = firebaseAuth.currentUser != null
+            }
+
+            auth.addAuthStateListener(listener)
+            onDispose { auth.removeAuthStateListener(listener) }
+        }
+
+        LaunchedEffect(isLoggedIn) {
             if (!isLoggedIn) {
                 navController.navigate("login") {
-                    popUpTo(0) // clear back stack so user can't go back
+                    popUpTo(0)
                 }
             } else {
-                // User logged in: sync tasks from Firebase
                 taskRepository.syncFromCloud()
             }
         }
+
 
         // Check battery optimization on startup (only if notifications are enabled)
         LaunchedEffect(settingsState.notificationsEnabled) {
