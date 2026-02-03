@@ -56,6 +56,10 @@ class AuthViewModel(
     fun isUserLoggedIn(): Boolean {
         return userRepository.currentUserId != null
     }
+
+    fun clearAuthResult() {
+        _authResult.value = null
+    }
 }
 
 
