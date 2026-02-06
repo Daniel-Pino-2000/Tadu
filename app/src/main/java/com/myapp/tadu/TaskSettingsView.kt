@@ -25,6 +25,7 @@ import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.History
+import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -83,10 +84,11 @@ fun SettingsScreen(
         ThemeMode.SYSTEM -> systemInDarkTheme
     }
 
-    var backPressed by remember { mutableStateOf(false)}
+    var backPressed by remember { mutableStateOf(false) }
     var showThemeDialog by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
     var showPermissionDialog by remember { mutableStateOf(false) }
+    var showLogoutDialog by remember { mutableStateOf(false) }
 
     // Track notification permission status
     var hasNotificationPermission by remember { mutableStateOf(checkNotificationPermission(context)) }
@@ -254,16 +256,6 @@ fun SettingsScreen(
                         }
                     )
                 }
-
-                Button(onClick = {
-                    authViewModel.logout() // calls FirebaseAuth.signOut()
-                    navController.navigate("login") {
-                        popUpTo("home") { inclusive = true } // clear HomeView from backstack
-                    }
-                }) {
-                    Text("Logout")
-                }
-
             }
 
             // Notifications & Reminders Section
@@ -319,8 +311,77 @@ fun SettingsScreen(
                 }
             }
 
+            // Account Section
+            item {
+                SettingsSection(title = "Account") {
+                    SettingsItem(
+                        icon = Icons.Default.ExitToApp,
+                        title = "Logout",
+                        subtitle = "Sign out of your account",
+                        onClick = { showLogoutDialog = true }
+                    )
+                }
+            }
+
             item { Spacer(modifier = Modifier.height(24.dp)) }
         }
+    }
+
+    // Logout Confirmation Dialog
+    if (showLogoutDialog) {
+        AlertDialog(
+            onDismissRequest = { showLogoutDialog = false },
+            icon = {
+                Icon(
+                    imageVector = Icons.Default.ExitToApp,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.size(28.dp)
+                )
+            },
+            title = {
+                Text(
+                    text = "Logout",
+                    style = MaterialTheme.typography.titleLarge.copy(
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to logout? You'll need to sign in again to access your tasks.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showLogoutDialog = false
+                        authViewModel.logout()
+                        navController.navigate("login") {
+                            popUpTo("home") { inclusive = true }
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text(
+                        "Logout",
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showLogoutDialog = false }) {
+                    Text(
+                        "Cancel",
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+            },
+            shape = RoundedCornerShape(24.dp)
+        )
     }
 
     // Theme Selection Dialog
@@ -374,7 +435,6 @@ fun SettingsScreen(
             onDismiss = { showThemeDialog = false }
         )
     }
-
 
     // Color Picker Dialog
     if (showColorPicker) {
@@ -464,7 +524,6 @@ private fun openAppNotificationSettings(context: Context) {
     }
     context.startActivity(intent)
 }
-
 
 /**
  * Improved notification permission dialog
