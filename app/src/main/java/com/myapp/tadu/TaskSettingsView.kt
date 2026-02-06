@@ -31,6 +31,7 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
@@ -89,6 +90,10 @@ fun SettingsScreen(
     val deleteAccountError by authViewModel.deleteAccountError.observeAsState()
     val deleteAccountLoading by authViewModel.deleteAccountLoading.observeAsState(false)
 
+    // Current user data
+    val currentUser by authViewModel.currentUser.observeAsState()
+    val userEmail = authViewModel.getCurrentUserEmail() ?: "No email"
+
     // Track previous value of clearHistoryEnabled to detect actual changes
     var previousClearHistoryEnabled by remember { mutableStateOf<Boolean?>(null) }
 
@@ -144,6 +149,8 @@ fun SettingsScreen(
     // Initial permission check
     LaunchedEffect(Unit) {
         updatePermissionStates()
+        // Load current user data
+        authViewModel.loadCurrentUser()
     }
 
     // Handle history cleanup work scheduling - only when the setting actually changes
@@ -259,6 +266,14 @@ fun SettingsScreen(
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item { Spacer(modifier = Modifier.height(8.dp)) }
+
+            // User Profile Section
+            item {
+                UserProfileSection(
+                    userName = currentUser?.let { "${it.firstName} ${it.lastName}" },
+                    userEmail = userEmail
+                )
+            }
 
             // Theme & Appearance Section
             item {
@@ -717,6 +732,82 @@ private fun DeleteAccountDialog(
         },
         shape = RoundedCornerShape(24.dp)
     )
+}
+
+/**
+ * User Profile Section - Shows user info at the top of settings
+ */
+@Composable
+private fun UserProfileSection(
+    userName: String?,
+    userEmail: String
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.primaryContainer
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
+        shape = RoundedCornerShape(20.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(20.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            // Profile Avatar
+            Box(
+                modifier = Modifier
+                    .size(56.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.primary),
+                contentAlignment = Alignment.Center
+            ) {
+                // Show first letter of name or default icon
+                if (userName != null && userName.isNotBlank()) {
+                    Text(
+                        text = userName.first().uppercase(),
+                        style = MaterialTheme.typography.headlineMedium,
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        fontWeight = FontWeight.Bold
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "User profile",
+                        tint = MaterialTheme.colorScheme.onPrimary,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+
+            // User Info
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                // User Name
+                if (userName != null && userName.isNotBlank()) {
+                    Text(
+                        text = userName,
+                        style = MaterialTheme.typography.titleLarge.copy(
+                            fontWeight = FontWeight.SemiBold
+                        ),
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
+                    )
+                }
+
+                // User Email
+                Text(
+                    text = userEmail,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                )
+            }
+        }
+    }
 }
 
 /**

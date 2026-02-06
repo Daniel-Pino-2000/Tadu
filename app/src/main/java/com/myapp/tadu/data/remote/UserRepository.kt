@@ -70,6 +70,34 @@ class UserRepository(
     val currentUserId: String?
         get() = auth.currentUser?.uid
 
+    // Current user email
+    val currentUserEmail: String?
+        get() = auth.currentUser?.email
+
+    /**
+     * Get current user data from Firestore
+     */
+    suspend fun getCurrentUser(): Result<User> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val firebaseUser = auth.currentUser
+                    ?: return@withContext Result.Error(Exception("No authenticated user"))
+
+                val snapshot = firestore.collection("users")
+                    .document(firebaseUser.uid)
+                    .get()
+                    .await()
+
+                val user = snapshot.toObject(User::class.java)
+                    ?: return@withContext Result.Error(Exception("User not found in Firestore"))
+
+                Result.Success(user)
+            } catch (e: Exception) {
+                Result.Error(e)
+            }
+        }
+    }
+
     // Helper to save user to Firestore
     private suspend fun saveUserToFirestore(user: User) {
         firestore.collection("users")

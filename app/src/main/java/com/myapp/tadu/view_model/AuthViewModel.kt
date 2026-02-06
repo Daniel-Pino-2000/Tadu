@@ -35,6 +35,10 @@ class AuthViewModel(
     private val _passwordResetResult = MutableLiveData<Result<Unit>?>()
     val passwordResetResult: LiveData<Result<Unit>?> get() = _passwordResetResult
 
+    // ---------- CURRENT USER ----------
+    private val _currentUser = MutableLiveData<User?>()
+    val currentUser: LiveData<User?> get() = _currentUser
+
     // ---------- DELETE ACCOUNT ----------
     private val _accountDeleted = MutableLiveData(false)
     val accountDeleted: LiveData<Boolean> get() = _accountDeleted
@@ -112,6 +116,30 @@ class AuthViewModel(
      */
     fun isUserLoggedIn(): Boolean {
         return userRepository.currentUserId != null
+    }
+
+    /**
+     * Get current user email
+     */
+    fun getCurrentUserEmail(): String? {
+        return userRepository.currentUserEmail
+    }
+
+    /**
+     * Load current user data
+     */
+    fun loadCurrentUser() {
+        viewModelScope.launch {
+            val result = userRepository.getCurrentUser()
+            when (result) {
+                is Result.Success -> {
+                    _currentUser.value = result.data
+                }
+                is Result.Error -> {
+                    _currentUser.value = null
+                }
+            }
+        }
     }
 
     /**
