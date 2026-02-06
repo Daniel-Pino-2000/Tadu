@@ -2,7 +2,9 @@ package com.myapp.tadu.data.remote
 
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
 
 class UserRepository(
     private val auth: FirebaseAuth,
@@ -73,5 +75,17 @@ class UserRepository(
             .document(user.uid) // Use UID as doc ID, not email
             .set(user)
             .await()
+    }
+
+    // In UserRepository.kt
+    suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                auth.sendPasswordResetEmail(email).await()
+                Result.Success(Unit)
+            } catch (e: Exception) {
+                Result.Error(e)
+            }
+        }
     }
 }

@@ -21,7 +21,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.google.firebase.FirebaseNetworkException
 import com.myapp.tadu.view_model.AuthViewModel
+import java.io.IOException
+import java.net.UnknownHostException
 
 @Composable
 fun SignUpScreen(
@@ -62,7 +65,12 @@ fun SignUpScreen(
                 }
                 is com.myapp.tadu.data.remote.Result.Error -> {
                     isLoading = false
-                    errorMessage = "Sign up failed. Please try again."
+                    errorMessage = when (res.exception) {
+                        is UnknownHostException -> "No internet connection. Please check your network."
+                        is FirebaseNetworkException -> "No internet connection. Please check your network."
+                        is IOException -> "Network error. Please check your internet connection."
+                        else -> "Sign up failed. Please try again."
+                    }
                     snackbarHostState.showSnackbar(
                         message = errorMessage ?: "Sign up failed",
                         duration = SnackbarDuration.Short

@@ -5,6 +5,7 @@ import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.google.firebase.auth.FirebaseAuth
+import com.google.firebase.FirebaseNetworkException
 import com.myapp.tadu.Graph
 import com.myapp.tadu.data.TaskRepository
 import com.myapp.tadu.data.remote.Injection
@@ -13,6 +14,8 @@ import com.myapp.tadu.data.remote.User
 import com.myapp.tadu.data.remote.UserRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.io.IOException
+import java.net.UnknownHostException
 
 class AuthViewModel(
     private val taskRepository: TaskRepository = Graph.taskRepository
@@ -26,23 +29,46 @@ class AuthViewModel(
     private val _authResult = MutableLiveData<Result<User>?>()
     val authResult: LiveData<Result<User>?> get() = _authResult
 
-
+    private val _passwordResetResult = MutableLiveData<Result<Unit>?>()
+    val passwordResetResult: LiveData<Result<Unit>?> get() = _passwordResetResult
 
     fun signUp(email: String, password: String, firstName: String, lastName: String) {
         viewModelScope.launch {
-            _authResult.value = userRepository.signUp(email, password, firstName, lastName)
+            try {
+                _authResult.value = userRepository.signUp(email, password, firstName, lastName)
+            } catch (e: Exception) {
+                _authResult.value = Result.Error(e)
+            }
         }
     }
 
     fun login(email: String, password: String) {
         viewModelScope.launch {
-            _authResult.value = userRepository.login(email, password)
+            try {
+                _authResult.value = userRepository.login(email, password)
+            } catch (e: Exception) {
+                _authResult.value = Result.Error(e)
+            }
         }
+    }
+
+    fun sendPasswordResetEmail(email: String) {
+        viewModelScope.launch {
+            try {
+                _passwordResetResult.value = userRepository.sendPasswordResetEmail(email)
+            } catch (e: Exception) {
+                _passwordResetResult.value = Result.Error(e)
+            }
+        }
+    }
+
+    fun clearPasswordResetResult() {
+        _passwordResetResult.value = null
     }
 
     fun logout() {
         viewModelScope.launch(Dispatchers.IO) {
-            // 1Clear local tasks so next user sees empty DB
+            // Clear local tasks so next user sees empty DB
             taskRepository.clearLocalTasks()
 
             // Sign out from Firebase
@@ -61,5 +87,3 @@ class AuthViewModel(
         _authResult.value = null
     }
 }
-
-

@@ -21,7 +21,10 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.google.firebase.FirebaseNetworkException
 import com.myapp.tadu.view_model.AuthViewModel
+import java.io.IOException
+import java.net.UnknownHostException
 
 @Composable
 fun LoginScreen(
@@ -34,6 +37,7 @@ fun LoginScreen(
     var passwordVisible by remember { mutableStateOf(false) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
     var isLoading by remember { mutableStateOf(false) }
+    var showForgotPasswordDialog by remember { mutableStateOf(false) }
 
     val focusManager = LocalFocusManager.current
     val scrollState = rememberScrollState()
@@ -42,6 +46,10 @@ fun LoginScreen(
     // Observe authentication result
     val result: com.myapp.tadu.data.remote.Result<com.myapp.tadu.data.remote.User>? by
     authViewModel.authResult.observeAsState(initial = null)
+
+    // Observe password reset result
+    val resetResult: com.myapp.tadu.data.remote.Result<Unit>? by
+    authViewModel.passwordResetResult.observeAsState(initial = null)
 
     // Handle authentication result
     LaunchedEffect(result) {
@@ -54,7 +62,12 @@ fun LoginScreen(
                 }
                 is com.myapp.tadu.data.remote.Result.Error -> {
                     isLoading = false
-                    errorMessage = "Login failed. Please check your credentials."
+                    errorMessage = when (res.exception) {
+                        is UnknownHostException -> "No internet connection. Please check your network."
+                        is FirebaseNetworkException -> "No internet connection. Please check your network."
+                        is IOException -> "Network error. Please check your internet connection."
+                        else -> "Login failed. Please check your credentials."
+                    }
                     snackbarHostState.showSnackbar(
                         message = errorMessage ?: "Login failed",
                         duration = SnackbarDuration.Short
@@ -62,6 +75,45 @@ fun LoginScreen(
                 }
             }
         }
+    }
+
+    // Handle password reset result
+    LaunchedEffect(resetResult) {
+        resetResult?.let { res ->
+            when (res) {
+                is com.myapp.tadu.data.remote.Result.Success -> {
+                    showForgotPasswordDialog = false
+                    snackbarHostState.showSnackbar(
+                        message = "Password reset email sent! Check your inbox.",
+                        duration = SnackbarDuration.Long
+                    )
+                    authViewModel.clearPasswordResetResult()
+                }
+                is com.myapp.tadu.data.remote.Result.Error -> {
+                    val message = when (res.exception) {
+                        is UnknownHostException -> "No internet connection. Please check your network."
+                        is FirebaseNetworkException -> "No internet connection. Please check your network."
+                        is IOException -> "Network error. Please check your internet connection."
+                        else -> "Failed to send reset email. Please check the email address."
+                    }
+                    snackbarHostState.showSnackbar(
+                        message = message,
+                        duration = SnackbarDuration.Short
+                    )
+                    authViewModel.clearPasswordResetResult()
+                }
+            }
+        }
+    }
+
+    // Show forgot password dialog
+    if (showForgotPasswordDialog) {
+        ForgotPasswordDialog(
+            onDismiss = { showForgotPasswordDialog = false },
+            onSendResetEmail = { resetEmail ->
+                authViewModel.sendPasswordResetEmail(resetEmail)
+            }
+        )
     }
 
     Scaffold(
@@ -176,9 +228,9 @@ fun LoginScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // Forgot Password Link (Optional)
+            // Forgot Password Link
             TextButton(
-                onClick = { /* Navigate to forgot password */ },
+                onClick = { showForgotPasswordDialog = true },
                 modifier = Modifier.align(Alignment.End),
                 enabled = !isLoading
             ) {
