@@ -1,5 +1,6 @@
 package com.myapp.tadu.data.remote
 
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +39,7 @@ class UserRepository(
         }
     }
 
-    // Login function (optional, added for completeness)
+    // Login function
     suspend fun login(email: String, password: String): Result<User> {
         return try {
             auth.signInWithEmailAndPassword(email, password).await()
@@ -77,12 +78,65 @@ class UserRepository(
             .await()
     }
 
-    // In UserRepository.kt
+    // Send password reset email
     suspend fun sendPasswordResetEmail(email: String): Result<Unit> {
         return withContext(Dispatchers.IO) {
             try {
                 auth.sendPasswordResetEmail(email).await()
                 Result.Success(Unit)
+            } catch (e: Exception) {
+                Result.Error(e)
+            }
+        }
+    }
+
+    /**
+     * Delete user account with password re-authentication
+     * This ensures the user has recently logged in before performing the destructive action
+     */
+    suspend fun deleteUserAccount(password: String): Result<Unit> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val user = auth.currentUser
+                    ?: return@withContext Result.Error(Exception("User not authenticated"))
+
+                val email = user.email
+                    ?: return@withContext Result.Error(Exception("User email not found"))
+
+                val uid = user.uid
+
+                // Step 1: Re-authenticate user with password for security
+                val credential = EmailAuthProvider.getCredential(email, password)
+                user.reauthenticate(credential).await()
+
+                // Step 2: Delete user tasks from Firestore in batches
+                val tasksRef = firestore.collection("users")
+                    .document(uid)
+                    .collection("tasks")
+
+                val taskSnapshots = tasksRef.get().await()
+
+                // Delete in batches of 500 (Firestore limit)
+                val batchSize = 500
+                taskSnapshots.documents.chunked(batchSize).forEach { chunk ->
+                    val batch = firestore.batch()
+                    chunk.forEach { doc ->
+                        batch.delete(doc.reference)
+                    }
+                    batch.commit().await()
+                }
+
+                // Step 3: Delete user document from Firestore
+                firestore.collection("users")
+                    .document(uid)
+                    .delete()
+                    .await()
+
+                // Step 4: Delete Firebase Authentication user (LAST step)
+                user.delete().await()
+
+                Result.Success(Unit)
+
             } catch (e: Exception) {
                 Result.Error(e)
             }

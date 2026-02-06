@@ -19,23 +19,34 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.work.ExistingPeriodicWorkPolicy
@@ -73,6 +84,11 @@ fun SettingsScreen(
     val notificationsEnabled by viewModel.notificationsEnabled.collectAsState()
     val clearHistoryEnabled by viewModel.clearHistoryEnabled.collectAsState()
 
+    // Delete account states
+    val accountDeleted by authViewModel.accountDeleted.observeAsState(false)
+    val deleteAccountError by authViewModel.deleteAccountError.observeAsState()
+    val deleteAccountLoading by authViewModel.deleteAccountLoading.observeAsState(false)
+
     // Track previous value of clearHistoryEnabled to detect actual changes
     var previousClearHistoryEnabled by remember { mutableStateOf<Boolean?>(null) }
 
@@ -89,6 +105,7 @@ fun SettingsScreen(
     var showColorPicker by remember { mutableStateOf(false) }
     var showPermissionDialog by remember { mutableStateOf(false) }
     var showLogoutDialog by remember { mutableStateOf(false) }
+    var showDeleteAccountDialog by remember { mutableStateOf(false) }
 
     // Track notification permission status
     var hasNotificationPermission by remember { mutableStateOf(checkNotificationPermission(context)) }
@@ -164,6 +181,38 @@ fun SettingsScreen(
                     viewModel.updateAccentColor(newAccentColor)
                 }
             }
+        }
+    }
+
+    // Observe accountDeleted LiveData - using DisposableEffect for immediate response
+    DisposableEffect(accountDeleted) {
+        if (accountDeleted) {
+            // Clear the flag immediately
+            authViewModel.clearAccountDeleted()
+
+            // Navigate to login with complete stack clear
+            try {
+                navController.navigate("login") {
+                    // Clear all back stack
+                    popUpTo(0) { inclusive = true }
+                    // Prevent multiple instances
+                    launchSingleTop = true
+                }
+            } catch (e: Exception) {
+                // If navigation fails, we're already on login or there's an issue
+                android.util.Log.e("SettingsScreen", "Navigation error after account deletion", e)
+            }
+        }
+
+        onDispose { }
+    }
+
+    // Handle delete account errors
+    LaunchedEffect(deleteAccountError) {
+        deleteAccountError?.let {
+            // Error is shown in the dialog
+            kotlinx.coroutines.delay(3000) // Show error for 3 seconds
+            authViewModel.clearDeleteAccountError()
         }
     }
 
@@ -323,6 +372,20 @@ fun SettingsScreen(
                 }
             }
 
+            // Danger Zone Section
+            item {
+                SettingsSection(title = "Danger zone") {
+                    SettingsItem(
+                        icon = Icons.Default.Delete,
+                        title = "Delete account",
+                        subtitle = "Permanently delete your account and all data",
+                        titleColor = MaterialTheme.colorScheme.error,
+                        iconTint = MaterialTheme.colorScheme.error,
+                        onClick = { showDeleteAccountDialog = true }
+                    )
+                }
+            }
+
             item { Spacer(modifier = Modifier.height(24.dp)) }
         }
     }
@@ -381,6 +444,23 @@ fun SettingsScreen(
                 }
             },
             shape = RoundedCornerShape(24.dp)
+        )
+    }
+
+    // Delete Account Dialog with Password Confirmation
+    if (showDeleteAccountDialog) {
+        DeleteAccountDialog(
+            isLoading = deleteAccountLoading,
+            error = deleteAccountError,
+            onConfirm = { password ->
+                authViewModel.deleteUserAccount(password)
+            },
+            onDismiss = {
+                if (!deleteAccountLoading) {
+                    showDeleteAccountDialog = false
+                    authViewModel.clearDeleteAccountError()
+                }
+            }
         )
     }
 
@@ -476,6 +556,167 @@ fun SettingsScreen(
             }
         )
     }
+}
+
+/**
+ * Delete Account Dialog with Password Confirmation
+ */
+@Composable
+private fun DeleteAccountDialog(
+    isLoading: Boolean,
+    error: String?,
+    onConfirm: (String) -> Unit,
+    onDismiss: () -> Unit
+) {
+    var password by remember { mutableStateOf("") }
+    var passwordVisible by remember { mutableStateOf(false) }
+    val focusManager = LocalFocusManager.current
+
+    AlertDialog(
+        onDismissRequest = {
+            if (!isLoading) {
+                onDismiss()
+            }
+        },
+        icon = {
+            Icon(
+                Icons.Default.Delete,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.error,
+                modifier = Modifier.size(28.dp)
+            )
+        },
+        title = {
+            Text(
+                "Delete account",
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.SemiBold
+                )
+            )
+        },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                Text(
+                    "This will permanently delete your account and all your tasks. " +
+                            "This action cannot be undone.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+
+                // Password Input Field
+                OutlinedTextField(
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Enter your password") },
+                    visualTransformation = if (passwordVisible) {
+                        VisualTransformation.None
+                    } else {
+                        PasswordVisualTransformation()
+                    },
+                    trailingIcon = {
+                        IconButton(onClick = { passwordVisible = !passwordVisible }) {
+                            Icon(
+                                imageVector = if (passwordVisible) {
+                                    Icons.Default.Visibility
+                                } else {
+                                    Icons.Default.VisibilityOff
+                                },
+                                contentDescription = if (passwordVisible) {
+                                    "Hide password"
+                                } else {
+                                    "Show password"
+                                }
+                            )
+                        }
+                    },
+                    singleLine = true,
+                    enabled = !isLoading,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            focusManager.clearFocus()
+                            if (password.isNotBlank()) {
+                                onConfirm(password)
+                            }
+                        }
+                    ),
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.error,
+                        focusedLabelColor = MaterialTheme.colorScheme.error
+                    )
+                )
+
+                // Show error if there is one
+                error?.let { errorMessage ->
+                    Text(
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                MaterialTheme.colorScheme.errorContainer,
+                                RoundedCornerShape(8.dp)
+                            )
+                            .padding(12.dp)
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.error,
+                    disabledContainerColor = MaterialTheme.colorScheme.error.copy(alpha = 0.6f)
+                ),
+                onClick = {
+                    if (password.isNotBlank()) {
+                        focusManager.clearFocus()
+                        onConfirm(password)
+                    }
+                },
+                enabled = !isLoading && password.isNotBlank()
+            ) {
+                if (isLoading) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onError,
+                            strokeWidth = 2.dp
+                        )
+                        Text(
+                            "Deleting...",
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
+                } else {
+                    Text(
+                        "Delete permanently",
+                        fontWeight = FontWeight.SemiBold
+                    )
+                }
+            }
+        },
+        dismissButton = {
+            TextButton(
+                onClick = onDismiss,
+                enabled = !isLoading
+            ) {
+                Text(
+                    "Cancel",
+                    fontWeight = FontWeight.Medium
+                )
+            }
+        },
+        shape = RoundedCornerShape(24.dp)
+    )
 }
 
 /**
@@ -627,6 +868,8 @@ private fun SettingsItem(
     title: String,
     subtitle: String? = null,
     onClick: () -> Unit,
+    titleColor: Color = MaterialTheme.colorScheme.onSurface,
+    iconTint: Color = MaterialTheme.colorScheme.primary,
     trailingContent: @Composable (() -> Unit)? = null
 ) {
     Row(
@@ -649,7 +892,7 @@ private fun SettingsItem(
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = iconTint,
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -662,7 +905,7 @@ private fun SettingsItem(
                 style = MaterialTheme.typography.bodyLarge.copy(
                     fontWeight = FontWeight.Medium
                 ),
-                color = MaterialTheme.colorScheme.onSurface
+                color = titleColor
             )
             subtitle?.let { subtitle ->
                 Text(
