@@ -311,7 +311,8 @@ private fun groupTasks(
         }
         currentRoute == "inbox" -> {
             if (tasksToDisplay.isNotEmpty()) {
-                listOf(TaskGroup("All Tasks", tasksToDisplay, Color.Gray))
+                val sortedTasks = tasksToDisplay.sortedBy { it.date }
+                listOf(TaskGroup("All Tasks", sortedTasks, Color.Gray))
             } else {
                 emptyList()
             }
@@ -1169,7 +1170,6 @@ private fun SwipeableTaskItem(
                                     )
                                 }
                             }
-                            null -> {}
                         }
                     }
                 }
