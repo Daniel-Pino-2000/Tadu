@@ -56,12 +56,6 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         preferences[NOTIFICATIONS_ENABLED_KEY] ?: true
     }
 
-    /**
-     * Flow of clear history enabled preference
-     */
-    val clearHistoryEnabled: Flow<Boolean> = dataStore.data.map { preferences ->
-        preferences[CLEAR_HISTORY_ENABLED_KEY] ?: false
-    }
 
     /**
      * Set theme mode preference
@@ -90,14 +84,6 @@ class SettingsRepository(private val dataStore: DataStore<Preferences>) {
         }
     }
 
-    /**
-     * Set clear history enabled preference
-     */
-    suspend fun setClearHistoryEnabled(enabled: Boolean) {
-        dataStore.edit { preferences ->
-            preferences[CLEAR_HISTORY_ENABLED_KEY] = enabled
-        }
-    }
 }
 
 /**

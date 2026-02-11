@@ -26,16 +26,14 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     val settingsState: StateFlow<SettingsState> = combine(
         repo.themeMode,
         repo.accentColor,
-        repo.notificationsEnabled,
-        repo.clearHistoryEnabled
-    ) { themeMode, accentColor, notificationsEnabled, clearHistoryEnabled ->
+        repo.notificationsEnabled
+    ) { themeMode, accentColor, notificationsEnabled ->
         SettingsState(
             isLoading = true, // Will be managed in MainActivity
             settingsLoaded = true,
             themeMode = themeMode,
             accentColor = accentColor,
-            notificationsEnabled = notificationsEnabled,
-            clearHistoryEnabled = clearHistoryEnabled
+            notificationsEnabled = notificationsEnabled
         )
     }.stateIn(
         scope = viewModelScope,
@@ -47,7 +45,6 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
     val themeMode = repo.themeMode.stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.SYSTEM)
     val accentColor = repo.accentColor.stateIn(viewModelScope, SharingStarted.Eagerly, Color(0xFF0733F5))
     val notificationsEnabled = repo.notificationsEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
-    val clearHistoryEnabled = repo.clearHistoryEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, false)
 
 
 
@@ -57,10 +54,6 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 
     fun updateAccentColor(color: Color) {
         viewModelScope.launch { repo.setAccentColor(color) }
-    }
-
-    fun updateClearHistoryEnabled(enabled: Boolean) {
-        viewModelScope.launch { repo.setClearHistoryEnabled(enabled) }
     }
 
     // Add this method to handle notification changes and update scheduled reminders

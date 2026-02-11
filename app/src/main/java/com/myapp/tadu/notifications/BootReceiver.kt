@@ -9,7 +9,6 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.myapp.tadu.Graph
 import com.myapp.tadu.data.TaskRepository
-import com.myapp.tadu.settings.HistoryCleanupWorker
 import com.myapp.tadu.settings.SettingsRepository
 import com.myapp.tadu.settings.createSettingsRepository
 import kotlinx.coroutines.CoroutineScope
@@ -31,8 +30,6 @@ class BootReceiver : BroadcastReceiver() {
                 // Reschedule reminders
                 rescheduleReminders(taskRepository, scheduler)
 
-                // Reschedule history cleanup if enabled
-                rescheduleHistoryCleanupIfEnabled(context, settingsRepository)
             }
         }
     }
@@ -49,42 +46,5 @@ class BootReceiver : BroadcastReceiver() {
         } catch (e: Exception) {
             Log.e("BootReceiver", "Error rescheduling reminders", e)
         }
-    }
-
-    private suspend fun rescheduleHistoryCleanupIfEnabled(
-        context: Context,
-        settingsRepository: SettingsRepository
-    ) {
-        try {
-            val isClearHistoryEnabled = settingsRepository.clearHistoryEnabled.first()
-
-            if (isClearHistoryEnabled) {
-                Log.d("BootReceiver", "History cleanup is enabled, rescheduling work")
-                scheduleHistoryCleanup(context)
-            } else {
-                Log.d("BootReceiver", "History cleanup is disabled")
-            }
-        } catch (e: Exception) {
-            Log.e("BootReceiver", "Error checking history cleanup setting", e)
-        }
-    }
-
-    private fun scheduleHistoryCleanup(context: Context) {
-        val workManager = WorkManager.getInstance(context)
-
-        // Cancel any existing work first to ensure clean state
-        workManager.cancelUniqueWork("history_cleanup_work")
-
-        val cleanupWorkRequest = PeriodicWorkRequestBuilder<HistoryCleanupWorker>(30, TimeUnit.DAYS)
-            .setInitialDelay(30, TimeUnit.DAYS) // Ensure it waits 30 days before first execution
-            .build()
-
-        workManager.enqueueUniquePeriodicWork(
-            "history_cleanup_work",
-            ExistingPeriodicWorkPolicy.KEEP, // Use KEEP to prevent immediate execution
-            cleanupWorkRequest
-        )
-
-        Log.d("BootReceiver", "History cleanup work scheduled with 30-day initial delay")
     }
 }

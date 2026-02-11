@@ -59,7 +59,6 @@ import androidx.navigation.NavHostController
 import com.myapp.tadu.ui.theme.LocalDynamicColors
 import com.myapp.tadu.ui.theme.getCommonAccentColors
 import com.myapp.tadu.notifications.canShowNotifications
-import com.myapp.tadu.settings.HistoryCleanupWorker
 import com.myapp.tadu.settings.SettingsViewModel
 import com.myapp.tadu.view_model.AuthViewModel
 import java.util.concurrent.TimeUnit
@@ -83,7 +82,6 @@ fun SettingsScreen(
     val currentThemeMode by viewModel.themeMode.collectAsState()
     val accentColor by viewModel.accentColor.collectAsState()
     val notificationsEnabled by viewModel.notificationsEnabled.collectAsState()
-    val clearHistoryEnabled by viewModel.clearHistoryEnabled.collectAsState()
 
     // Delete account states
     val accountDeleted by authViewModel.accountDeleted.observeAsState(false)
@@ -151,20 +149,6 @@ fun SettingsScreen(
         updatePermissionStates()
         // Load current user data
         authViewModel.loadCurrentUser()
-    }
-
-    // Handle history cleanup work scheduling - only when the setting actually changes
-    LaunchedEffect(clearHistoryEnabled) {
-        // Skip the first emission when the screen loads
-        if (previousClearHistoryEnabled != null && previousClearHistoryEnabled != clearHistoryEnabled) {
-            if (clearHistoryEnabled) {
-                scheduleHistoryCleanup(context, true)
-            } else {
-                WorkManager.getInstance(context).cancelUniqueWork("history_cleanup_work")
-            }
-        }
-        // Update the previous value
-        previousClearHistoryEnabled = clearHistoryEnabled
     }
 
     // Handle system theme changes for accent color updates
@@ -351,25 +335,6 @@ fun SettingsScreen(
                             } else {
                                 viewModel.updateNotificationsEnabled(false)
                             }
-                        }
-                    )
-                }
-            }
-
-            // Data & Privacy Section
-            item {
-                SettingsSection(title = "Data & Privacy") {
-                    SettingsSwitchItem(
-                        icon = Icons.Default.History,
-                        title = "Auto-clear task history",
-                        subtitle = if (clearHistoryEnabled) {
-                            "All finished tasks will be cleared every 30 days"
-                        } else {
-                            "Finished tasks will be kept indefinitely"
-                        },
-                        checked = clearHistoryEnabled,
-                        onCheckedChange = { enabled ->
-                            viewModel.updateClearHistoryEnabled(enabled)
                         }
                     )
                 }
@@ -1274,28 +1239,6 @@ private fun ColorOption(
                     .background(color)
             )
         }
-    }
-}
-
-// Helper function to schedule history cleanup work
-private fun scheduleHistoryCleanup(context: Context, enabled: Boolean) {
-    val workManager = WorkManager.getInstance(context)
-
-    if (enabled) {
-        // Cancel any existing work first
-        workManager.cancelUniqueWork("history_cleanup_work")
-
-        val cleanupWorkRequest = PeriodicWorkRequestBuilder<HistoryCleanupWorker>(30, TimeUnit.DAYS)
-            .setInitialDelay(30, TimeUnit.DAYS) // Ensure it waits 30 days before first execution
-            .build()
-
-        workManager.enqueueUniquePeriodicWork(
-            "history_cleanup_work",
-            ExistingPeriodicWorkPolicy.KEEP, // Use KEEP to prevent immediate execution
-            cleanupWorkRequest
-        )
-    } else {
-        workManager.cancelUniqueWork("history_cleanup_work")
     }
 }
 
