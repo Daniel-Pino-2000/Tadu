@@ -8,16 +8,20 @@ import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
 import com.myapp.tadu.Graph
+import com.myapp.tadu.Graph.reminderScheduler
 import com.myapp.tadu.data.TaskRepository
 import com.myapp.tadu.data.remote.Injection
 import com.myapp.tadu.data.remote.Result
 import com.myapp.tadu.data.remote.User
 import com.myapp.tadu.data.remote.UserRepository
+import com.myapp.tadu.notifications.ReminderScheduler
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 class AuthViewModel(
-    private val taskRepository: TaskRepository = Graph.taskRepository
+    private val taskRepository: TaskRepository = Graph.taskRepository,
+    private val reminderScheduler: ReminderScheduler
 ) : ViewModel() {
 
     private val userRepository: UserRepository = UserRepository(
@@ -168,6 +172,13 @@ class AuthViewModel(
 
             when (result) {
                 is Result.Success -> {
+
+                    // Cancel all reminders before clearing tasks
+                    val tasksWithReminders = taskRepository.getTasksWithReminders().firstOrNull() ?: emptyList()
+                    tasksWithReminders.forEach { task ->
+                        reminderScheduler.cancel(task)
+                    }
+
                     // Clear local data first
                     taskRepository.clearLocalTasks()
 

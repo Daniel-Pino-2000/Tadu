@@ -56,6 +56,7 @@ import androidx.compose.material.icons.filled.Restore
 import androidx.compose.material3.MaterialTheme
 import com.myapp.tadu.settings.SettingsViewModel
 import com.myapp.tadu.ui.theme.LocalDynamicColors
+import com.myapp.tadu.view_model.TaskViewModel
 
 /**
  * A composable that displays a modal bottom sheet for adding or editing tasks.

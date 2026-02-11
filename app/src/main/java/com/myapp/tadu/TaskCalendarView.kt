@@ -34,6 +34,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.myapp.tadu.data.Task
+import com.myapp.tadu.view_model.TaskViewModel
 import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.YearMonth

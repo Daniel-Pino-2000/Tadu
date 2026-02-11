@@ -1,17 +1,23 @@
-package com.myapp.tadu
+package com.myapp.tadu.view_model
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.myapp.tadu.Graph
 import com.myapp.tadu.data.Task
 import com.myapp.tadu.data.TaskRepository
 import com.myapp.tadu.data.UiState
 import com.myapp.tadu.navigation.Screen
 import com.myapp.tadu.notifications.ReminderScheduler
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 class TaskViewModel(
@@ -32,12 +38,14 @@ class TaskViewModel(
 
     @RequiresApi(Build.VERSION_CODES.O)
     private val _currentScreen = MutableStateFlow<Screen>(Screen.BottomScreen.Today)
-    val currentScreen: StateFlow<Screen> @RequiresApi(Build.VERSION_CODES.O)
+    val currentScreen: StateFlow<Screen>
+        @RequiresApi(Build.VERSION_CODES.O)
     get() = _currentScreen
 
     @RequiresApi(Build.VERSION_CODES.O)
     private val _currentRoute = MutableStateFlow<String>(Screen.BottomScreen.Today.route)
-    val currentRoute: StateFlow<String> @RequiresApi(Build.VERSION_CODES.O)
+    val currentRoute: StateFlow<String>
+        @RequiresApi(Build.VERSION_CODES.O)
     get() = _currentRoute
 
     private val _uiState = MutableStateFlow(UiState())

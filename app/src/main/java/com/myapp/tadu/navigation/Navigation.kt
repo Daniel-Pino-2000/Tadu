@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -23,31 +24,41 @@ import com.myapp.tadu.SettingsScreen
 import com.myapp.tadu.TaskCalendarView
 import com.myapp.tadu.TaskHistoryView
 import com.myapp.tadu.TaskRemindersScreen
-import com.myapp.tadu.TaskViewModel
+import com.myapp.tadu.view_model.TaskViewModel
 import com.myapp.tadu.settings.createSettingsRepository
 import com.myapp.tadu.settings.SettingsViewModel
 import com.myapp.tadu.notifications.AndroidReminderScheduler
 import com.myapp.tadu.screens.LoginScreen
 import com.myapp.tadu.screens.SignUpScreen
 import com.myapp.tadu.view_model.AuthViewModel
+import com.myapp.tadu.view_model.AuthViewModelFactory
+import com.myapp.tadu.view_model.TaskViewModelFactory
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalAnimationApi::class)
 @RequiresApi(Build.VERSION_CODES.O)
 @Composable
 fun Navigation(
     navController: NavHostController,
-    authViewModel: AuthViewModel,
     isLoggedIn: Boolean // New parameter to determine start destination
 ) {
     val context = LocalContext.current
 
-    // Manually create ViewModel with injected ReminderScheduler and Repository
-    val viewModel = remember {
-        TaskViewModel(
+    val reminderScheduler = AndroidReminderScheduler(context)
+
+    val taskViewModel: TaskViewModel = viewModel(
+        factory = TaskViewModelFactory(
             taskRepository = Graph.taskRepository,
-            reminderScheduler = AndroidReminderScheduler(context)
+            reminderScheduler = reminderScheduler
         )
-    }
+    )
+
+    val authViewModel: AuthViewModel = viewModel(
+        factory = AuthViewModelFactory(
+            reminderScheduler = reminderScheduler
+        )
+    )
+
+
 
     // SettingsViewModel with proper repository
     val settingsViewModel = remember {
@@ -55,7 +66,7 @@ fun Navigation(
         SettingsViewModel(repo)
     }
 
-    val uiState by viewModel.uiState.collectAsState()
+    val uiState by taskViewModel.uiState.collectAsState()
 
     // Animation configuration
     val animationDuration = 350
@@ -91,7 +102,7 @@ fun Navigation(
 
         // Home screen
         composable(Screen.Home.route) {
-            HomeView(navController, viewModel, settingsViewModel)
+            HomeView(navController, taskViewModel, settingsViewModel)
         }
 
         // History screen with vertical slide from bottom
@@ -126,12 +137,12 @@ fun Navigation(
                 )
             }
         ) {
-            TaskHistoryView(viewModel, settingsViewModel, navController)
+            TaskHistoryView(taskViewModel, settingsViewModel, navController)
         }
 
         // Reminders screen
         composable(Screen.Reminders.route) {
-            TaskRemindersScreen(viewModel, navController)
+            TaskRemindersScreen(taskViewModel, navController)
         }
 
         // Settings screen
@@ -174,18 +185,18 @@ fun Navigation(
             var selectedTaskId by remember { mutableStateOf<Long?>(null) }
 
             TaskCalendarView(
-                viewModel,
+                taskViewModel,
                 onTaskClick = { task ->
                     if (task != null) {
                         // Editing existing task
                         selectedTaskId = task.id
-                        viewModel.setTaskBeingEdited(true)
-                        viewModel.setShowBottomSheet(true)
+                        taskViewModel.setTaskBeingEdited(true)
+                        taskViewModel.setShowBottomSheet(true)
                     } else {
                         // Adding new task
                         selectedTaskId = null
-                        viewModel.setTaskBeingEdited(false)
-                        viewModel.setShowBottomSheet(true)
+                        taskViewModel.setTaskBeingEdited(false)
+                        taskViewModel.setShowBottomSheet(true)
                     }
                 }
             )
@@ -194,8 +205,8 @@ fun Navigation(
             if (uiState.showBottomSheet) {
                 ModalBottomSheet(
                     onDismissRequest = {
-                        viewModel.setShowBottomSheet(false)
-                        viewModel.setTaskBeingEdited(false)
+                        taskViewModel.setShowBottomSheet(false)
+                        taskViewModel.setTaskBeingEdited(false)
                         selectedTaskId = null
                     }
                 ) {
@@ -216,24 +227,24 @@ fun Navigation(
                     ) {
                         AddTaskView(
                             selectedTaskId ?: uiState.currentId,
-                            viewModel,
+                            taskViewModel,
                             settingsViewModel,
                             onDismiss = {
-                                viewModel.setShowBottomSheet(false)
-                                viewModel.setTaskBeingEdited(false)
+                                taskViewModel.setShowBottomSheet(false)
+                                taskViewModel.setTaskBeingEdited(false)
                                 selectedTaskId = null
-                                viewModel.resetFormFields()
+                                taskViewModel.resetFormFields()
                             },
                             onSubmit = { task ->
                                 if (!uiState.taskBeingEdited) {
-                                    viewModel.addTask(task)
+                                    taskViewModel.addTask(task)
                                 } else {
-                                    viewModel.updateTask(task)
+                                    taskViewModel.updateTask(task)
                                 }
-                                viewModel.setShowBottomSheet(false)
-                                viewModel.setTaskBeingEdited(false)
+                                taskViewModel.setShowBottomSheet(false)
+                                taskViewModel.setTaskBeingEdited(false)
                                 selectedTaskId = null
-                                viewModel.resetFormFields()
+                                taskViewModel.resetFormFields()
                             }
                         )
                     }

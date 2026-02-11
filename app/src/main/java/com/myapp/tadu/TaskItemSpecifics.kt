@@ -61,6 +61,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.ui.draw.*
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import com.myapp.tadu.view_model.TaskViewModel
 
 @OptIn(ExperimentalMaterialApi::class)
 @RequiresApi(Build.VERSION_CODES.O)

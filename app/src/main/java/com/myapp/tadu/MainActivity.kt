@@ -153,7 +153,6 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun MainContent(settingsViewModel: SettingsViewModel) {
         val navController = rememberNavController()
-        val authViewModel: AuthViewModel = viewModel()
         val settingsState by settingsViewModel.settingsState.collectAsState()
 
         // Check if user is logged in - initialize properly
@@ -209,7 +208,6 @@ class MainActivity : ComponentActivity() {
             Box(modifier = Modifier.fillMaxSize()) {
                 Navigation(
                     navController = navController,
-                    authViewModel = authViewModel,
                     isLoggedIn = isLoggedIn // Pass login state
                 )
 
