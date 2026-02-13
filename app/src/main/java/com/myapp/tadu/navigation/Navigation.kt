@@ -5,7 +5,6 @@ import androidx.annotation.RequiresApi
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -39,7 +38,7 @@ import com.myapp.tadu.view_model.TaskViewModelFactory
 @Composable
 fun Navigation(
     navController: NavHostController,
-    isLoggedIn: Boolean // New parameter to determine start destination
+    isLoggedIn: Boolean
 ) {
     val context = LocalContext.current
 
@@ -58,9 +57,6 @@ fun Navigation(
         )
     )
 
-
-
-    // SettingsViewModel with proper repository
     val settingsViewModel = remember {
         val repo = context.createSettingsRepository()
         SettingsViewModel(repo)
@@ -68,12 +64,11 @@ fun Navigation(
 
     val uiState by taskViewModel.uiState.collectAsState()
 
-    // Animation configuration
     val animationDuration = 350
 
     NavHost(
         navController = navController,
-        startDestination = if (isLoggedIn) Screen.Home.route else Screen.LoginScreen.route // Dynamic start
+        startDestination = if (isLoggedIn) Screen.Home.route else Screen.LoginScreen.route
     ) {
         // Login screen
         composable(Screen.LoginScreen.route) {
@@ -188,12 +183,10 @@ fun Navigation(
                 taskViewModel,
                 onTaskClick = { task ->
                     if (task != null) {
-                        // Editing existing task
                         selectedTaskId = task.id
                         taskViewModel.setTaskBeingEdited(true)
                         taskViewModel.setShowBottomSheet(true)
                     } else {
-                        // Adding new task
                         selectedTaskId = null
                         taskViewModel.setTaskBeingEdited(false)
                         taskViewModel.setShowBottomSheet(true)
@@ -201,54 +194,30 @@ fun Navigation(
                 }
             )
 
-            // Animated bottom sheet
+            // AddTaskView owns its own ModalBottomSheet internally — no wrapper needed here
             if (uiState.showBottomSheet) {
-                ModalBottomSheet(
-                    onDismissRequest = {
+                AddTaskView(
+                    id = selectedTaskId ?: uiState.currentId,
+                    viewModel = taskViewModel,
+                    settingsViewModel = settingsViewModel,
+                    onDismiss = {
                         taskViewModel.setShowBottomSheet(false)
                         taskViewModel.setTaskBeingEdited(false)
                         selectedTaskId = null
+                        taskViewModel.resetFormFields()
+                    },
+                    onSubmit = { task ->
+                        if (!uiState.taskBeingEdited) {
+                            taskViewModel.addTask(task)
+                        } else {
+                            taskViewModel.updateTask(task)
+                        }
+                        taskViewModel.setShowBottomSheet(false)
+                        taskViewModel.setTaskBeingEdited(false)
+                        selectedTaskId = null
+                        taskViewModel.resetFormFields()
                     }
-                ) {
-                    AnimatedVisibility(
-                        visible = uiState.showBottomSheet,
-                        enter = slideInVertically(
-                            initialOffsetY = { it / 2 },
-                            animationSpec = tween(300, easing = EaseOutQuart)
-                        ) + fadeIn(
-                            animationSpec = tween(300, easing = EaseOutQuart)
-                        ),
-                        exit = slideOutVertically(
-                            targetOffsetY = { it / 2 },
-                            animationSpec = tween(200, easing = EaseInQuart)
-                        ) + fadeOut(
-                            animationSpec = tween(200, easing = EaseInQuart)
-                        )
-                    ) {
-                        AddTaskView(
-                            selectedTaskId ?: uiState.currentId,
-                            taskViewModel,
-                            settingsViewModel,
-                            onDismiss = {
-                                taskViewModel.setShowBottomSheet(false)
-                                taskViewModel.setTaskBeingEdited(false)
-                                selectedTaskId = null
-                                taskViewModel.resetFormFields()
-                            },
-                            onSubmit = { task ->
-                                if (!uiState.taskBeingEdited) {
-                                    taskViewModel.addTask(task)
-                                } else {
-                                    taskViewModel.updateTask(task)
-                                }
-                                taskViewModel.setShowBottomSheet(false)
-                                taskViewModel.setTaskBeingEdited(false)
-                                selectedTaskId = null
-                                taskViewModel.resetFormFields()
-                            }
-                        )
-                    }
-                }
+                )
             }
         }
     }
