@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -94,6 +95,8 @@ import com.airbnb.lottie.compose.rememberLottieComposition
 import com.myapp.tadu.ui.theme.LocalDynamicColors
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.ui.focus.FocusManager
+import androidx.compose.ui.layout.onSizeChanged
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.SoftwareKeyboardController
 import com.myapp.tadu.view_model.TaskViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -983,10 +986,10 @@ private fun SwipeableTaskItem(
     coroutineScope: CoroutineScope,
     keyboardController: SoftwareKeyboardController?,
     focusManager: FocusManager,
-    modifier: Modifier = Modifier // Add modifier parameter
+    modifier: Modifier = Modifier
 ) {
-    // State to trigger reset
     var shouldResetDismissState by remember { mutableStateOf(false) }
+    var cardHeightPx by remember { mutableStateOf(0) }
 
     val hapticFeedback = LocalHapticFeedback.current
 
@@ -994,20 +997,19 @@ private fun SwipeableTaskItem(
         confirmStateChange = { dismissValue ->
             when (dismissValue) {
                 DismissValue.DismissedToEnd -> {
-                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress) // Vibration
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                     viewModel.setTaskToUpdate(task)
                     viewModel.setShowDatePicker(true)
                     viewModel.setId(task.id)
-                    // Set flag to reset outside lambda
                     shouldResetDismissState = true
-                    false // prevent dismissal
+                    false
                 }
                 DismissValue.DismissedToStart -> {
                     coroutineScope.launch {
                         undoToastManager.showTaskDeletedToast(
                             taskName = task.title,
                             onDelete = {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress) // Vibration
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
                                 viewModel.deleteTask(task.id)
                             },
                             onRestore = {
@@ -1015,14 +1017,13 @@ private fun SwipeableTaskItem(
                             }
                         )
                     }
-                    true // allow dismissal
+                    true
                 }
                 else -> false
             }
         }
     )
 
-    // Reset dismiss state when flag is set
     LaunchedEffect(shouldResetDismissState) {
         if (shouldResetDismissState) {
             dismissState.reset()
@@ -1030,18 +1031,16 @@ private fun SwipeableTaskItem(
         }
     }
 
-    Box(modifier = modifier.padding(vertical = 4.dp)) { // Apply the modifier here
+    Box(modifier = modifier.padding(vertical = 4.dp)) {
         SwipeToDismiss(
             state = dismissState,
             directions = setOf(DismissDirection.StartToEnd, DismissDirection.EndToStart),
-            // Increased threshold for less sensitivity - requires 60% swipe to trigger
             dismissThresholds = { FractionalThreshold(0.6f) },
             background = {
-                // ... your existing background code ...
                 val direction = dismissState.dismissDirection
                 val progress = dismissState.progress.fraction
+                val density = LocalDensity.current
 
-                // Only show color when actually swiping and past a certain threshold
                 val shouldShowBackground = direction != null && progress > 0.2f
 
                 val color by animateColorAsState(
@@ -1051,10 +1050,8 @@ private fun SwipeableTaskItem(
                             DismissDirection.EndToStart -> Color.Red
                             null -> Color.Transparent
                         }
-                    } else {
-                        Color.Transparent
-                    },
-                    animationSpec = tween(150), // Faster animation for more responsive feel
+                    } else Color.Transparent,
+                    animationSpec = tween(150),
                     label = "swipe_background_color"
                 )
 
@@ -1064,124 +1061,125 @@ private fun SwipeableTaskItem(
                     null -> Alignment.Center
                 }
 
-                // Smooth icon animations without jarring transitions
                 val iconScale by animateFloatAsState(
                     targetValue = if (shouldShowBackground) {
-                        // Smooth continuous scaling curve
-                        val baseScale = 0.4f + (progress * 0.8f) // Linear base from 0.4 to 1.2
+                        val baseScale = 0.4f + (progress * 0.8f)
                         val pulseMultiplier = if (progress > 0.7f) {
-                            1f + (sin((progress - 0.7f) * 15f) * 0.05f) // Very subtle pulse
+                            1f + (sin((progress - 0.7f) * 15f) * 0.05f)
                         } else 1f
                         baseScale * pulseMultiplier
                     } else 0f,
-                    animationSpec = tween(
-                        durationMillis = 100,
-                        easing = LinearOutSlowInEasing
-                    ),
+                    animationSpec = tween(durationMillis = 100, easing = LinearOutSlowInEasing),
                     label = "icon_scale"
                 )
 
                 val iconAlpha by animateFloatAsState(
                     targetValue = if (shouldShowBackground) {
-                        // Smooth fade curve
                         when {
                             progress < 0.2f -> 0f
-                            progress < 0.5f -> (progress - 0.2f) / 0.3f // Smooth fade from 0.2 to 0.5
+                            progress < 0.5f -> (progress - 0.2f) / 0.3f
                             else -> 1f
                         }
                     } else 0f,
-                    animationSpec = tween(
-                        durationMillis = 100,
-                        easing = LinearOutSlowInEasing
-                    ),
+                    animationSpec = tween(durationMillis = 100, easing = LinearOutSlowInEasing),
                     label = "icon_alpha"
                 )
 
                 val iconRotation by animateFloatAsState(
                     targetValue = if (shouldShowBackground) {
                         when (direction) {
-                            DismissDirection.StartToEnd -> progress * 12f // Smooth rotation
+                            DismissDirection.StartToEnd -> progress * 12f
                             DismissDirection.EndToStart -> -progress * 15f
                             null -> 0f
                         }
                     } else 0f,
-                    animationSpec = tween(
-                        durationMillis = 100,
-                        easing = LinearOutSlowInEasing
-                    ),
+                    animationSpec = tween(durationMillis = 100, easing = LinearOutSlowInEasing),
                     label = "icon_rotation"
                 )
 
+                // Outer Box: fills full row
                 Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .background(color)
-                        .padding(horizontal = 20.dp),
-                    contentAlignment = alignment
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    if (shouldShowBackground && iconScale > 0f) {
-                        when (direction) {
-                            DismissDirection.StartToEnd -> {
-                                Box(
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    // Smooth scaling background circle
-                                    Box(
-                                        modifier = Modifier
-                                            .size((40f + (iconScale * 20f)).dp) // Smooth size progression
-                                            .background(
-                                                Color.White.copy(alpha = 0.15f * iconAlpha),
-                                                CircleShape
-                                            )
-                                    )
-                                    Icon(
-                                        imageVector = Icons.Default.DateRange,
-                                        contentDescription = "Set Date",
-                                        tint = Color.White,
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                            .scale(iconScale)
-                                            .alpha(iconAlpha)
-                                            .rotate(iconRotation)
-                                    )
+                    // Inner Box: slightly shorter than the card, with rounded corners
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .then(
+                                if (cardHeightPx > 0) {
+                                    Modifier.height(with(density) { cardHeightPx.toDp() } - 4.dp)
+                                } else {
+                                    Modifier.fillMaxHeight()
                                 }
-                            }
-                            DismissDirection.EndToStart -> {
-                                Box(
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    // Single smooth scaling background - no secondary ring
-                                    Box(
-                                        modifier = Modifier
-                                            .size((40f + (iconScale * 25f)).dp)
-                                            .background(
-                                                Color.White.copy(alpha = 0.2f * iconAlpha),
-                                                CircleShape
-                                            )
-                                    )
-                                    Icon(
-                                        imageVector = Icons.Default.Delete,
-                                        contentDescription = "Delete Task",
-                                        tint = Color.White,
-                                        modifier = Modifier
-                                            .size(24.dp)
-                                            .scale(iconScale)
-                                            .alpha(iconAlpha)
-                                            .rotate(iconRotation)
-                                    )
+                            )
+                            .background(color)
+                            .padding(horizontal = 20.dp),
+                        contentAlignment = alignment
+                    ) {
+                        if (shouldShowBackground && iconScale > 0f) {
+                            when (direction) {
+                                DismissDirection.StartToEnd -> {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size((40f + (iconScale * 20f)).dp)
+                                                .background(
+                                                    Color.White.copy(alpha = 0.15f * iconAlpha),
+                                                    CircleShape
+                                                )
+                                        )
+                                        Icon(
+                                            imageVector = Icons.Default.DateRange,
+                                            contentDescription = "Set Date",
+                                            tint = Color.White,
+                                            modifier = Modifier
+                                                .size(24.dp)
+                                                .scale(iconScale)
+                                                .alpha(iconAlpha)
+                                                .rotate(iconRotation)
+                                        )
+                                    }
                                 }
+                                DismissDirection.EndToStart -> {
+                                    Box(contentAlignment = Alignment.Center) {
+                                        Box(
+                                            modifier = Modifier
+                                                .size((40f + (iconScale * 25f)).dp)
+                                                .background(
+                                                    Color.White.copy(alpha = 0.2f * iconAlpha),
+                                                    CircleShape
+                                                )
+                                        )
+                                        Icon(
+                                            imageVector = Icons.Default.Delete,
+                                            contentDescription = "Delete Task",
+                                            tint = Color.White,
+                                            modifier = Modifier
+                                                .size(24.dp)
+                                                .scale(iconScale)
+                                                .alpha(iconAlpha)
+                                                .rotate(iconRotation)
+                                        )
+                                    }
+                                }
+                                null -> {}
                             }
                         }
                     }
                 }
             },
             dismissContent = {
-                TaskItem(task, viewModel, currentRoute, undoToastManager) {
-                    keyboardController?.hide()
-                    focusManager.clearFocus()
-                    viewModel.setId(task.id)
-                    viewModel.setTaskBeingEdited(true)
-                    viewModel.setShowBottomSheet(true)
+                Box(modifier = Modifier.onSizeChanged { size ->
+                    cardHeightPx = size.height
+                }) {
+                    TaskItem(task, viewModel, currentRoute, undoToastManager) {
+                        keyboardController?.hide()
+                        focusManager.clearFocus()
+                        viewModel.setId(task.id)
+                        viewModel.setTaskBeingEdited(true)
+                        viewModel.setShowBottomSheet(true)
+                    }
                 }
             }
         )
