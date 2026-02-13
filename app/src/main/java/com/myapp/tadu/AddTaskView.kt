@@ -137,7 +137,7 @@ fun AddTaskView(
 
     // Initialize form fields based on whether we're editing an existing task or creating a new one
     val task by viewModel.getTaskById(id).collectAsState(
-        initial = Task(0L, "", "", "", "", "4", "")
+        initial = Task(0L, "", "", System.currentTimeMillis(), "", "4", "")
     )
 
     LaunchedEffect(id, task) {

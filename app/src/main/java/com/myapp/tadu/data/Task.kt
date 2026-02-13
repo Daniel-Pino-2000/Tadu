@@ -14,7 +14,7 @@ data class Task(
     @ColumnInfo(name = "task-description")
     var description: String = "",
     @ColumnInfo(name = "task-date")
-    var date: String = Date().toString(),
+    var date: Long = Date().time,
     @ColumnInfo(name = "task-address")
     var address: String = "",
     @ColumnInfo(name = "task-priority")

@@ -3,6 +3,7 @@ package com.myapp.tadu.view_model
 import android.os.Build
 import androidx.annotation.RequiresApi
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
@@ -28,7 +29,7 @@ class TaskViewModel(
     var taskHasBeenChanged by mutableStateOf(false)
     var taskTitleState by mutableStateOf("")
     var taskDescriptionState by mutableStateOf("")
-    var taskDateState by mutableStateOf("")
+    var taskDateState by mutableLongStateOf(System.currentTimeMillis())
     var taskAddressState by mutableStateOf("")
     var taskPriority by mutableStateOf("")
     var taskDeadline by mutableStateOf("")
@@ -71,8 +72,8 @@ class TaskViewModel(
         taskHasBeenChanged = true
     }
 
-    fun onTaskDateChanged(newString: String) {
-        taskDateState = newString
+    fun onTaskDateChanged(newDate: Long) {
+        taskDateState = newDate
         taskHasBeenChanged = true
     }
 
@@ -125,7 +126,7 @@ class TaskViewModel(
     fun resetFormFields() {
         taskTitleState = ""
         taskDescriptionState = ""
-        taskDateState = ""
+        taskDateState = System.currentTimeMillis()
         taskAddressState = ""
         taskPriority = ""
         taskDeadline = ""
