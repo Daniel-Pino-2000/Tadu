@@ -72,10 +72,12 @@ import android.content.Intent
 import android.provider.CalendarContract
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.layout.imePadding
 import com.myapp.tadu.ui.theme.LocalDynamicColors
 import java.time.ZoneId
 import java.util.Locale
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.ui.window.DialogProperties
 import com.myapp.tadu.view_model.TaskViewModel
 
 @RequiresApi(Build.VERSION_CODES.O)
@@ -618,10 +620,14 @@ fun NewLabelDialog(
         focusRequester.requestFocus()
     }
 
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
         Box(
             modifier = Modifier
-                .fillMaxSize(),
+                .fillMaxSize()
+                .imePadding(),
             contentAlignment = Alignment.Center
         ) {
             Column(
