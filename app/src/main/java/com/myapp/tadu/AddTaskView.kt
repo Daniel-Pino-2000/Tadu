@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.material.TextField
 import androidx.compose.material.TextFieldDefaults
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
@@ -57,6 +58,7 @@ import androidx.compose.material3.MaterialTheme
 import com.myapp.tadu.settings.SettingsViewModel
 import com.myapp.tadu.ui.theme.LocalDynamicColors
 import com.myapp.tadu.view_model.TaskViewModel
+import kotlinx.coroutines.launch
 
 /**
  * A composable that displays a modal bottom sheet for adding or editing tasks.
@@ -67,6 +69,7 @@ import com.myapp.tadu.view_model.TaskViewModel
  * - Auto-focuses title field and shows keyboard when opened
  * - Validates input and disables submit for invalid tasks
  * - Properly handles reminder data collection and scheduling
+ * - Animates sheet closed before notifying parent (prevents abrupt removal)
  *
  * @param id The task ID (0L for new task, existing ID for editing)
  * @param viewModel The TaskViewModel that manages task state
@@ -82,15 +85,16 @@ fun AddTaskView(
     settingsViewModel: SettingsViewModel,
     onDismiss: () -> Unit,
     onSubmit: (task: Task) -> Unit,
-    isHistoryMode: Boolean = false, // New parameter to indicate if we're in history mode
-    onDelete: ((Long) -> Unit)? = null // Callback for delete action
+    isHistoryMode: Boolean = false,
+    onDelete: ((Long) -> Unit)? = null
 ) {
 
     val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
 
     // State for controlling the confirmation dialog visibility
     val openConfirmDialog = remember { mutableStateOf(false) }
-    val openDeleteDialog = remember { mutableStateOf(false) } // New delete confirmation dialog
+    val openDeleteDialog = remember { mutableStateOf(false) }
 
     // Flag to control when dismissal should be allowed (bypasses confirmation)
     val allowDismiss = remember { mutableStateOf(false) }
@@ -100,30 +104,46 @@ fun AddTaskView(
     var reminderText by remember { mutableStateOf<String?>(null) }
 
     // Configure the bottom sheet state with custom dismiss behavior
-    var sheetState: SheetState = rememberModalBottomSheetState(
+    val sheetState: SheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
         confirmValueChange = { newValue ->
-            // When trying to hide the sheet, check if there are unsaved changes
             if (newValue == SheetValue.Hidden && viewModel.taskHasBeenChanged && !allowDismiss.value && !isHistoryMode) {
-                openConfirmDialog.value = true // Show confirmation dialog
-                false // Prevent the sheet from closing
+                openConfirmDialog.value = true
+                false
             } else {
-                true // Allow the state change (sheet can close)
+                true
             }
         }
     )
+
+    // ── Animate the sheet closed, THEN invoke the parent callback. ────────────
+    // This prevents the composable from being removed from the tree while the
+    // slide-down animation is still running, which caused the two visual bugs:
+    //   1. The sheet lingering at the bottom after dismiss.
+    //   2. The sheet jumping/cutting instead of sliding on submit.
+    //
+    // NOTE: onDismissRequest (tap-outside / swipe) does NOT need this helper
+    // because ModalBottomSheet already completes its own animation before
+    // calling onDismissRequest — so we only use animateDismiss for programmatic
+    // close paths (back button, submit button, discard button, delete button).
+    fun animateDismiss(action: () -> Unit) {
+        coroutineScope.launch {
+            sheetState.hide() // suspends until the slide-down animation finishes
+            action()          // only then tell the parent to remove the composable
+        }
+    }
+    // ─────────────────────────────────────────────────────────────────────────
 
     // Focus management for automatic keyboard display
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
 
     // Handle hardware/gesture back button presses
-    // Ensures consistent behavior with swipe-to-dismiss and tap-outside-to-dismiss
     BackHandler(enabled = true) {
         if (viewModel.taskHasBeenChanged && !allowDismiss.value && !isHistoryMode) {
-            openConfirmDialog.value = true // Show confirmation if there are unsaved changes
+            openConfirmDialog.value = true
         } else {
-            onDismiss() // Allow immediate dismissal if no changes or dismissal is allowed
+            animateDismiss { onDismiss() }
         }
     }
 
@@ -142,47 +162,42 @@ fun AddTaskView(
 
     LaunchedEffect(id, task) {
         if (id != 0L && task.id != 0L) {
-            // Editing existing task
             viewModel.populateFieldsWithTask(task)
-            // Initialize reminder state from existing task
             reminderTime = task.reminderTime
             reminderText = if (task.reminderTime != null && task.reminderTime!! > 0) {
-                // Format the existing reminder time for display
                 task.reminderTime?.toReminderDateTime()?.let { reminderDateTime ->
                     "Set for ${reminderDateTime.date} at ${reminderDateTime.time}"
                 }
             } else null
         } else if (id == 0L) {
-            // Creating new task - only reset if fields haven't been set from calendar
             if (viewModel.taskDeadline.isEmpty()) {
                 viewModel.resetFormFields()
             } else {
-                // Keep the deadline from calendar but reset other fields
                 val currentDeadline = viewModel.taskDeadline
                 viewModel.resetFormFields()
                 viewModel.onTaskDeadlineChanged(currentDeadline)
             }
-            // Reset reminder state for new task
             reminderTime = null
             reminderText = null
         }
     }
 
-    // Reset the "has changed" flag since we just loaded initial values
     viewModel.taskHasBeenChanged = false
 
     ModalBottomSheet(
         onDismissRequest = {
-            // Handle tap-outside-to-dismiss with same logic as back button
+            // onDismissRequest fires AFTER ModalBottomSheet has already completed
+            // its own hide animation (swipe-to-dismiss or tap-outside), so we call
+            // the parent callback directly here — no animateDismiss needed.
             if (viewModel.taskHasBeenChanged && !allowDismiss.value && !isHistoryMode) {
-                openConfirmDialog.value = true // Show confirmation if there are unsaved changes
+                openConfirmDialog.value = true
             } else {
-                onDismiss() // Allow immediate dismissal if no changes or dismissal is allowed
+                onDismiss()
                 viewModel.resetFormFields()
             }
         },
         sheetState = sheetState,
-        dragHandle = { /* Empty so there is no drag handle*/ },
+        dragHandle = { /* Empty so there is no drag handle */ },
         modifier = Modifier.padding(0.dp)
     ) {
         // Intercept back press only while the sheet is visible
@@ -190,8 +205,10 @@ fun AddTaskView(
             if (viewModel.taskHasBeenChanged && !allowDismiss.value && !isHistoryMode) {
                 openConfirmDialog.value = true
             } else {
-                onDismiss()
-                viewModel.resetFormFields()
+                animateDismiss {
+                    onDismiss()
+                    viewModel.resetFormFields()
+                }
             }
         }
 
@@ -230,10 +247,8 @@ fun AddTaskView(
                 ),
                 modifier = Modifier.focusRequester(focusRequester),
                 keyboardOptions = KeyboardOptions.Default.copy(imeAction = ImeAction.Done),
-                keyboardActions = KeyboardActions(onDone = {
-                    //keyboardController?.hide()
-                }),
-                readOnly = isHistoryMode // Make read-only in history mode
+                keyboardActions = KeyboardActions(onDone = {}),
+                readOnly = isHistoryMode
             )
 
             // Task description input field
@@ -263,7 +278,7 @@ fun AddTaskView(
                     textColor = MaterialTheme.colorScheme.onSurface,
                     placeholderColor = MaterialTheme.colorScheme.onSurfaceVariant
                 ),
-                readOnly = isHistoryMode // Make read-only in history mode
+                readOnly = isHistoryMode
             )
 
             // Additional task options (priority, deadline, etc.)
@@ -271,7 +286,7 @@ fun AddTaskView(
 
             Spacer(modifier = Modifier.height(6.dp))
 
-            // Reminder Section - now handles its own UI and returns data via callback
+            // Reminder Section
             if (!isHistoryMode) {
                 ReminderSection(
                     settingsViewModel,
@@ -279,14 +294,12 @@ fun AddTaskView(
                     onReminderChanged = { newReminderTime, newReminderText ->
                         reminderTime = newReminderTime
                         reminderText = newReminderText
-                        // Mark that the task has been changed when reminder is modified
                         viewModel.taskHasBeenChanged = true
                         viewModel.onTaskReminderTimeChanged(reminderTime)
                         viewModel.onTaskReminderTextChanged(reminderText)
                     }
                 )
             } else {
-                // Show reminder info in read-only mode for history
                 if (reminderTime != null && reminderTime!! > 0) {
                     reminderText?.let { text ->
                         Card(
@@ -326,7 +339,7 @@ fun AddTaskView(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = if (isHistoryMode) Arrangement.SpaceBetween else Arrangement.SpaceBetween,
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
 
@@ -419,11 +432,9 @@ fun AddTaskView(
 
                 Button(
                     onClick = {
-                        if (!isValid) return@Button // ignore click if not valid
+                        if (!isValid) return@Button
 
-                        // Create task object based on whether we're editing or creating
                         val taskToSubmit = if (id == 0L) {
-                            // Creating new task
                             Task(
                                 title = viewModel.taskTitleState,
                                 description = viewModel.taskDescriptionState,
@@ -431,21 +442,19 @@ fun AddTaskView(
                                 priority = viewModel.taskPriority,
                                 deadline = viewModel.taskDeadline,
                                 label = viewModel.taskLabel,
-                                reminderTime = reminderTime, // Include reminder time
+                                reminderTime = reminderTime,
                                 reminderText = reminderText
                             )
                         } else {
-                            // Editing existing task
                             Task(
                                 id = id,
                                 title = viewModel.taskTitleState,
                                 description = viewModel.taskDescriptionState,
-                                date = viewModel.taskDateState,
                                 address = viewModel.taskAddressState,
                                 priority = viewModel.taskPriority,
                                 deadline = viewModel.taskDeadline,
                                 label = viewModel.taskLabel,
-                                reminderTime = reminderTime, // Include reminder time
+                                reminderTime = reminderTime,
                                 reminderText = reminderText,
                                 isDeleted = task.isDeleted,
                                 deletionDate = task.deletionDate,
@@ -454,19 +463,15 @@ fun AddTaskView(
                             )
                         }
 
-                        // Submit the task - the ViewModel will handle reminder scheduling
-                        onSubmit(taskToSubmit)
-
-                        // Add to calendar if checked and not in history mode
                         if (addToCalendar && !isHistoryMode) {
-                            addTaskToCalendar(
-                                context = context,
-                                taskToSubmit.title,
-                                taskToSubmit.deadline
-                            )
+                            addTaskToCalendar(context, taskToSubmit.title, taskToSubmit.deadline)
                         }
+
+                        // Animate the sheet away, then notify the parent.
+                        // This is the fix for the abrupt navigation on submit.
+                        animateDismiss { onSubmit(taskToSubmit) }
                     },
-                    enabled = true, // always enabled so appearance never changes
+                    enabled = true,
                     modifier = Modifier.size(48.dp),
                     colors = ButtonDefaults.buttonColors(
                         backgroundColor = buttonColor
@@ -488,7 +493,7 @@ fun AddTaskView(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0x80000000)), // Semi-transparent backdrop
+                        .background(Color(0x80000000)),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -499,7 +504,6 @@ fun AddTaskView(
                         horizontalAlignment = Alignment.Start,
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // Dialog title
                         Text(
                             text = "Discard changes?",
                             fontSize = 20.sp,
@@ -507,25 +511,23 @@ fun AddTaskView(
                             color = Color.Black,
                             lineHeight = 24.sp
                         )
-                        // Dialog message
                         Text(
                             text = "Your changes will be lost.",
                             fontSize = 14.sp,
                             color = Color(0xFF757575),
                             lineHeight = 20.sp
                         )
-                        // Action buttons
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
                         ) {
-                            // Cancel button - closes dialog but keeps the sheet open
+                            // Cancel — keep the sheet open
                             TextButton(
                                 onClick = {
                                     openConfirmDialog.value = false
-                                    allowDismiss.value = false // Ensure dismissal remains blocked
+                                    allowDismiss.value = false
                                 },
                                 modifier = Modifier.padding(horizontal = 4.dp)
                             ) {
@@ -536,12 +538,12 @@ fun AddTaskView(
                                     fontWeight = FontWeight.Medium
                                 )
                             }
-                            // Discard button - allows dismissal and closes the sheet
+                            // Discard — animate sheet away, then notify parent
                             TextButton(
                                 onClick = {
                                     openConfirmDialog.value = false
-                                    allowDismiss.value = true // Allow dismissal to proceed
-                                    onDismiss() // Actually dismiss the sheet
+                                    allowDismiss.value = true
+                                    animateDismiss { onDismiss() }
                                 },
                                 modifier = Modifier.padding(horizontal = 4.dp)
                             ) {
@@ -564,7 +566,7 @@ fun AddTaskView(
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color(0x80000000)), // Semi-transparent backdrop
+                        .background(Color(0x80000000)),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
@@ -575,7 +577,6 @@ fun AddTaskView(
                         horizontalAlignment = Alignment.Start,
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        // Dialog title
                         Text(
                             text = "Delete permanently?",
                             fontSize = 20.sp,
@@ -583,21 +584,19 @@ fun AddTaskView(
                             color = Color.Black,
                             lineHeight = 24.sp
                         )
-                        // Dialog message
                         Text(
                             text = "This task will be permanently deleted and cannot be recovered.",
                             fontSize = 14.sp,
                             color = Color(0xFF757575),
                             lineHeight = 20.sp
                         )
-                        // Action buttons
                         Row(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(top = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.End)
                         ) {
-                            // Cancel button
+                            // Cancel
                             TextButton(
                                 onClick = {
                                     openDeleteDialog.value = false
@@ -611,12 +610,12 @@ fun AddTaskView(
                                     fontWeight = FontWeight.Medium
                                 )
                             }
-                            // Delete button
+                            // Delete — animate sheet away, then notify parent
                             TextButton(
                                 onClick = {
                                     openDeleteDialog.value = false
                                     onDelete?.invoke(id)
-                                    onDismiss()
+                                    animateDismiss { onDismiss() }
                                 },
                                 modifier = Modifier.padding(horizontal = 4.dp)
                             ) {

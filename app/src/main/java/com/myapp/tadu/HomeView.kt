@@ -104,7 +104,7 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel, setting
         when (currentRoute) {
             Screen.BottomScreen.Today.bRoute,
             Screen.BottomScreen.Inbox.bRoute,
-            Screen.BottomScreen.Search.bRoute-> {
+            Screen.BottomScreen.Search.bRoute -> {
                 BottomNavScreens(
                     viewModel = viewModel,
                     currentRoute = currentRoute,
@@ -112,7 +112,6 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel, setting
                     modifier = Modifier.padding(innerPadding)
                 )
             }
-
         }
     }
 
@@ -126,10 +125,12 @@ fun HomeView(navController: NavHostController, viewModel: TaskViewModel, setting
                 viewModel.updateTask(newTask)
             }
         }
-        // Hide date picker after date is picked
         viewModel.setShowDatePicker(false)
     }
 
+    // AddTaskView owns its own ModalBottomSheet and its own close animation.
+    // The callbacks below are only invoked AFTER the sheet has fully animated away,
+    // so calling setShowBottomSheet(false) here will never cut off any animation.
     if (uiState.showBottomSheet) {
         AddTaskView(
             uiState.currentId,
