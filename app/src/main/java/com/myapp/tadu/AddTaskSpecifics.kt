@@ -621,8 +621,7 @@ fun NewLabelDialog(
     Dialog(onDismissRequest = onDismiss) {
         Box(
             modifier = Modifier
-                .fillMaxSize()
-                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.5f)),
+                .fillMaxSize(),
             contentAlignment = Alignment.Center
         ) {
             Column(

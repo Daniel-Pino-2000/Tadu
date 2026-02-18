@@ -494,8 +494,7 @@ fun AddTaskView(
             Dialog(onDismissRequest = { openConfirmDialog.value = false }) {
                 Box(
                     modifier = Modifier
-                        .fillMaxSize()
-                        .background(Color(0x80000000)),
+                        .fillMaxSize(),
                     contentAlignment = Alignment.Center
                 ) {
                     Column(
