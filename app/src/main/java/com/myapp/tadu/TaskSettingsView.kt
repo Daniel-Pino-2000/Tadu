@@ -104,6 +104,8 @@ fun SettingsScreen(
     }
 
     var backPressed by remember { mutableStateOf(false) }
+    var interactionEnabled by remember { mutableStateOf(true) }
+
     var showThemeDialog by remember { mutableStateOf(false) }
     var showColorPicker by remember { mutableStateOf(false) }
     var showPermissionDialog by remember { mutableStateOf(false) }
@@ -227,6 +229,7 @@ fun SettingsScreen(
                     onClick = {
                         if (!backPressed) {
                             backPressed = true
+                            interactionEnabled = false
                             navController.popBackStack()
                         }
                     }
@@ -271,7 +274,7 @@ fun SettingsScreen(
                             ThemeMode.DARK -> "Dark theme"
                             ThemeMode.SYSTEM -> "Follow system theme"
                         },
-                        onClick = { showThemeDialog = true }
+                        onClick = { if (interactionEnabled) showThemeDialog = true }
                     )
 
                     HorizontalDivider(
@@ -285,7 +288,7 @@ fun SettingsScreen(
                         icon = Icons.Default.Palette,
                         title = "Accent Color",
                         subtitle = "Customize app colors",
-                        onClick = { showColorPicker = true },
+                        onClick = {if (interactionEnabled) showColorPicker = true },
                         trailingContent = {
                             Box(
                                 modifier = Modifier
@@ -317,7 +320,7 @@ fun SettingsScreen(
                             isEnabled = notificationsEnabled
                         ),
                         checked = notificationsEnabled && hasNotificationPermission,
-                        enabled = true,
+                        enabled = interactionEnabled,
                         onCheckedChange = { enabled ->
                             if (enabled) {
                                 if (hasNotificationPermission) {
@@ -347,7 +350,7 @@ fun SettingsScreen(
                         icon = Icons.Default.ExitToApp,
                         title = "Logout",
                         subtitle = "Sign out of your account",
-                        onClick = { showLogoutDialog = true }
+                        onClick = {if (interactionEnabled) showLogoutDialog = true }
                     )
                 }
             }
@@ -361,7 +364,7 @@ fun SettingsScreen(
                         subtitle = "Permanently delete your account and all data",
                         titleColor = MaterialTheme.colorScheme.error,
                         iconTint = MaterialTheme.colorScheme.error,
-                        onClick = { showDeleteAccountDialog = true }
+                        onClick = {if (interactionEnabled) showDeleteAccountDialog = true }
                     )
                 }
             }
