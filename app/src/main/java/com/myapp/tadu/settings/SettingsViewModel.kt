@@ -4,10 +4,12 @@ import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.myapp.tadu.ThemeMode
+import com.myapp.tadu.ui.theme.getCommonAccentColors
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import androidx.compose.ui.graphics.Color
 
@@ -15,24 +17,22 @@ data class SettingsState(
     val isLoading: Boolean = true,
     val settingsLoaded: Boolean = false,
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
-    val accentColor: Color = Color(0xFF0733F5),
+    val accentColorIndex: Int = 0,
     val notificationsEnabled: Boolean = true,
-    val clearHistoryEnabled: Boolean = false
 )
 
 class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
 
-    // Combined settings state that indicates when all settings are loaded
     val settingsState: StateFlow<SettingsState> = combine(
         repo.themeMode,
-        repo.accentColor,
+        repo.accentColorIndex,
         repo.notificationsEnabled
-    ) { themeMode, accentColor, notificationsEnabled ->
+    ) { themeMode, accentColorIndex, notificationsEnabled ->
         SettingsState(
-            isLoading = true, // Will be managed in MainActivity
+            isLoading = false,
             settingsLoaded = true,
             themeMode = themeMode,
-            accentColor = accentColor,
+            accentColorIndex = accentColorIndex,
             notificationsEnabled = notificationsEnabled
         )
     }.stateIn(
@@ -41,33 +41,45 @@ class SettingsViewModel(private val repo: SettingsRepository) : ViewModel() {
         initialValue = SettingsState(isLoading = true, settingsLoaded = false)
     )
 
-    // Individual flows for backward compatibility if needed elsewhere
     val themeMode = repo.themeMode.stateIn(viewModelScope, SharingStarted.Eagerly, ThemeMode.SYSTEM)
-    val accentColor = repo.accentColor.stateIn(viewModelScope, SharingStarted.Eagerly, Color(0xFF0733F5))
+    val accentColorIndex = repo.accentColorIndex.stateIn(viewModelScope, SharingStarted.Eagerly, 0)
     val notificationsEnabled = repo.notificationsEnabled.stateIn(viewModelScope, SharingStarted.Eagerly, true)
 
-
+    // Keep accentColor flow for backward compatibility with the rest of the codebase.
+    // It always returns the LIGHT theme color — the correct themed color is derived
+    // in MainActivity using accentColorIndex + isDarkTheme. Files like TaskReminderCard
+    // that read this flow will get the base color; MainActivity overrides with the
+    // properly themed version at the top level via MyToDoAppTheme.
+    val accentColor: StateFlow<Color> = repo.accentColorIndex.map { index ->
+        val palette = getCommonAccentColors(isDarkTheme = false)
+        palette[index.coerceIn(0, palette.lastIndex)]
+    }.stateIn(viewModelScope, SharingStarted.Eagerly, Color(0xFF0733F5))
 
     fun updateThemeMode(mode: ThemeMode) {
         viewModelScope.launch { repo.setThemeMode(mode) }
     }
 
-    fun updateAccentColor(color: Color) {
-        viewModelScope.launch { repo.setAccentColor(color) }
+    fun updateAccentColorIndex(index: Int) {
+        viewModelScope.launch { repo.setAccentColorIndex(index) }
     }
 
-    // Add this method to handle notification changes and update scheduled reminders
+    // Keep updateAccentColor for backward compatibility - finds the closest index
+    fun updateAccentColor(color: Color) {
+        viewModelScope.launch {
+            val lightColors = getCommonAccentColors(isDarkTheme = false)
+            val darkColors = getCommonAccentColors(isDarkTheme = true)
+            // Try to find in either palette
+            val index = (lightColors.indexOfFirst { it == color }).takeIf { it >= 0 }
+                ?: (darkColors.indexOfFirst { it == color }).takeIf { it >= 0 }
+                ?: 0
+            repo.setAccentColorIndex(index)
+        }
+    }
+
     fun updateNotificationsEnabled(enabled: Boolean) {
         viewModelScope.launch {
             try {
                 repo.setNotificationsEnabled(enabled)
-
-                // If notifications are being disabled, you might want to cancel all scheduled reminders
-                // You'll need to inject your reminder scheduler or repository to do this
-                // if (!enabled) {
-                //     reminderScheduler.cancelAllReminders()
-                // }
-
                 Log.d("SettingsViewModel", "Notifications enabled updated to: $enabled")
             } catch (e: Exception) {
                 Log.e("SettingsViewModel", "Error updating notifications setting", e)

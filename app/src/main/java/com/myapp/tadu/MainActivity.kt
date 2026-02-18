@@ -32,15 +32,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.google.firebase.auth.FirebaseAuth
 import com.myapp.tadu.Graph.taskRepository
 import com.myapp.tadu.navigation.Navigation
 import com.myapp.tadu.ui.theme.MyToDoAppTheme
+import com.myapp.tadu.ui.theme.getCommonAccentColors
 import com.myapp.tadu.settings.createSettingsRepository
 import com.myapp.tadu.settings.SettingsViewModel
-import com.myapp.tadu.view_model.AuthViewModel
 import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
@@ -74,6 +73,14 @@ class MainActivity : ComponentActivity() {
                 ThemeMode.SYSTEM -> systemInDarkTheme
             }
 
+            // Derive accent color fresh on every recomposition from index + current theme.
+            // When the system theme flips, isDarkTheme changes -> this recomputes instantly.
+            // No remapping LaunchedEffect needed - zero stale state possible.
+            val accentColor = remember(settingsState.accentColorIndex, isDarkTheme) {
+                val palette = getCommonAccentColors(isDarkTheme)
+                palette[settingsState.accentColorIndex.coerceIn(0, palette.lastIndex)]
+            }
+
             // Streamlined loading sequence
             LaunchedEffect(settingsState.settingsLoaded) {
                 if (settingsState.settingsLoaded) {
@@ -85,7 +92,7 @@ class MainActivity : ComponentActivity() {
             // Apply theme consistently
             MyToDoAppTheme(
                 darkTheme = isDarkTheme,
-                accentColor = settingsState.accentColor
+                accentColor = accentColor
             ) {
                 SetSystemBarsColor(color = MaterialTheme.colorScheme.background)
 
@@ -130,7 +137,7 @@ class MainActivity : ComponentActivity() {
             targetValue = 360f,
             animationSpec = infiniteRepeatable(
                 animation = tween(
-                    durationMillis = 1200, // Slightly slower for smoother feel
+                    durationMillis = 1200,
                     easing = LinearEasing
                 )
             ),
@@ -208,7 +215,7 @@ class MainActivity : ComponentActivity() {
             Box(modifier = Modifier.fillMaxSize()) {
                 Navigation(
                     navController = navController,
-                    isLoggedIn = isLoggedIn // Pass login state
+                    isLoggedIn = isLoggedIn
                 )
 
                 // Show battery optimization dialog when needed (only if logged in)
@@ -255,7 +262,6 @@ class MainActivity : ComponentActivity() {
             }
         }
     }
-
 
     /**
      * Check if battery optimization is disabled for this app
