@@ -185,6 +185,7 @@ fun AddTaskView(
     viewModel.taskHasBeenChanged = false
 
     ModalBottomSheet(
+        windowInsets = WindowInsets(0),
         onDismissRequest = {
             // onDismissRequest fires AFTER ModalBottomSheet has already completed
             // its own hide animation (swipe-to-dismiss or tap-outside), so we call
@@ -218,7 +219,7 @@ fun AddTaskView(
             color = Color.Black
         )
 
-        Column(modifier = Modifier.padding(6.dp)) {
+        Column(modifier = Modifier.padding(6.dp).navigationBarsPadding() ) {
 
             // Task title input field
             TextField(
