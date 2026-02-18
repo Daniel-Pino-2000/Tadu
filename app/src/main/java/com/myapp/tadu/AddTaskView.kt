@@ -103,11 +103,15 @@ fun AddTaskView(
     var reminderTime by remember { mutableStateOf<Long?>(null) }
     var reminderText by remember { mutableStateOf<String?>(null) }
 
-    // Configure the bottom sheet state with custom dismiss behavior
+    // We can't reference sheetState inside its own initializer, so we use a flag
+    // to trigger a re-expand via LaunchedEffect after confirmValueChange blocks a hide.
+    val snapSheetOpen = remember { mutableStateOf(false) }
+
     val sheetState: SheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
         confirmValueChange = { newValue ->
             if (newValue == SheetValue.Hidden && viewModel.taskHasBeenChanged && !allowDismiss.value && !isHistoryMode) {
+                snapSheetOpen.value = true  // handled by LaunchedEffect below
                 openConfirmDialog.value = true
                 false
             } else {
@@ -116,20 +120,20 @@ fun AddTaskView(
         }
     )
 
+    // Re-expand the sheet when confirmValueChange blocked a hide.
+    // This counteracts the partial collapse animation that may have already started.
+    LaunchedEffect(snapSheetOpen.value) {
+        if (snapSheetOpen.value) {
+            snapSheetOpen.value = false
+            sheetState.show()
+        }
+    }
+
     // ── Animate the sheet closed, THEN invoke the parent callback. ────────────
-    // This prevents the composable from being removed from the tree while the
-    // slide-down animation is still running, which caused the two visual bugs:
-    //   1. The sheet lingering at the bottom after dismiss.
-    //   2. The sheet jumping/cutting instead of sliding on submit.
-    //
-    // NOTE: onDismissRequest (tap-outside / swipe) does NOT need this helper
-    // because ModalBottomSheet already completes its own animation before
-    // calling onDismissRequest — so we only use animateDismiss for programmatic
-    // close paths (back button, submit button, discard button, delete button).
     fun animateDismiss(action: () -> Unit) {
         coroutineScope.launch {
-            sheetState.hide() // suspends until the slide-down animation finishes
-            action()          // only then tell the parent to remove the composable
+            sheetState.hide()
+            action()
         }
     }
     // ─────────────────────────────────────────────────────────────────────────
@@ -137,15 +141,6 @@ fun AddTaskView(
     // Focus management for automatic keyboard display
     val focusRequester = remember { FocusRequester() }
     val keyboardController = LocalSoftwareKeyboardController.current
-
-    // Handle hardware/gesture back button presses
-    BackHandler(enabled = true) {
-        if (viewModel.taskHasBeenChanged && !allowDismiss.value && !isHistoryMode) {
-            openConfirmDialog.value = true
-        } else {
-            animateDismiss { onDismiss() }
-        }
-    }
 
     // Auto-focus the title field and show keyboard when sheet becomes visible (only if not in history mode)
     LaunchedEffect(sheetState.isVisible) {
@@ -163,6 +158,8 @@ fun AddTaskView(
     LaunchedEffect(id, task) {
         if (id != 0L && task.id != 0L) {
             viewModel.populateFieldsWithTask(task)
+            // ✅ Reset the changed flag AFTER populating — the user hasn't changed anything yet
+            viewModel.taskHasBeenChanged = false
             reminderTime = task.reminderTime
             reminderText = if (task.reminderTime != null && task.reminderTime!! > 0) {
                 task.reminderTime?.toReminderDateTime()?.let { reminderDateTime ->
@@ -177,12 +174,16 @@ fun AddTaskView(
                 viewModel.resetFormFields()
                 viewModel.onTaskDeadlineChanged(currentDeadline)
             }
+            // ✅ Reset the changed flag AFTER resetting fields — the user hasn't changed anything yet
+            viewModel.taskHasBeenChanged = false
             reminderTime = null
             reminderText = null
         }
     }
 
-    viewModel.taskHasBeenChanged = false
+    // ✅ REMOVED: `viewModel.taskHasBeenChanged = false` that was here directly in the
+    // composable body. It was running on EVERY recomposition, continuously resetting
+    // the flag and making the "unsaved changes" check never trigger.
 
     ModalBottomSheet(
         windowInsets = WindowInsets(0),
@@ -190,6 +191,11 @@ fun AddTaskView(
             // onDismissRequest fires AFTER ModalBottomSheet has already completed
             // its own hide animation (swipe-to-dismiss or tap-outside), so we call
             // the parent callback directly here — no animateDismiss needed.
+            //
+            // NOTE: confirmValueChange above will intercept swipe/tap-outside BEFORE
+            // the sheet hides when taskHasBeenChanged is true, so by the time
+            // onDismissRequest fires, either the user confirmed discard (allowDismiss=true)
+            // or taskHasBeenChanged is false. The check below is a safety net.
             if (viewModel.taskHasBeenChanged && !allowDismiss.value && !isHistoryMode) {
                 openConfirmDialog.value = true
             } else {
@@ -201,9 +207,12 @@ fun AddTaskView(
         dragHandle = { /* Empty so there is no drag handle */ },
         modifier = Modifier.padding(0.dp)
     ) {
-        // Intercept back press only while the sheet is visible
+        // ✅ SINGLE BackHandler — only inside the sheet content, not duplicated outside.
+        // Also calls sheetState.show() to snap the sheet back if it started closing
+        // before this handler fully intercepted the back press.
         BackHandler(enabled = sheetState.isVisible) {
             if (viewModel.taskHasBeenChanged && !allowDismiss.value && !isHistoryMode) {
+                coroutineScope.launch { sheetState.show() }
                 openConfirmDialog.value = true
             } else {
                 animateDismiss {
@@ -469,8 +478,6 @@ fun AddTaskView(
                             addTaskToCalendar(context, taskToSubmit.title, taskToSubmit.deadline)
                         }
 
-                        // Animate the sheet away, then notify the parent.
-                        // This is the fix for the abrupt navigation on submit.
                         animateDismiss { onSubmit(taskToSubmit) }
                     },
                     enabled = true,
