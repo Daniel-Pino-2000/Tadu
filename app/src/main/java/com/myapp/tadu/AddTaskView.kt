@@ -450,6 +450,7 @@ fun AddTaskView(
                                 id = id,
                                 title = viewModel.taskTitleState,
                                 description = viewModel.taskDescriptionState,
+                                date = task.date,
                                 address = viewModel.taskAddressState,
                                 priority = viewModel.taskPriority,
                                 deadline = viewModel.taskDeadline,
