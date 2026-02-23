@@ -26,8 +26,6 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 
 ## 📸 Screenshots
 
-*(Add your real screenshots inside `screenshots/` folder)*
-
 ---
 
 ### 🔐 Authentication Screens
@@ -45,7 +43,7 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 
 ### ✏️ Task Detail & Reminder
 
-![Task Detail Screen](screenshots/task_detail.png)
+![Task Detail Screen](screenshots/editor.png)
 
 ---
 
