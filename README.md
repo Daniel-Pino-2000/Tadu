@@ -33,37 +33,37 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 ### 🔐 Authentication Screens
 
 #### Login / Registration
-![Login Screen](screenshots/login.jpeg)
+![Login Screen](screenshots/login.png)
 
 ---
 
 ### 🏠 Main Task Dashboard
 
-![Home Screen](screenshots/home.jpeg)
+![Home Screen](screenshots/home.png)
 
 ---
 
 ### ✏️ Task Detail & Reminder
 
-![Task Detail Screen](screenshots/task_detail.jpeg)
+![Task Detail Screen](screenshots/task_detail.png)
 
 ---
 
 ### 📅 Calendar View
 
-![Calendar Screen](screenshots/calendar.jpeg)
+![Calendar Screen](screenshots/calendar.png)
 
 ---
 
 ### ⚙️ Settings Screen
 
-![Settings Screen](screenshots/settings.jpeg)
+![Settings Screen](screenshots/settings.png)
 
 ---
 
 ### 📜 Task History
 
-![History Screen](screenshots/history.jpeg)
+![History Screen](screenshots/history.png)
 
 ---
 
