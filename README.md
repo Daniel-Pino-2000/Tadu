@@ -1,72 +1,79 @@
-# 📋 Tadu – Task Management App
+# 📋 Tadu – Smart Task Management App
 
-## 🌟 Description
+![Android](https://img.shields.io/badge/Platform-Android-green)
+![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue)
+![Firebase](https://img.shields.io/badge/Backend-Firebase-orange)
 
-**Tadu** helps you create tasks in seconds, set deadlines, choose priority levels, and add locations.
+## 🚀 Overview
 
-The app includes **Firebase account features**, allowing users to:
+**Tadu** is a modern task management Android application designed to help users stay organized and productive.
 
-- ✅ Sign up  
-- 🔑 Log in  
-- 🚪 Log out  
-- 🗑️ Delete account  
-- ☁️ Save tasks in the cloud  
+With Tadu, you can quickly create tasks, set deadlines, choose priority levels, and add locations.
 
-For data management, Tadu uses **Room database** for local storage and offline support.
+The app supports **cloud synchronization**, **local offline storage**, and **task reminders**.
 
-The app integrates **<REMINDER_LIBRARY_NAME>** for notifications and task reminders.
+### ✨ Core Functionalities
 
-Whether it’s work, school, or daily life, Tadu helps you stay organized and productive.
+- ✅ User authentication (Sign up, Login, Logout, Delete account) using Firebase  
+- ☁️ Cloud task storage  
+- 📂 Local persistence using Room database  
+- 🔔 Task reminders using **<REMINDER_LIBRARY_NAME>**  
+- 📅 Deadline and priority management  
+- 📍 Location tagging  
+- 📤 Calendar integration
 
 ---
 
 ## 📸 Screenshots
 
-### 🔐 Login & Registration
-<!-- Replace path with your real screenshot -->
+*(Add your real screenshots inside `screenshots/` folder)*
+
+### 🔐 Authentication Screens
+
 ![Login Screen](screenshots/login.png)
 
-### 🏠 Home / Task List
+---
+
+### 🏠 Main Task Dashboard
+
 ![Home Screen](screenshots/home.png)
 
-### ✏️ Create Task
-![Create Task Screen](screenshots/create_task.png)
+---
 
-### 📌 Task Details / Reminder View
+### ✏️ Create Task Screen
+
+![Create Task](screenshots/create_task.png)
+
+---
+
+### 📌 Task Details & Reminder View
+
 ![Task Detail Screen](screenshots/task_detail.png)
 
-*(Add or remove screenshots depending on what you have.)*
+---
+
+## 🏗️ Architecture Highlights
+
+- MVVM (Model-View-ViewModel) pattern  
+- Repository abstraction layer  
+- Separation of UI, business logic, and data storage  
+- Offline-first data design
 
 ---
 
-## 🚀 Features
+## 🛠️ Tech Stack
 
-- Create tasks in seconds  
-- Set deadlines  
-- Priority selection  
-- Location tagging  
-- Task reminders using **<REMINDER_LIBRARY_NAME>**  
-- Firebase authentication  
-- Cloud synchronization  
-- Local storage with Room database  
-- Calendar integration  
+- Kotlin / Android SDK  
+- Jetpack Compose (if you are using it)  
+- Firebase Authentication & Cloud Storage  
+- Room Persistence Library  
+- Notification / Reminder Library (**<REMINDER_LIBRARY_NAME>**)  
 
 ---
 
-## 🛠️ Technologies Used
+## 📦 Installation
 
-- Kotlin / Java (Android Development)
-- Jetpack Compose (if applicable)
-- Firebase Authentication & Database
-- Room Persistence Library
-- <REMINDER_LIBRARY_NAME> Notification Library
-- MVVM Architecture (if used)
-
----
-
-## 🔧 Installation
-
-1. Clone the repository:
+### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/yourusername/tadu.git
