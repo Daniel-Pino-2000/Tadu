@@ -17,7 +17,7 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 - ✅ User authentication (Sign up, Login, Logout, Delete account) using Firebase  
 - ☁️ Cloud task storage  
 - 📂 Local persistence using Room database  
-- 🔔 Task reminders using **<REMINDER_LIBRARY_NAME>**  
+- 🔔 Task reminders using BroadcastReceiver, AlarmManager, NotificationManager  
 - 📅 Deadline and priority management  
 - 📍 Location tagging  
 - 📤 Calendar integration
