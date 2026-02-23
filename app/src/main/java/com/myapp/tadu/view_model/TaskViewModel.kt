@@ -165,7 +165,6 @@ class TaskViewModel(
             taskRepository.addTask(task)
             // Schedule reminder if time is set and in future
             if (task.reminderTime != null && task.reminderTime!! > System.currentTimeMillis()) {
-                println("It is scheduling the reminder!")
                 reminderScheduler.schedule(task)
             }
         }
@@ -224,18 +223,23 @@ class TaskViewModel(
 
     fun completeTask(taskId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
-            taskRepository.markTaskCompleted(taskId)
-        }
-    }
+            val task = taskRepository.getTaskById(taskId).firstOrNull()
 
-    fun uncompleteTask(taskId: Long) {
-        viewModelScope.launch(Dispatchers.IO) {
-            taskRepository.markTaskPending(taskId)
+            if (task?.reminderTime != null) {
+                reminderScheduler.cancel(task)
+            }
+            taskRepository.markTaskCompleted(taskId)
         }
     }
 
     fun restoreTask(taskId: Long) {
         viewModelScope.launch(Dispatchers.IO) {
+            val task = taskRepository.getTaskById(taskId).firstOrNull()
+
+            if (task?.reminderTime != null) {
+                reminderScheduler.schedule(task)
+            }
+
             taskRepository.restoreTask(taskId)
         }
         resetFormFields()
