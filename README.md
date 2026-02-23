@@ -89,4 +89,4 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/tadu.git
+git clone https://github.com/Daniel-Pino-2000/tadu.git
