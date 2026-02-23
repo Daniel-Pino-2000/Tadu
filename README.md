@@ -80,7 +80,7 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 - Jetpack Compose (if applicable)  
 - Firebase Authentication & Cloud Storage  
 - Room Persistence Library  
-- Notification / Reminder Library (**<REMINDER_LIBRARY_NAME>**)
+- AlarmManager + BroadcastReceiver (Task reminders)
 
 ---
 
