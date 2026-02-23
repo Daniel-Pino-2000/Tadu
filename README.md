@@ -4,7 +4,7 @@
 
 **Tadu** helps you create tasks in seconds, set deadlines, choose priority levels, and add locations.
 
-The app includes **account features using Firebase**, allowing users to:
+The app includes **Firebase account features**, allowing users to:
 
 - ✅ Sign up  
 - 🔑 Log in  
@@ -14,23 +14,42 @@ The app includes **account features using Firebase**, allowing users to:
 
 For data management, Tadu uses **Room database** for local storage and offline support.
 
-The app also integrates **<REMINDER_LIBRARY_NAME>** for notifications and task reminders.
+The app integrates **<REMINDER_LIBRARY_NAME>** for notifications and task reminders.
 
 Whether it’s work, school, or daily life, Tadu helps you stay organized and productive.
 
 ---
 
+## 📸 Screenshots
+
+### 🔐 Login & Registration
+<!-- Replace path with your real screenshot -->
+![Login Screen](screenshots/login.png)
+
+### 🏠 Home / Task List
+![Home Screen](screenshots/home.png)
+
+### ✏️ Create Task
+![Create Task Screen](screenshots/create_task.png)
+
+### 📌 Task Details / Reminder View
+![Task Detail Screen](screenshots/task_detail.png)
+
+*(Add or remove screenshots depending on what you have.)*
+
+---
+
 ## 🚀 Features
 
-- ✏️ Create tasks in seconds  
-- 📅 Set deadlines  
-- ⭐ Choose priority levels  
-- 📍 Add task locations  
-- 🔔 Task reminders using **<REMINDER_LIBRARY_NAME>**  
-- ☁️ Cloud synchronization  
-- 🔐 Firebase authentication  
-- 📂 Local storage with Room database  
-- 📤 Calendar integration  
+- Create tasks in seconds  
+- Set deadlines  
+- Priority selection  
+- Location tagging  
+- Task reminders using **<REMINDER_LIBRARY_NAME>**  
+- Firebase authentication  
+- Cloud synchronization  
+- Local storage with Room database  
+- Calendar integration  
 
 ---
 
@@ -38,10 +57,10 @@ Whether it’s work, school, or daily life, Tadu helps you stay organized and pr
 
 - Kotlin / Java (Android Development)
 - Jetpack Compose (if applicable)
-- Firebase Authentication & Cloud Storage
-- Room Database
+- Firebase Authentication & Database
+- Room Persistence Library
 - <REMINDER_LIBRARY_NAME> Notification Library
-- MVVM Architecture (if applicable)
+- MVVM Architecture (if used)
 
 ---
 
