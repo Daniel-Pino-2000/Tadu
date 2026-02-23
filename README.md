@@ -17,7 +17,7 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 - ✅ User authentication (Sign up, Login, Logout, Delete account) using Firebase  
 - ☁️ Cloud task storage  
 - 📂 Local persistence using Room database  
-- 🔔 Task reminders using **<REMINDER_LIBRARY_NAME>**  
+- 🔔 Task reminders using BroadcastReceiver, AlarmManager, NotificationManager  
 - 📅 Deadline and priority management  
 - 📍 Location tagging  
 - 📤 Calendar integration
@@ -25,8 +25,6 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 ---
 
 ## 📸 Screenshots
-
-*(Add your real screenshots inside `screenshots/` folder)*
 
 ---
 
@@ -45,7 +43,7 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 
 ### ✏️ Task Detail & Reminder
 
-![Task Detail Screen](screenshots/task_detail.png)
+![Task Detail Screen](screenshots/editor.png)
 
 ---
 
@@ -82,7 +80,7 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 - Jetpack Compose (if applicable)  
 - Firebase Authentication & Cloud Storage  
 - Room Persistence Library  
-- Notification / Reminder Library (**<REMINDER_LIBRARY_NAME>**)
+- AlarmManager + BroadcastReceiver (Task reminders)
 
 ---
 
@@ -91,4 +89,4 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/tadu.git
+git clone https://github.com/Daniel-Pino-2000/tadu.git
