@@ -28,27 +28,42 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 
 *(Add your real screenshots inside `screenshots/` folder)*
 
+---
+
 ### 🔐 Authentication Screens
 
-![Login Screen](screenshots/login.png)
+#### Login / Registration
+![Login Screen](screenshots/login.jpeg)
 
 ---
 
 ### 🏠 Main Task Dashboard
 
-![Home Screen](screenshots/home.png)
+![Home Screen](screenshots/home.jpeg)
 
 ---
 
-### ✏️ Create Task Screen
+### ✏️ Task Detail & Reminder
 
-![Create Task](screenshots/create_task.png)
+![Task Detail Screen](screenshots/task_detail.jpeg)
 
 ---
 
-### 📌 Task Details & Reminder View
+### 📅 Calendar View
 
-![Task Detail Screen](screenshots/task_detail.png)
+![Calendar Screen](screenshots/calendar.jpeg)
+
+---
+
+### ⚙️ Settings Screen
+
+![Settings Screen](screenshots/settings.jpeg)
+
+---
+
+### 📜 Task History
+
+![History Screen](screenshots/history.jpeg)
 
 ---
 
@@ -64,10 +79,10 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 ## 🛠️ Tech Stack
 
 - Kotlin / Android SDK  
-- Jetpack Compose (if you are using it)  
+- Jetpack Compose (if applicable)  
 - Firebase Authentication & Cloud Storage  
 - Room Persistence Library  
-- Notification / Reminder Library (**<REMINDER_LIBRARY_NAME>**)  
+- Notification / Reminder Library (**<REMINDER_LIBRARY_NAME>**)
 
 ---
 
