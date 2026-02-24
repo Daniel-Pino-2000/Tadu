@@ -6,6 +6,7 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,7 +69,11 @@ fun Navigation(
 
     NavHost(
         navController = navController,
-        startDestination = if (isLoggedIn) Screen.Home.route else Screen.LoginScreen.route
+        startDestination = if (isLoggedIn) Screen.Home.route else Screen.LoginScreen.route,
+        enterTransition = { EnterTransition.None },
+        exitTransition = { ExitTransition.None },
+        popEnterTransition = { EnterTransition.None },
+        popExitTransition = { ExitTransition.None }
     ) {
         // Login screen
         composable(Screen.LoginScreen.route) {
@@ -96,8 +101,21 @@ fun Navigation(
         }
 
         // Home screen
-        composable(Screen.Home.route) {
-            HomeView(navController, taskViewModel, settingsViewModel)
+        // Home screen
+        composable(
+            Screen.Home.route,
+            exitTransition = { ExitTransition.None },
+            popEnterTransition = { EnterTransition.None }
+        ) {
+            var visible by remember { mutableStateOf(false) }
+            LaunchedEffect(Unit) { visible = true }
+
+            AnimatedVisibility(
+                visible = visible,
+                enter = fadeIn(animationSpec = tween(durationMillis = 400, easing = FastOutSlowInEasing))
+            ) {
+                HomeView(navController, taskViewModel, settingsViewModel)
+            }
         }
 
         // History screen with vertical slide from bottom
