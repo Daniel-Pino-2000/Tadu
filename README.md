@@ -6,11 +6,10 @@
 
 ## 🚀 Overview
 
-**Tadu** is a modern task management Android application designed to help users stay organized and productive.
-
-With Tadu, you can quickly create tasks, set deadlines, choose priority levels, and add locations.
-
-The app supports **cloud synchronization**, **local offline storage**, and **task reminders**.
+**Tadu** is an Android task management app built with Kotlin and Jetpack Compose, following
+an MVVM architecture with a repository layer over Firebase (auth + cloud storage) and a local
+Room database for offline-first persistence. Tasks support deadlines, priority levels, and
+location tags, with scheduled reminders backed by `AlarmManager` and a `BroadcastReceiver`.
 
 ### ✨ Core Functionalities
 
@@ -77,7 +76,7 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 ## 🛠️ Tech Stack
 
 - Kotlin / Android SDK  
-- Jetpack Compose (if applicable)  
+- Jetpack Compose  
 - Firebase Authentication & Cloud Storage  
 - Room Persistence Library  
 - AlarmManager + BroadcastReceiver (Task reminders)
@@ -86,7 +85,23 @@ The app supports **cloud synchronization**, **local offline storage**, and **tas
 
 ## 📦 Installation
 
-### 1. Clone the Repository
+### 1. Clone the repository
 
 ```bash
-git clone https://github.com/Daniel-Pino-2000/tadu.git
+git clone https://github.com/Daniel-Pino-2000/Tadu.git
+```
+
+### 2. Open in Android Studio
+
+Open the cloned folder as an existing project and let Gradle sync.
+
+### 3. Add your own Firebase config
+
+Tadu needs a Firebase project (Authentication + Firestore enabled) to run. Create one in the
+[Firebase console](https://console.firebase.google.com/), register an Android app with package
+name `com.myapp.tadu`, download the generated `google-services.json`, and place it at
+`app/google-services.json`, replacing the one already in this repo.
+
+### 4. Run
+
+Run the `app` configuration on an emulator or device (minSdk per `app/build.gradle.kts`).
