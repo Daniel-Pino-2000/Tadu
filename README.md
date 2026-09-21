@@ -1,89 +1,73 @@
-# 📋 Tadu – Smart Task Management App
+# Tadu — Smart Task Management App
 
 ![Android](https://img.shields.io/badge/Platform-Android-green)
 ![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue)
 ![Firebase](https://img.shields.io/badge/Backend-Firebase-orange)
 
-## 🚀 Overview
+An Android task manager built with Kotlin and Jetpack Compose, following an MVVM
+architecture with a repository layer over Firebase (auth + cloud storage) and a local
+Room database for offline-first persistence. Tasks support deadlines, priority levels,
+labels, and location tags, with scheduled reminders backed by `AlarmManager` and a
+`BroadcastReceiver` that survive a device reboot.
 
-**Tadu** is an Android task management app built with Kotlin and Jetpack Compose, following
-an MVVM architecture with a repository layer over Firebase (auth + cloud storage) and a local
-Room database for offline-first persistence. Tasks support deadlines, priority levels, and
-location tags, with scheduled reminders backed by `AlarmManager` and a `BroadcastReceiver`.
-
-### ✨ Core Functionalities
-
-- ✅ User authentication (Sign up, Login, Logout, Delete account) using Firebase  
-- ☁️ Cloud task storage  
-- 📂 Local persistence using Room database  
-- 🔔 Task reminders using BroadcastReceiver, AlarmManager, NotificationManager  
-- 📅 Deadline and priority management  
-- 📍 Location tagging  
-- 📤 Calendar integration
-
----
-
-## 📸 Screenshots
-
----
-
-### 🔐 Authentication Screens
-
-#### Login / Registration
-![Login Screen](screenshots/login.png)
+<table>
+<tr>
+<td width="25%"><img src="screenshots/login.png" alt="Login screen"><br><sub>Login / registration</sub></td>
+<td width="25%"><img src="screenshots/home.png" alt="Home screen"><br><sub>Today — grouped by due date</sub></td>
+<td width="25%"><img src="screenshots/editor.png" alt="Task detail screen"><br><sub>Task detail — location, reminder</sub></td>
+<td width="25%"><img src="screenshots/calendar.png" alt="Calendar screen"><br><sub>Calendar view</sub></td>
+</tr>
+<tr>
+<td width="25%"><img src="screenshots/search.png" alt="Search screen"><br><sub>Search / label filter</sub></td>
+<td width="25%"><img src="screenshots/search2.png" alt="Filtered search results"><br><sub>Filtered by label</sub></td>
+<td width="25%"><img src="screenshots/history.png" alt="Task history screen"><br><sub>Task history</sub></td>
+<td width="25%"><img src="screenshots/settings.png" alt="Settings screen"><br><sub>Settings</sub></td>
+</tr>
+</table>
 
 ---
 
-### 🏠 Main Task Dashboard
+## Features
 
-![Home Screen](screenshots/home.png)
-
----
-
-### ✏️ Task Detail & Reminder
-
-![Task Detail Screen](screenshots/editor.png)
-
----
-
-### 📅 Calendar View
-
-![Calendar Screen](screenshots/calendar.png)
+- **Authentication** — sign up, log in, log out, delete account (Firebase Auth)
+- **Cloud + local storage** — tasks sync to Firebase Cloud Storage and persist locally
+  via Room for offline-first access
+- **Reminders** — scheduled notifications via `AlarmManager` + `BroadcastReceiver`,
+  automatically rescheduled on device reboot (`BootReceiver`)
+- **Deadlines & priority** — due dates, priority levels, and custom labels
+- **Location tagging** — attach a location to a task
+- **Search & filtering** — search tasks by title or filter by label
+- **Calendar view** — tasks laid out by date, with add-to-device-calendar support
+- **Task history** — review past/completed tasks
 
 ---
 
-### ⚙️ Settings Screen
+## Architecture
 
-![Settings Screen](screenshots/settings.png)
-
----
-
-### 📜 Task History
-
-![History Screen](screenshots/history.png)
-
----
-
-## 🏗️ Architecture Highlights
-
-- MVVM (Model-View-ViewModel) pattern  
-- Repository abstraction layer  
-- Separation of UI, business logic, and data storage  
-- Offline-first data design
+- **MVVM** — `TaskViewModel` and `AuthViewModel` expose state to Compose screens; no UI
+  code talks to Room or Firebase directly.
+- **Repository layer** — `TaskRepository` and `UserRepository` are the single source of
+  truth, deciding local (Room) vs. remote (Firebase) reads/writes.
+- **Offline-first** — the local Room database is the primary read path; cloud sync goes
+  through the repository layer rather than the UI.
+- **Reminder scheduling** — `AndroidReminderScheduler` schedules `AlarmManager` alarms;
+  `ReminderReceiver` handles firing them and `BootReceiver` re-schedules pending
+  reminders after a device restart, since `AlarmManager` alarms don't survive a reboot
+  on their own.
 
 ---
 
-## 🛠️ Tech Stack
+## Tech Stack
 
-- Kotlin / Android SDK  
-- Jetpack Compose  
-- Firebase Authentication & Cloud Storage  
-- Room Persistence Library  
-- AlarmManager + BroadcastReceiver (Task reminders)
+- Kotlin / Android SDK
+- Jetpack Compose
+- Firebase Authentication & Cloud Storage
+- Room Persistence Library
+- AlarmManager + BroadcastReceiver (task reminders)
 
 ---
 
-## 📦 Installation
+## Installation
 
 ### 1. Clone the repository
 
