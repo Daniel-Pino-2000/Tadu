@@ -77,6 +77,7 @@ keyPassword=********
 Create the keystore once with:
 
 ```bash
+mkdir -p keystore
 keytool -genkeypair -v -keystore keystore/tadu-release.jks \
   -alias tadu -keyalg RSA -keysize 2048 -validity 10000
 ```

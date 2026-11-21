@@ -150,7 +150,7 @@ These are deliberate starting points for future improvements, not blockers:
 7. **Hardcoded strings.** Only `app_name` lives in `strings.xml`. Extract user-facing
    text for localisation and lint cleanliness.
 8. **Material 2 and Material 3 coexist.** Plan a single design-system migration.
-9. **Boilerplate tests.** `ExampleUnitTest` / `ExampleInstrumentedTest` are still
-   generated samples; replace them with behaviour tests as features change.
-10. **No release signing configuration.** Release builds are currently unsigned; see
-    the development guide before publishing.
+9. **Boilerplate instrumentation test.** `ExampleInstrumentedTest` is still a
+   generated sample; replace it with behaviour tests as features change.
+10. **Release signing is opt-in.** Release builds are unsigned unless a local
+    `keystore.properties` exists; see the development guide before publishing.

@@ -113,6 +113,6 @@ Use these as a starting point, not a mandate to do everything at once:
 4. Add repository/ViewModel unit tests with fake DAO and cloud services.
 5. Extract hardcoded strings and finish the Material 3 migration.
 6. Replace the generated example tests with behaviour tests.
-7. Add release signing and a tag-based release workflow.
+7. Add a tag-based release workflow on top of the optional signing setup.
 
 See `docs/ARCHITECTURE.md` for the full debt list.
