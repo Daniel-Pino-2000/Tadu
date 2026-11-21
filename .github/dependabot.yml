@@ -10,6 +10,17 @@ updates:
       - Daniel-Pino-2000
     commit-message:
       prefix: build
+    ignore:
+      # Major toolchain bumps (AGP, Gradle, Kotlin, Firebase) are coordinated
+      # manually. See the toolchain upgrade issue.
+      - dependency-name: "*"
+        update-types:
+          - "version-update:semver-major"
+      # AndroidX minor releases often require a newer AGP; upgrade them together
+      # with the toolchain rather than one at a time.
+      - dependency-name: "androidx.*"
+        update-types:
+          - "version-update:semver-minor"
     groups:
       androidx:
         patterns:
