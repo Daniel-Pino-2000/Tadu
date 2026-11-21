@@ -1,21 +1,19 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
+# Tadu ProGuard / R8 rules
 #
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
+# Firebase and AndroidX ship their own consumer rules. The rules below cover
+# model classes that are read/written through reflection by Firestore.
+#
+# Docs: https://developer.android.com/build/shrink-code
 
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
+# Firestore maps documents to data classes via reflection.
+-keepclassmembers class com.myapp.tadu.data.** {
+    *;
+}
+-keep class com.myapp.tadu.data.remote.User { *; }
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
+# Keep annotations and generic signatures used by reflection-based libraries.
+-keepattributes *Annotation*,Signature,InnerClasses,EnclosingMethod
 
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
+# Preserve line numbers so release crash reports remain useful.
+-keepattributes SourceFile,LineNumberTable
+-renamesourcefileattribute SourceFile

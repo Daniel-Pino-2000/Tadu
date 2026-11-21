@@ -1,0 +1,6 @@
+# Default owner for everything in the repository.
+* @Daniel-Pino-2000
+
+# Build, CI and repository configuration.
+/.github/ @Daniel-Pino-2000
+/gradle/ @Daniel-Pino-2000

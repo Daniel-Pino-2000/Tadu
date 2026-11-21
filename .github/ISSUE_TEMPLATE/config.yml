@@ -1,0 +1,12 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Documentation
+    url: https://github.com/Daniel-Pino-2000/Tadu#readme
+    about: Setup, build, architecture and development guides.
+  - name: Report a security vulnerability
+    url: https://github.com/Daniel-Pino-2000/Tadu/security/advisories/new
+    about: Please report security problems privately, not as a public issue.
+  - name: Questions and ideas
+    url: https://github.com/Daniel-Pino-2000/Tadu/discussions
+    about: Ask questions or discuss ideas with the community.

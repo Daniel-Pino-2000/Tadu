@@ -1,14 +1,15 @@
-# Tadu — Smart Task Management App
+# Tadu — Smart Task Management for Android
 
-![Android](https://img.shields.io/badge/Platform-Android-green)
-![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue)
-![Firebase](https://img.shields.io/badge/Backend-Firebase-orange)
+[![CI](https://github.com/Daniel-Pino-2000/Tadu/actions/workflows/ci.yml/badge.svg?branch=master)](https://github.com/Daniel-Pino-2000/Tadu/actions/workflows/ci.yml)
+![Platform](https://img.shields.io/badge/platform-Android-3DDC84)
+![Kotlin](https://img.shields.io/badge/kotlin-2.0-7F52FF)
+![Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4)
+![minSdk](https://img.shields.io/badge/minSdk-24-blue)
 
-An Android task manager built with Kotlin and Jetpack Compose, following an MVVM
-architecture with a repository layer over Firebase (auth + cloud storage) and a local
-Room database for offline-first persistence. Tasks support deadlines, priority levels,
-labels, and location tags, with scheduled reminders backed by `AlarmManager` and a
-`BroadcastReceiver` that survive a device reboot.
+Tadu is an offline-first Android task manager built with Kotlin and Jetpack Compose.
+Tasks live in a local Room database and sync to Firebase Firestore, so the app stays
+responsive without a network connection. Tasks support deadlines, priorities, labels,
+location tags, and scheduled reminders that survive a device reboot.
 
 <table>
 <tr>
@@ -27,65 +28,155 @@ labels, and location tags, with scheduled reminders backed by `AlarmManager` and
 
 ---
 
-## Features
+## Highlights
 
-- **Authentication** — sign up, log in, log out, delete account (Firebase Auth)
-- **Cloud + local storage** — tasks sync to Firebase Cloud Storage and persist locally
-  via Room for offline-first access
-- **Reminders** — scheduled notifications via `AlarmManager` + `BroadcastReceiver`,
-  automatically rescheduled on device reboot (`BootReceiver`)
-- **Deadlines & priority** — due dates, priority levels, and custom labels
-- **Location tagging** — attach a location to a task
-- **Search & filtering** — search tasks by title or filter by label
-- **Calendar view** — tasks laid out by date, with add-to-device-calendar support
-- **Task history** — review past/completed tasks
+- **Authentication** — email/password sign-up, login, logout, password reset, and
+  account deletion with re-authentication (Firebase Auth).
+- **Offline-first storage** — Room is the primary read path; changes are mirrored to
+  Firestore under the signed-in user's document.
+- **Reminders** — `AlarmManager` alarms fire through a `BroadcastReceiver`; pending
+  reminders are rescheduled after a reboot by `BootReceiver`.
+- **Organisation** — due dates, deadlines, priority levels, custom labels, and an
+  optional location tag per task.
+- **Views** — Today, Inbox, Search, Calendar, Reminders, History, and Settings.
+- **Calendar integration** — add a task to the device calendar through an `INSERT`
+  intent.
+- **Personalisation** — light/dark/system theme, accent palettes, and a global
+  notification toggle backed by DataStore.
 
----
+## Tech stack
+
+| Area | Choice |
+| --- | --- |
+| Language | Kotlin 2.0 |
+| UI | Jetpack Compose (Material 2 + Material 3), Navigation Compose |
+| Architecture | MVVM + repository layer, manual dependency container (`Graph`) |
+| Local persistence | Room (KSP), DataStore Preferences |
+| Backend | Firebase Authentication + Cloud Firestore |
+| Background work | `AlarmManager`, `BroadcastReceiver` |
+| Build | Gradle 8.11, AGP 8.10, version catalog (`gradle/libs.versions.toml`) |
 
 ## Architecture
 
-- **MVVM** — `TaskViewModel` and `AuthViewModel` expose state to Compose screens; no UI
-  code talks to Room or Firebase directly.
-- **Repository layer** — `TaskRepository` and `UserRepository` are the single source of
-  truth, deciding local (Room) vs. remote (Firebase) reads/writes.
-- **Offline-first** — the local Room database is the primary read path; cloud sync goes
-  through the repository layer rather than the UI.
-- **Reminder scheduling** — `AndroidReminderScheduler` schedules `AlarmManager` alarms;
-  `ReminderReceiver` handles firing them and `BootReceiver` re-schedules pending
-  reminders after a device restart, since `AlarmManager` alarms don't survive a reboot
-  on their own.
+```
+Compose UI ──► ViewModels ──► Repositories ──┬──► Room (local, source of truth)
+                                             └──► Firestore (per-user cloud copy)
 
----
+ViewModels ──► ReminderScheduler ──► AlarmManager ──► ReminderReceiver ──► Notification
+BootReceiver ──► ReminderScheduler (reschedule after reboot)
+```
 
-## Tech Stack
+- The UI never talks to Room or Firebase directly; it observes state from ViewModels.
+- `TaskRepository` decides when to touch the local database and when to mirror a
+  change to Firestore.
+- Reminder scheduling is behind the `ReminderScheduler` interface so it can be faked
+  in tests.
 
-- Kotlin / Android SDK
-- Jetpack Compose
-- Firebase Authentication & Cloud Storage
-- Room Persistence Library
-- AlarmManager + BroadcastReceiver (task reminders)
+Read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for the package map, data flows, and
+known technical debt.
 
----
+## Project structure
 
-## Installation
+```
+app/src/main/java/com/myapp/tadu/
+├── data/                 Room entity, DAO, database, TaskRepository
+│   └── remote/           Firebase Auth/Firestore services and result types
+├── navigation/           Route and screen definitions
+├── notifications/        Alarm scheduling, receivers, notification helpers
+├── screens/              Login, sign-up, forgot-password UI
+├── settings/             DataStore-backed settings repository and ViewModel
+├── ui/theme/             Compose theme, typography, dynamic colour
+├── view_model/           AuthViewModel and TaskViewModel
+├── Graph.kt              Manual dependency container
+├── MainActivity.kt       Entry point and navigation host
+└── *.kt                  Compose screens and shared components
+```
+
+## Getting started
+
+### Prerequisites
+
+- Android Studio Meerkat Feature Drop (2024.3.2) or newer, or the Android
+  command-line tools
+- JDK 17 (Android Studio's bundled JDK works)
+- Android SDK 35
+- A Firebase project with **Authentication** and **Cloud Firestore** enabled
 
 ### 1. Clone the repository
 
 ```bash
 git clone https://github.com/Daniel-Pino-2000/Tadu.git
+cd Tadu
 ```
 
-### 2. Open in Android Studio
+### 2. Connect your own Firebase project
 
-Open the cloned folder as an existing project and let Gradle sync.
+The repository does **not** ship a real Firebase configuration.
 
-### 3. Add your own Firebase config
+1. Create a project in the [Firebase console](https://console.firebase.google.com/).
+2. Add an Android app with package name `com.myapp.tadu`.
+3. Enable the **Email/Password** sign-in provider.
+4. Create a **Firestore Database** (production mode is fine).
+5. Download `google-services.json` and place it at `app/google-services.json`.
+6. Deploy the included security rules (requires the Firebase CLI):
 
-Tadu needs a Firebase project (Authentication + Firestore enabled) to run. Create one in the
-[Firebase console](https://console.firebase.google.com/), register an Android app with package
-name `com.myapp.tadu`, download the generated `google-services.json`, and place it at
-`app/google-services.json`, replacing the one already in this repo.
+   ```bash
+   firebase deploy --only firestore:rules
+   ```
 
-### 4. Run
+`app/google-services.json` is git-ignored. If you only need to compile the project
+without a real backend, copy the placeholder instead:
 
-Run the `app` configuration on an emulator or device (minSdk per `app/build.gradle.kts`).
+```bash
+cp app/google-services.json.example app/google-services.json
+```
+
+### 3. Build and run
+
+```bash
+./gradlew assembleDebug        # build the debug APK
+./gradlew installDebug         # install on a connected device/emulator
+```
+
+Or open the folder in Android Studio and run the `app` configuration.
+
+## Build, test and quality checks
+
+| Command | Purpose |
+| --- | --- |
+| `./gradlew assembleDebug` | Compile and package the debug APK |
+| `./gradlew testDebugUnitTest` | Run JVM unit tests |
+| `./gradlew lintDebug` | Run Android Lint |
+| `./gradlew connectedDebugAndroidTest` | Run instrumentation tests (device required) |
+| `./gradlew assembleRelease` | Build a minified release APK/AAB |
+| `./gradlew clean` | Delete build outputs |
+
+CI runs lint, unit tests, and a debug build on every push and pull request. See
+[docs/DEVELOPMENT.md](docs/DEVELOPMENT.md) for release signing and troubleshooting.
+
+## Documentation
+
+- [Architecture](docs/ARCHITECTURE.md) — layers, data flows, Firestore schema, debt
+- [Development guide](docs/DEVELOPMENT.md) — setup, commands, CI, releases
+- [Contributing](CONTRIBUTING.md) — workflow, conventions, pull requests
+- [Code of Conduct](CODE_OF_CONDUCT.md)
+- [Security policy](SECURITY.md)
+- [Changelog](CHANGELOG.md)
+- [Agent / house rules](AGENTS.md) — conventions for AI-assisted and human changes
+
+## Contributing
+
+Contributions are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) and the
+[Code of Conduct](CODE_OF_CONDUCT.md) before opening a pull request. Use the issue
+templates for bugs and feature requests.
+
+## Security
+
+Please do not open public issues for security problems. See [SECURITY.md](SECURITY.md)
+for the reporting process and the project's secrets policy.
+
+## License
+
+No license has been chosen yet. Until a `LICENSE` file is added, the code is
+all rights reserved. If you intend to accept outside contributions or allow reuse,
+add a license (MIT and Apache-2.0 are common choices for Android projects).

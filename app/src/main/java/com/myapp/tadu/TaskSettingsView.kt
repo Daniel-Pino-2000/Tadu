@@ -50,9 +50,6 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.PeriodicWorkRequestBuilder
-import androidx.work.WorkManager
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.navigation.NavHostController
@@ -61,7 +58,6 @@ import com.myapp.tadu.ui.theme.getCommonAccentColors
 import com.myapp.tadu.notifications.canShowNotifications
 import com.myapp.tadu.settings.SettingsViewModel
 import com.myapp.tadu.view_model.AuthViewModel
-import java.util.concurrent.TimeUnit
 import kotlin.math.abs
 
 // Helper function to check notification permission

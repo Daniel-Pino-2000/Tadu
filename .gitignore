@@ -1,15 +1,53 @@
+# ---------------------------------------------------------------------------
+# Gradle / build output
+# ---------------------------------------------------------------------------
+.gradle/
+build/
+/app/build/
+/app/release/
+captures/
+.externalNativeBuild/
+.cxx/
+*.hprof
+
+# Gradle wrapper JAR is part of the repo; never ignore it.
+!gradle/wrapper/gradle-wrapper.jar
+
+# ---------------------------------------------------------------------------
+# Android Studio / IntelliJ
+# ---------------------------------------------------------------------------
 *.iml
-.gradle
-/local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
-.DS_Store
-/build
-/captures
-.externalNativeBuild
-.cxx
+.idea/caches/
+.idea/libraries/
+.idea/modules.xml
+.idea/workspace.xml
+.idea/navEditor.xml
+.idea/assetWizardSettings.xml
+.idea/shelf/
+.idea/httpRequests/
+.idea/jarRepositories.xml
+
+# Kotlin compiler caches and error logs
+.kotlin/
+.kotlin/**
+
+# ---------------------------------------------------------------------------
+# Local configuration and secrets
+# ---------------------------------------------------------------------------
 local.properties
+app/google-services.json
+!app/google-services.json.example
+keystore.properties
+/keystore/
+*.jks
+*.keystore
+*.p12
+.env
+.env.*
+
+# ---------------------------------------------------------------------------
+# OS / editor noise
+# ---------------------------------------------------------------------------
+.DS_Store
+Thumbs.db
+*.log
