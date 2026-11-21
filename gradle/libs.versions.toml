@@ -20,7 +20,7 @@ firebaseBom = "33.7.0"
 coroutines = "1.7.3"
 
 # UI extras
-lottie = "6.1.0"
+lottie = "6.7.1"
 
 # Testing
 junit = "4.13.2"
