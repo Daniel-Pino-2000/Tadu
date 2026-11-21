@@ -1,9 +1,9 @@
 [versions]
 # Build tooling
 agp = "8.10.0"
-kotlin = "2.0.21"
-ksp = "2.0.21-1.0.28"
-googleServices = "4.4.4"
+kotlin = "2.4.21"
+ksp = "2.3.14"
+googleServices = "4.6.0"
 
 # AndroidX / Compose
 coreKtx = "1.12.0"
@@ -17,7 +17,7 @@ navigation = "2.9.0"
 room = "2.7.1"
 datastore = "1.1.7"
 firebaseBom = "33.7.0"
-coroutines = "1.7.3"
+coroutines = "1.11.0"
 
 # UI extras
 lottie = "6.1.0"
