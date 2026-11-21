@@ -9,6 +9,7 @@ this project intends to follow [Semantic Versioning](https://semver.org/).
 
 ### Added
 
+- MIT license.
 - Contributor guide, code of conduct, security policy, and agent/house rules.
 - Architecture and development documentation under `docs/`.
 - GitHub issue templates, pull request template, CODEOWNERS, and Dependabot config.

@@ -5,6 +5,7 @@
 ![Kotlin](https://img.shields.io/badge/kotlin-2.0-7F52FF)
 ![Compose](https://img.shields.io/badge/UI-Jetpack%20Compose-4285F4)
 ![minSdk](https://img.shields.io/badge/minSdk-24-blue)
+![License](https://img.shields.io/badge/license-MIT-blue)
 
 Tadu is an offline-first Android task manager built with Kotlin and Jetpack Compose.
 Tasks live in a local Room database and sync to Firebase Firestore, so the app stays
@@ -177,6 +178,6 @@ for the reporting process and the project's secrets policy.
 
 ## License
 
-No license has been chosen yet. Until a `LICENSE` file is added, the code is
-all rights reserved. If you intend to accept outside contributions or allow reuse,
-add a license (MIT and Apache-2.0 are common choices for Android projects).
+Tadu is released under the [MIT License](LICENSE).
+
+Copyright (c) 2026 Daniel Pino.

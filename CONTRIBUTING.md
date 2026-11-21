@@ -87,6 +87,11 @@ Use the bug report issue template. Include:
 - App version (or commit SHA)
 - Relevant logs (redact personal data)
 
+## License
+
+By contributing, you agree that your contributions will be licensed under the
+[MIT License](LICENSE).
+
 ## Community
 
 By participating you agree to follow the [Code of Conduct](CODE_OF_CONDUCT.md).
