@@ -110,9 +110,9 @@ Recommended settings for the hosted repository (configure in **Settings**):
 
 - Enable **Issues** and **Discussions**; disable the wiki unless you plan to use it.
 - Enable **Dependabot alerts** and **Dependabot security updates**.
-- Protect `master`: require the CI check to pass, require a pull request for changes,
-  and disallow force pushes. For a solo maintainer, start with "require status checks"
-  and add review requirements when collaborators join.
+- `master` is protected: the `Lint, test and assemble` CI check is required, and force
+  pushes and branch deletion are blocked. Direct pushes by the owner are still allowed;
+  enable "Require a pull request before merging" when collaborators join.
 - Enable **Automatically delete head branches**.
 - Add a repository description and topics (Android, Kotlin, Jetpack Compose, Room,
   Firebase, offline-first).
